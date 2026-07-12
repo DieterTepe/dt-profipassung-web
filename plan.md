@@ -3,7 +3,8 @@
 ## Interaktiver Toleranz- & Passungsassistent nach ISO 286 — mit Pressverband (DIN 7190), Toleranzketten (WC/RSS/Monte-Carlo), ISO 2768 und ANSI B4.1 — dreisprachig (DE/EN/PT), offline, Handy zuerst
 
 ═══════════════════════════════════════════════════════════════════════════
-Plan-Version : 1.0 · Stand 2026-07-12 · **Planung abgeschlossen, noch KEIN Code.**
+Plan-Version : 1.1 · Stand 2026-07-13 · Status: **B1 bestätigt** (daten.js + test_passung.js)
+Basislinie   : `node test_passung.js` → **39.035 Assertions, 0 Fehler** (Stand B1)
 Produktname  : **DT-ProfiPassung** (Arbeitstitel — vor Markteintritt Marke/Domain prüfen,
                analog Naming-Caveat der Schraube). Produktversion startet bei v0.1.0.
 Modell       : Einmalkauf (Vollversion) + kostenlose Testversion — **Testversion hat den
@@ -517,6 +518,14 @@ konsolidiert sie), übrige Schrauben-Module.
 ## Changelog des Plans (knapp halten — Historie in Git)
 **v1.0 (2026-07-12):** Erstfassung — konsolidiert aus Dieters Ideen-Notizen inkl. seiner
 Antworten (Kette integriert mit eigenem Bereich + Brücke; ANSI direkt in V1; Assistent ja).
+**v1.1 (2026-07-13):** B1 bestätigt. ISO-286-Zahlenkern: IT1–IT16 (1–500 mm) · Welle
+d e f g h · k m n p s · js (s mit Zwischenstufen > 50 mm) · Bohrung über Allgemein-/
+Sonderregel-Δ inkl. Norm-Feinheiten (Δ=0 bis 3 mm · M6-Ausnahme 250–315: ES=−9 ·
+k-Grundabmaß nur IT4–IT7). Basislinie 39.035. **Nächster Schritt (Datenpass vor B2):**
+Buchstaben a b c · j · r t u v x y z za zb zc mit Zwischenstufen nachtragen — bis dahin
+liefert der Kern dort ehrlich `FD_NOT_IN_DATASET`, nie Falschwerte. Entscheidungen
+Session 1: Name **DT-ProfiPassung** ✓ · Endung **`.dtp`** ✓ · B13 (ANSI) bleibt an
+Position 13.
 
 ═══════════════════════════════════════════════════════════════════════════
 Ende plan.md · DT-ProfiPassung · Plan v1.0
