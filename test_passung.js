@@ -105,6 +105,40 @@ shaftIs(300, 's', 7, 222, 170);      // s(280–315) = +170, IT7(250–315) = 52
 // k-Gradregel: Grundabmass nur IT4..IT7, sonst 0:
 shaftIs(50, 'k', 8, 39, 0);
 shaftIs(50, 'k', 3, 4, 0);
+// Datenpass — a, b, c (es-Feinraster, publizierte Werte):
+shaftIs(25, 'a', 11, -300, -430);
+shaftIs(2, 'a', 9, -270, -295);
+shaftIs(40, 'b', 9, -170, -232);
+shaftIs(120, 'b', 10, -240, -380);
+shaftIs(25, 'c', 11, -110, -240);
+shaftIs(45, 'c', 11, -130, -290);
+shaftIs(160, 'c', 12, -210, -610);
+// Datenpass — r, t, u, v, x, y, z, za, zb, zc (ei-Feinraster):
+shaftIs(30, 'r', 6, 41, 28);
+shaftIs(100, 'r', 6, 73, 51);
+shaftIs(160, 'r', 6, 90, 65);
+shaftIs(70, 't', 6, 94, 75);
+shaftIs(40, 'u', 8, 99, 60);
+shaftIs(45, 'u', 8, 109, 70);
+shaftIs(16, 'v', 7, 57, 39);
+shaftIs(25, 'x', 8, 97, 64);
+shaftIs(2, 'x', 8, 34, 20);
+shaftIs(20, 'y', 7, 84, 63);
+shaftIs(100, 'z', 7, 293, 258);
+shaftIs(5, 'z', 7, 47, 35);
+shaftIs(30, 'za', 7, 139, 118);
+shaftIs(30, 'zb', 7, 181, 160);
+shaftIs(30, 'zc', 7, 239, 218);
+// j gepinnt (⚠ Zweitquelle ausstehend — pinnt den Datenstand gegen versehentliche Edits):
+(function () {
+  var r = D.shaftDeviations(50, 'j', 6);
+  ok(r.es === 11 && r.ei === -5 && r.unverified === true, '50 j6 = +11/-5 (gepinnt, Zweitquelle ausstehend)');
+  r = D.shaftDeviations(50, 'j', 5);
+  ok(r.es === 6 && r.ei === -5, '50 j5 = +6/-5 (gepinnt)');
+  r = D.shaftDeviations(30, 'j', 7);
+  ok(r.es === 13 && r.ei === -8, '30 j7 = +13/-8 (gepinnt)');
+  ok(D.shaftDeviations(50, 'j', 8).code === D.CODE.FD_UNDEFINED, 'j8: nicht vorgesehen -> js8 nutzen');
+})();
 
 /* === 3) Abmass-Anker Bohrung [µm] ========================================= */
 section('3) Abmass-Anker Bohrung');
@@ -159,6 +193,29 @@ boreIs(50, 'M', 8, 5, -34);
   var r = D.boreDeviations(50, 'JS', 7);
   ok(r.ES === 12.5 && r.EI === -12.5 && r.symmetric === true, '50 JS7 = ±12,5');
 })();
+// Datenpass — Allgemeinregel A/B/C (publizierte Klassiker):
+boreIs(25, 'A', 11, 430, 300);
+boreIs(40, 'B', 9, 232, 170);
+boreIs(25, 'C', 11, 240, 110);
+// Datenpass — Sonderregel auf dem Feinraster:
+boreIs(30, 'R', 7, -20, -41);
+boreIs(60, 'T', 7, -55, -85);
+boreIs(25, 'U', 7, -40, -61);
+// Allgemeinregel oberhalb IT7 (Schrumpfsitz-Klassiker):
+boreIs(50, 'U', 8, -70, -109);
+// Regelableitung Feinraster (extern gegenpruefen):
+boreIs(50, 'ZA', 7, -171, -196);
+// J gepinnt (⚠ Zweitquelle ausstehend):
+(function () {
+  var r = D.boreDeviations(50, 'J', 7);
+  ok(r.ES === 14 && r.EI === -11 && r.unverified === true, '50 J7 = +14/-11 (gepinnt, Zweitquelle ausstehend)');
+  r = D.boreDeviations(100, 'J', 6);
+  ok(r.ES === 16 && r.EI === -6, '100 J6 = +16/-6 (gepinnt)');
+  ok(D.boreDeviations(50, 'J', 5).code === D.CODE.FD_UNDEFINED, 'J5: nicht vorgesehen');
+})();
+// Norm-Fussnote: Grundabmass N oberhalb IT8 nicht bis 1 mm:
+ok(D.boreDeviations(1, 'N', 9).code === D.CODE.FD_UNDEFINED, 'N9 @ 1 mm: Norm sieht das nicht vor');
+boreIs(1.5, 'N', 9, -4, -29);
 
 /* === 4) Passungs-Anker (Spiel/Uebermass aus den Abmassen) ================== */
 section('4) Passungs-Anker');
@@ -237,11 +294,41 @@ D.MAIN_MAX.forEach(function (mx, ri) {
   crossOk(got, exp, 2, 0.04, 'ei(s) = IT7 + 0,4·D Stufe ' + st[0] + '–' + st[1]);
 });
 
+// 5c) Feinraster-Buchstaben: a,b,c (es) und t..zc (ei) je Zwischenstufe.
+// AUSREISSERLISTE: kleine Nennmasse einiger Buchstaben sind norm-historische
+// Uebernahmen aus der ISA und weichen staerker von der Formel ab (z bei 1-3 mm
+// bis 45 %) — dort gilt nur das Grobnetz (50 %), das Vorzeichenfehler (200 %),
+// Zehnerpotenzen und Zahlendreher trotzdem sicher faengt.
+var WHITELIST = { u: { 0: 1, 1: 1, 2: 1 }, x: { 0: 1, 1: 1, 2: 1 }, z: { 0: 1, 1: 1, 2: 1 },
+                  za: { 0: 1, 1: 1 }, zb: { 0: 1 }, zc: { 0: 1, 1: 1 } };
+var FD_LO = [1].concat(D.FD_MAX.slice(0, 24));
+D.FD_MAX.forEach(function (mx, fi) {
+  var lo = FD_LO[fi], Dm = Math.sqrt(lo * mx);
+  var itR = function (g) { return D.itValue(Dm, g); };
+  ['a', 'b', 'c'].forEach(function (L) {
+    var r = D.shaftDeviations(Dm, L, 7); if (r.code) return;
+    // c 10..40 mm: historische Uebernahme -> 15 % statt 12 %.
+    crossOk(D.FORMULA_ES[L](Dm), r.es, 3, L === 'c' ? 0.15 : 0.12,
+            'es(' + L + ') Feinstufe ' + lo + '-' + mx);
+  });
+  ['t', 'u', 'v', 'x', 'y', 'z', 'za', 'zb', 'zc'].forEach(function (L) {
+    var r = D.shaftDeviations(Dm, L, 7); if (r.code) return;
+    var rel = (WHITELIST[L] && WHITELIST[L][fi]) ? 0.50 : 0.12;
+    crossOk(D.FORMULA_EI[L](Dm, itR), r.ei, 3, rel, 'ei(' + L + ') Feinstufe ' + lo + '-' + mx);
+  });
+  // r = geometrisches Mittel aus p und s (Norm-Regel):
+  var rr = D.shaftDeviations(Dm, 'r', 7);
+  var pp = D.shaftDeviations(Dm, 'p', 7), ss = D.shaftDeviations(Dm, 's', 7);
+  crossOk(Math.sqrt(pp.ei * ss.ei), rr.ei, 2, 0.04, 'ei(r) = sqrt(p*s) Feinstufe ' + lo + '-' + mx);
+});
+
 /* === 6) Invarianten & Property-Tests ====================================== */
 section('6) Invarianten & Properties');
 var PROBES = [1, 2, 3, 3.5, 5, 6, 8, 10, 14, 18, 20, 25, 30, 40, 45, 50, 55, 63,
   70, 80, 90, 100, 110, 120, 130, 150, 170, 180, 200, 220, 250, 260, 280, 300,
   315, 350, 355, 380, 400, 420, 450, 480, 500];
+var LETTERS_ALL = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'j', 'k', 'm', 'n', 'p',
+  'r', 's', 't', 'u', 'v', 'x', 'y', 'z', 'za', 'zb', 'zc'];
 var GRADES = []; for (var g6 = 1; g6 <= 16; g6++) GRADES.push(g6);
 
 // IT streng steigend im Grad, schwach steigend im Nennmassbereich:
@@ -268,43 +355,57 @@ PROBES.forEach(function (N) {
     // unter dem kleinsten Norm-Schritt (0,1 µm) — faengt jeden echten Fehler und
     // laesst nur den Gleitkomma-Staub der Norm-Halbwerte durch (IT1..IT3 klein,
     // Delta bei Feingraden wie M2: 0,8 µm ist binaer nicht exakt darstellbar).
-    ['d', 'e', 'f', 'g', 'k', 'm', 'n', 'p', 's'].forEach(function (L) {
+    LETTERS_ALL.forEach(function (L) {
       var s = D.shaftDeviations(N, L, g);
-      ok(Math.abs((s.es - s.ei) - T) < 1e-9, 'es-ei=IT (' + L + g + ' @ ' + N + ')');
+      if (!s.code) ok(Math.abs((s.es - s.ei) - T) < 1e-9, 'es-ei=IT (' + L + g + ' @ ' + N + ')');
       var b = D.boreDeviations(N, L.toUpperCase(), g);
-      ok(Math.abs((b.ES - b.EI) - T) < 1e-9, 'ES-EI=IT (' + L.toUpperCase() + g + ' @ ' + N + ')');
+      if (!b.code) ok(Math.abs((b.ES - b.EI) - T) < 1e-9, 'ES-EI=IT (' + L.toUpperCase() + g + ' @ ' + N + ')');
     });
     // Allgemeinregel EI = -es fuer A..H:
-    ['d', 'e', 'f', 'g', 'h'].forEach(function (L) {
-      ok(D.boreDeviations(N, L.toUpperCase(), g).EI === -D.shaftDeviations(N, L, g).es,
+    ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'].forEach(function (L) {
+      var sG = D.shaftDeviations(N, L, g), bG = D.boreDeviations(N, L.toUpperCase(), g);
+      if (!sG.code && !bG.code) ok(bG.EI === -sG.es,
          'Allgemeinregel EI=-es (' + L + ' @ ' + N + '/' + g + ')');
     });
   });
 });
 
-// Sonderregel-Delta NUR K/M/N <= IT8 und P <= IT7 (oberhalb: Allgemeinregel ES=-ei):
+// Sonderregel-Delta NUR K/M/N <= IT8 und P..ZC <= IT7 (oberhalb: Allgemeinregel ES=-ei):
 PROBES.forEach(function (N) {
   ['k', 'm', 'n'].forEach(function (L) {
     for (var g = 9; g <= 16; g++) {
-      ok(D.boreDeviations(N, L.toUpperCase(), g).ES === -D.shaftDeviations(N, L, g).ei,
+      var sD = D.shaftDeviations(N, L, g), bD = D.boreDeviations(N, L.toUpperCase(), g);
+      if (!sD.code && !bD.code) ok(bD.ES === -sD.ei,
          'keine Delta oberhalb IT8 (' + L.toUpperCase() + g + ' @ ' + N + ')');
     }
   });
-  ['p', 's'].forEach(function (L) {
+  ['p', 'r', 's', 't', 'u', 'v', 'x', 'y', 'z', 'za', 'zb', 'zc'].forEach(function (L) {
     for (var g = 8; g <= 16; g++) {
-      ok(D.boreDeviations(N, L.toUpperCase(), g).ES === -D.shaftDeviations(N, L, g).ei,
+      var sD = D.shaftDeviations(N, L, g), bD = D.boreDeviations(N, L.toUpperCase(), g);
+      if (!sD.code && !bD.code) ok(bD.ES === -sD.ei,
          'keine Delta oberhalb IT7 (' + L.toUpperCase() + g + ' @ ' + N + ')');
     }
   });
 });
 
-// Buchstaben-Ordnung je Nennmass (Typo-Netz): |d|>|e|>|f|>|g|>h=0 und k<=m<n<p<s:
+// Buchstaben-Ordnung je Nennmass (Typo-Netz), volle Kette (nicht vorgesehene
+// Felder werden uebersprungen; j bleibt als asymmetrisches Feld aussen vor):
 PROBES.forEach(function (N) {
-  var es = {}, ei = {};
-  ['d', 'e', 'f', 'g'].forEach(function (L) { es[L] = D.shaftDeviations(N, L, 7).es; });
-  ['k', 'm', 'n', 'p', 's'].forEach(function (L) { ei[L] = D.shaftDeviations(N, L, 7).ei; });
-  ok(es.d < es.e && es.e < es.f && es.f < es.g && es.g < 0, 'Ordnung d<e<f<g<0 @ ' + N);
-  ok(ei.k <= ei.m && ei.m < ei.n && ei.n < ei.p && ei.p < ei.s, 'Ordnung k<=m<n<p<s @ ' + N);
+  var esSeq = ['a', 'b', 'c', 'd', 'e', 'f', 'g'].map(function (L) {
+    var r = D.shaftDeviations(N, L, 7); return r.code ? null : r.es;
+  }).filter(function (v) { return v !== null; });
+  for (var i2 = 1; i2 < esSeq.length; i2++) {
+    ok(esSeq[i2 - 1] < esSeq[i2], 'Ordnung es a..g @ ' + N + ' Pos ' + i2);
+  }
+  ok(esSeq[esSeq.length - 1] < 0, 'g < 0 @ ' + N);
+  var eiSeq = ['k', 'm', 'n', 'p', 'r', 's', 't', 'u', 'v', 'x', 'y', 'z', 'za', 'zb', 'zc']
+    .map(function (L) {
+      var r = D.shaftDeviations(N, L, 7); return r.code ? null : r.ei;
+    }).filter(function (v) { return v !== null; });
+  for (var i3 = 1; i3 < eiSeq.length; i3++) {
+    ok(eiSeq[i3 - 1] < eiSeq[i3], 'Ordnung ei k..zc @ ' + N + ' Pos ' + i3);
+  }
+  ok(eiSeq[0] >= 0, 'k >= 0 @ ' + N);
 });
 
 // Ganzzahligkeit: Kern-Abmasse sind ganzzahlige µm, ueberall wo IT ganzzahlig ist
@@ -313,9 +414,9 @@ PROBES.forEach(function (N) {
   for (var g = 1; g <= 16; g++) {
     var T = D.itValue(N, g);
     if (!Number.isInteger(T)) continue;
-    ['d', 'e', 'f', 'g', 'h', 'k', 'm', 'n', 'p', 's'].forEach(function (L) {
+    LETTERS_ALL.forEach(function (L) {
       var s = D.shaftDeviations(N, L, g);
-      ok(Number.isInteger(s.es) && Number.isInteger(s.ei), 'ganzzahlig ' + L + g + ' @ ' + N);
+      if (!s.code) ok(Number.isInteger(s.es) && Number.isInteger(s.ei), 'ganzzahlig ' + L + g + ' @ ' + N);
     });
   }
 });
@@ -323,7 +424,7 @@ PROBES.forEach(function (N) {
 // Zufalls-Property (deterministischer Seed): Identitaeten + Wiederholbarkeit:
 (function () {
   var rnd = mulberry32(20260713);
-  var LETTERS = ['d', 'e', 'f', 'g', 'h', 'js', 'k', 'm', 'n', 'p', 's'];
+  var LETTERS = LETTERS_ALL.concat(['js']);
   for (var i = 0; i < 4000; i++) {
     var N = 1 + rnd() * 499;
     var g = 1 + Math.floor(rnd() * 16);
@@ -331,10 +432,11 @@ PROBES.forEach(function (N) {
     var T = D.itValue(N, g);
     var a = D.shaftDeviations(N, L, g);
     var b = D.shaftDeviations(N, L, g);
-    ok(a.es === b.es && a.ei === b.ei, 'deterministisch ' + L + g + ' @ ' + N.toFixed(3));
-    ok(Math.abs((a.es - a.ei) - T) < 1e-9, 'es-ei=IT (Zufall) ' + L + g + ' @ ' + N.toFixed(3));
+    ok(a.es === b.es && a.ei === b.ei && a.code === b.code,
+       'deterministisch ' + L + g + ' @ ' + N.toFixed(3));
+    if (!a.code) ok(Math.abs((a.es - a.ei) - T) < 1e-9, 'es-ei=IT (Zufall) ' + L + g + ' @ ' + N.toFixed(3));
     var B = D.boreDeviations(N, L.toUpperCase(), g);
-    ok(Math.abs((B.ES - B.EI) - T) < 1e-9, 'ES-EI=IT (Zufall) ' + L.toUpperCase() + g + ' @ ' + N.toFixed(3));
+    if (!B.code) ok(Math.abs((B.ES - B.EI) - T) < 1e-9, 'ES-EI=IT (Zufall) ' + L.toUpperCase() + g + ' @ ' + N.toFixed(3));
   }
 })();
 
@@ -347,11 +449,27 @@ mustThrow(function () { D.itValue(50, 17); }, 'IT17 -> ERR_GRADE_UNKNOWN (B1-Umf
 mustThrow(function () { D.itValue(50, 0); }, 'IT0 -> ERR_GRADE_UNKNOWN');
 ok(D.shaftDeviations(0.5, 'g', 6).code === D.CODE.OUT_OF_RANGE, 'Abmass unter 1 mm -> OUT_OF_RANGE');
 ok(D.shaftDeviations(600, 'g', 6).code === D.CODE.OUT_OF_RANGE, 'Abmass ueber 500 mm -> OUT_OF_RANGE');
-ok(D.shaftDeviations(50, 'a', 11).code === D.CODE.FD_NOT_IN_DATASET, 'a11: ehrliche Luecke (B1)');
-ok(D.shaftDeviations(50, 'u', 7).code === D.CODE.FD_NOT_IN_DATASET, 'u7: ehrliche Luecke (B1)');
-ok(D.boreDeviations(50, 'ZA', 7).code === D.CODE.FD_NOT_IN_DATASET, 'ZA7: ehrliche Luecke (B1)');
+ok(D.shaftDeviations(5, 'cd', 7).code === D.CODE.FD_NOT_IN_DATASET, 'cd: V1 bewusst ohne cd/ef/fg');
 ok(D.shaftDeviations(50, 'q', 7).code === D.CODE.LETTER_UNKNOWN, 'q: gibt es in ISO 286 nicht');
 ok(D.boreDeviations(50, 'W', 7).code === D.CODE.LETTER_UNKNOWN, 'W: gibt es in ISO 286 nicht');
+
+// Von der Norm nicht vorgesehene Felder -> FD_UNDEFINED (inkl. Grenzverhalten):
+ok(D.shaftDeviations(24, 't', 7).code === D.CODE.FD_UNDEFINED &&
+   D.shaftDeviations(24.5, 't', 7).ei === 41, 't erst ueber 24 mm (Grenze)');
+ok(D.shaftDeviations(14, 'v', 7).code === D.CODE.FD_UNDEFINED &&
+   D.shaftDeviations(14.5, 'v', 7).ei === 39, 'v erst ueber 14 mm (Grenze)');
+ok(D.shaftDeviations(18, 'y', 7).code === D.CODE.FD_UNDEFINED &&
+   D.shaftDeviations(18.5, 'y', 7).ei === 63, 'y erst ueber 18 mm (Grenze)');
+ok(D.shaftDeviations(1, 'a', 7).code === D.CODE.FD_UNDEFINED &&
+   D.shaftDeviations(1.5, 'a', 7).es === -270, 'a nicht bis 1 mm (Norm-Fussnote)');
+ok(D.shaftDeviations(1, 'b', 7).code === D.CODE.FD_UNDEFINED, 'b nicht bis 1 mm (Norm-Fussnote)');
+ok(D.shaftDeviations(1, 'c', 7).es === -60, 'c gilt auch bei 1 mm');
+
+// Feinraster-Grenzen "ueber .. bis einschliesslich":
+ok(D.shaftDeviations(40, 'u', 7).ei === 60 && D.shaftDeviations(40.5, 'u', 7).ei === 70, 'u-Feingrenze 40 mm');
+ok(D.shaftDeviations(14, 'x', 7).ei === 40 && D.shaftDeviations(14.5, 'x', 7).ei === 45, 'x-Feingrenze 14 mm');
+ok(D.shaftDeviations(10, 'c', 7).es === -80 && D.shaftDeviations(10.5, 'c', 7).es === -95, 'c-Feingrenze 10 mm');
+ok(D.shaftDeviations(50, 'r', 7).ei === 34 && D.shaftDeviations(50.5, 'r', 7).ei === 41, 'r-Feingrenze 50 mm');
 
 // Bereichsgrenzen "ueber .. bis einschliesslich":
 ok(D.itValue(3, 7) === 10 && D.itValue(3.1, 7) === 12, 'Grenze 3 mm: 3->Stufe 1..3, 3,1->Stufe 3..6');
@@ -384,5 +502,5 @@ if (fail > 0) {
   fails.forEach(function (m) { console.log('   - ' + m); });
   process.exit(1);
 } else {
-  console.log('\n  ALLE TESTS BESTANDEN — Zahlenkern steht (Basislinie B1).\n');
+  console.log('\n  ALLE TESTS BESTANDEN — Zahlenkern steht.\n');
 }

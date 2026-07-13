@@ -9,14 +9,16 @@
  * Formeldrift. Der Formelsatz lebt ausschliesslich im Harness als Quervergleich
  * (z. B. 50 e8: Formel -49,3 -> die Norm rundet auf -50; Tabelle ist massgeblich).
  *
- * Umfang B1 (bewusst eng, plan.md 0.4 — Zuschnitt je Session flexibel):
- *   - Nennmaess 1..500 mm, 13 Hauptstufen.
+ * Umfang B1 + Datenpass (plan.md 0.4):
+ *   - Nennmasse 1..500 mm; 13 Hauptstufen + feines 25er-Raster fuer Grundabmasse.
  *   - IT1..IT16 vollstaendig (publiziert).
- *   - Welle: d,e,f,g,h (es) · k,m,n,p (ei) · s (ei, inkl. Zwischenstufen >50) · js.
- *   - Bohrung: Allgemeinregel + Sonderregel (Delta) fuer K,M,N (<=IT8) und
- *     P..ZC (<=IT7).
- *   - Noch NICHT im Datensatz (sauber markiert, kein Falschwert): a,b,c sowie die
- *     feinen Zwischenstufen von r,t,u,v,x,y,z,za,zb,zc  ->  Code FD_NOT_IN_DATASET.
+ *   - Welle: a..h (es) · j5..j7 (gepinnt, Zweitquelle ausstehend) · js · k..zc (ei)
+ *     — voller V1-Buchstabensatz, bewusst ohne cd/ef/fg (FD_NOT_IN_DATASET).
+ *   - Bohrung: Allgemeinregel + Sonderregel (Delta; K/M/N <= IT8, P..ZC <= IT7),
+ *     J6..J8-Tabelle, Norm-Fussnoten (a/b und N>IT8 nicht bis 1 mm; M6 250-315;
+ *     Delta = 0 bis 3 mm).
+ *   - Felder, die die Norm nicht vorsieht (t bis 24, v bis 14, y bis 18, j8 ...)
+ *     -> Code FD_UNDEFINED, nie ein Falschwert.
  * ==========================================================================*/
 (function (root, factory) {
   if (typeof module === 'object' && module.exports) { module.exports = factory(); }
@@ -24,13 +26,14 @@
 })(typeof globalThis !== 'undefined' ? globalThis : this, function () {
   'use strict';
 
-  var VERSION   = '0.1.0';
+  var VERSION   = '0.2.0';
   var DATA_STD  = 'ISO 286-1:2019 / -2:2020';
 
   /* ---- Hilfscode-Konstanten (stabile Meldungscodes; UI uebersetzt) -------- */
   var CODE = {
     OUT_OF_RANGE:       'ERR_OUT_OF_RANGE',        // Nennmass ausserhalb 1..500
-    FD_NOT_IN_DATASET:  'FD_NOT_IN_DATASET',       // Buchstabe/Bereich noch nicht tabelliert
+    FD_NOT_IN_DATASET:  'FD_NOT_IN_DATASET',       // Buchstabe/Bereich nicht im V1-Datensatz
+    FD_UNDEFINED:       'FD_UNDEFINED',            // Norm sieht dieses Feld hier nicht vor
     GRADE_UNKNOWN:      'ERR_GRADE_UNKNOWN',       // IT-Grad unbekannt
     LETTER_UNKNOWN:     'ERR_LETTER_UNKNOWN'       // Toleranzfeld-Buchstabe unbekannt
   };
@@ -117,6 +120,68 @@
     return -1;
   }
 
+  /* =========================================================================
+   * 3b) Feines 25er-Raster (Datenpass): Grundabmasse mit Zwischenstufen.
+   *     Stufen: 1-3, 3-6, 6-10, 10-14, 14-18, 18-24, 24-30, 30-40, 40-50,
+   *     50-65, 65-80, 80-100, 100-120, 120-140, 140-160, 160-180, 180-200,
+   *     200-225, 225-250, 250-280, 280-315, 315-355, 355-400, 400-450, 450-500.
+   *     null = die Norm sieht das Feld in dieser Stufe nicht vor.
+   * =======================================================================*/
+  var FD_MAX = [3, 6, 10, 14, 18, 24, 30, 40, 50, 65, 80, 100, 120, 140, 160,
+                180, 200, 225, 250, 280, 315, 355, 400, 450, 500];
+  function fdRangeIndex(nominal) {
+    if (!(nominal >= 1) || nominal > 500) return -1;
+    for (var i = 0; i < FD_MAX.length; i++) { if (nominal <= FD_MAX[i]) return i; }
+    return -1;
+  }
+
+  var ES_FINE = {            // es <= 0 (a/b: Norm sieht Nennmasse bis 1 mm nicht vor)
+    a: [-270, -270, -280, -290, -290, -300, -300, -310, -320, -340, -360, -380, -410,
+        -460, -520, -580, -660, -740, -820, -920, -1050, -1200, -1350, -1500, -1650],
+    b: [-140, -140, -150, -150, -150, -160, -160, -170, -180, -190, -200, -220, -240,
+        -260, -280, -310, -340, -380, -420, -480, -540, -600, -680, -760, -840],
+    c: [-60, -70, -80, -95, -95, -110, -110, -120, -130, -140, -150, -170, -180,
+        -200, -210, -230, -240, -260, -280, -300, -330, -360, -400, -440, -480]
+  };
+  var EI_FINE = {            // ei >= 0
+    r:  [10, 15, 19, 23, 23, 28, 28, 34, 34, 41, 43, 51, 54, 63, 65, 68, 77, 80, 84,
+         94, 98, 108, 114, 126, 132],
+    t:  [null, null, null, null, null, null, 41, 48, 54, 66, 75, 91, 104, 122, 134,
+         146, 166, 180, 196, 218, 240, 268, 294, 330, 360],
+    u:  [18, 23, 28, 33, 33, 41, 48, 60, 70, 87, 102, 124, 144, 170, 190, 210, 236,
+         258, 284, 315, 350, 390, 435, 490, 540],
+    v:  [null, null, null, null, 39, 47, 55, 68, 81, 102, 120, 146, 172, 202, 228,
+         252, 284, 310, 340, 385, 425, 475, 530, 595, 660],
+    x:  [20, 28, 34, 40, 45, 54, 64, 80, 97, 122, 146, 178, 210, 248, 280, 310, 350,
+         385, 425, 475, 525, 590, 660, 740, 820],
+    y:  [null, null, null, null, null, 63, 75, 94, 114, 144, 174, 214, 254, 300, 340,
+         380, 425, 470, 520, 580, 650, 730, 820, 920, 1000],
+    z:  [26, 35, 42, 50, 60, 73, 88, 112, 136, 172, 210, 258, 310, 365, 415, 465,
+         520, 575, 640, 710, 790, 900, 1000, 1100, 1250],
+    za: [32, 42, 52, 64, 77, 98, 118, 148, 180, 226, 274, 335, 400, 470, 535, 600,
+         670, 740, 820, 920, 1000, 1150, 1300, 1450, 1600],
+    zb: [40, 50, 67, 90, 108, 136, 160, 200, 242, 300, 360, 445, 525, 620, 700, 780,
+         880, 960, 1050, 1200, 1300, 1500, 1650, 1850, 2100],
+    zc: [60, 80, 97, 130, 150, 188, 218, 274, 325, 405, 480, 585, 690, 800, 900,
+         1000, 1150, 1250, 1350, 1550, 1700, 1900, 2100, 2400, 2600]
+  };
+
+  /* j (Welle, ei) und J (Bohrung, ES): reine Tabellenfelder ohne Formel, nur
+   * j5..j7 bzw. J6..J8 vorgesehen. 13 Hauptstufen.
+   * ⚠ QUELLENSTATUS: gepinnt nach Erstquelle — Zweitquelle (Tabellenbuch) steht
+   *   noch aus (plan.md 6.1: >= 2 unabhaengige Quellen). Ergebnisse tragen
+   *   deshalb das Flag `unverified: true`. */
+  var J_SHAFT_EI = {
+    5: [-2, -2, -2, -3, -4, -5, -7, -9, -11, -13, -16, -18, -20],
+    6: [-2, -2, -2, -3, -4, -5, -7, -9, -11, -13, -16, -18, -20],
+    7: [-4, -4, -5, -6, -8, -10, -12, -15, -18, -21, -26, -28, -32]
+  };
+  var J_BORE_ES = {
+    6: [2, 5, 5, 6, 8, 10, 13, 16, 18, 22, 25, 29, 33],
+    7: [4, 6, 8, 10, 12, 14, 18, 22, 26, 30, 36, 39, 43],
+    8: [6, 10, 12, 15, 20, 24, 28, 34, 41, 47, 55, 60, 66]
+  };
+
   /* Buchstaben, die in B1 tabelliert sind (alles andere -> FD_NOT_IN_DATASET). */
   var SHAFT_UPPER = { d:1, e:1, f:1, g:1, h:1 };            // Fundamental = es
   var SHAFT_LOWER = { k:1, m:1, n:1, p:1, s:1 };            // Fundamental = ei
@@ -150,13 +215,34 @@
       if (letter === 'k' && !(grade >= 4 && grade <= 7)) ei = 0;  // k-Sonderfall
       return { ei: ei, es: ei + T };
     }
-    if (LETTERS_ISO[letter]) return { code: CODE.FD_NOT_IN_DATASET }; // a,b,c,j,r,t,u,... spaeter
+    // a, b, c: es auf dem feinen Raster (a/b: Norm-Fussnote — nicht bis 1 mm)
+    if (ES_FINE[letter]) {
+      if (nominal <= 1 && letter !== 'c') return { code: CODE.FD_UNDEFINED };
+      var esF = ES_FINE[letter][fdRangeIndex(nominal)];
+      return { es: esF, ei: esF - T };
+    }
+    // r..zc: ei auf dem feinen Raster; null = Norm sieht das Feld hier nicht vor
+    if (EI_FINE[letter]) {
+      var eiF = EI_FINE[letter][fdRangeIndex(nominal)];
+      if (eiF === null) return { code: CODE.FD_UNDEFINED };
+      return { ei: eiF, es: eiF + T };
+    }
+    // j: nur j5..j7 tabelliert (⚠ Zweitquelle ausstehend, siehe Tabellen-Kommentar)
+    if (letter === 'j') {
+      var rowJ = J_SHAFT_EI[grade];
+      if (!rowJ) return { code: CODE.FD_UNDEFINED };
+      var eiJ = rowJ[ri];
+      return { ei: eiJ, es: eiJ + T, unverified: true };
+    }
+    if (LETTERS_ISO[letter]) return { code: CODE.FD_NOT_IN_DATASET }; // nur noch cd/ef/fg (bewusst ausserhalb V1)
     return { code: CODE.LETTER_UNKNOWN };        // gibt es in ISO 286 nicht (i, l, o, q, w, ...)
   }
 
-  /* Alle Toleranzfeld-Buchstaben, die ISO 286 kennt (V1-Umfang, ohne cd/ef/fg). */
-  var LETTERS_ISO = { a:1, b:1, c:1, d:1, e:1, f:1, g:1, h:1, j:1, js:1, k:1, m:1,
-                      n:1, p:1, r:1, s:1, t:1, u:1, v:1, x:1, y:1, z:1, za:1, zb:1, zc:1 };
+  /* Alle Toleranzfeld-Buchstaben, die ISO 286 kennt. cd/ef/fg sind bewusst
+   * ausserhalb des V1-Umfangs (plan.md) -> FD_NOT_IN_DATASET statt unbekannt. */
+  var LETTERS_ISO = { a:1, b:1, c:1, cd:1, d:1, e:1, ef:1, f:1, fg:1, g:1, h:1,
+                      j:1, js:1, k:1, m:1, n:1, p:1, r:1, s:1, t:1, u:1, v:1,
+                      x:1, y:1, z:1, za:1, zb:1, zc:1 };
 
   /* =========================================================================
    * 4) Grundabmasse BOHRUNG aus der Welle abgeleitet:
@@ -184,11 +270,21 @@
     if (LU === 'H') return { EI: 0, ES: T };
     if (LU === 'JS') { var half = T / 2; return { ES: half, EI: -half, symmetric: true }; }
 
+    // J: eigene Tabelle J6..J8 (⚠ Zweitquelle ausstehend)
+    if (LU === 'J') {
+      var rowJB = J_BORE_ES[grade];
+      if (!rowJB) return { code: CODE.FD_UNDEFINED };
+      var ESJ = rowJB[ri];
+      return { ES: ESJ, EI: ESJ - T, unverified: true };
+    }
+    // Norm-Fussnote: Grundabmass N oberhalb IT8 ist bis 1 mm nicht vorgesehen
+    if (lower === 'n' && grade > 8 && nominal <= 1) return { code: CODE.FD_UNDEFINED };
+
     var sh = shaftDeviations(nominal, lower, grade);
     if (sh.code) return { code: sh.code };
 
     // A..H (obere Buchstaben der Welle): EI = -es
-    if (SHAFT_UPPER[lower]) {
+    if (SHAFT_UPPER[lower] || ES_FINE[lower]) {
       var EI = -sh.es;
       return { EI: EI, ES: EI + T };
     }
@@ -228,6 +324,9 @@
    *    Grundabmass-Formeln der Welle je geom. Mittel D (plan.md 1.1).
    * =======================================================================*/
   var FORMULA_ES = {   // liefert es-Naeherung [µm] (vor Norm-Rundung)
+    a: function (D) { return D <= 120 ? -(265 + 1.3 * D) : -3.5 * D; },
+    b: function (D) { return D <= 160 ? -(140 + 0.85 * D) : -1.8 * D; },
+    c: function (D) { return D <= 40 ? -52 * Math.pow(D, 0.2) : -(95 + 0.8 * D); },
     d: function (D) { return -16 * Math.pow(D, 0.44); },
     e: function (D) { return -11 * Math.pow(D, 0.41); },
     f: function (D) { return -5.5 * Math.pow(D, 0.41); },
@@ -237,7 +336,16 @@
   var FORMULA_EI = {   // liefert ei-Naeherung [µm]
     m: function (D, itR) { return itR(7) - itR(6); },
     n: function (D)      { return 5 * Math.pow(D, 0.34); },
-    k: function (D)      { return 0.6 * Math.cbrt(D); }   // nur IT4..IT7
+    k: function (D)      { return 0.6 * Math.cbrt(D); },  // nur IT4..IT7
+    t:  function (D, itR) { return itR(7) + 0.63 * D; },
+    u:  function (D, itR) { return itR(7) + D; },
+    v:  function (D, itR) { return itR(7) + 1.25 * D; },
+    x:  function (D, itR) { return itR(7) + 1.6 * D; },
+    y:  function (D, itR) { return itR(7) + 2 * D; },
+    z:  function (D, itR) { return itR(7) + 2.5 * D; },
+    za: function (D, itR) { return itR(8) + 3.15 * D; },
+    zb: function (D, itR) { return itR(9) + 4 * D; },
+    zc: function (D, itR) { return itR(10) + 5 * D; }
   };
 
   /* Toleranzfaktor i [µm] (D<=500) — Beleg fuer die IT-Stufung im Harness. */
@@ -255,6 +363,8 @@
     MAIN_MAX: MAIN_MAX,
     MAIN_D: MAIN_D,
     rangeIndex: rangeIndex,
+    FD_MAX: FD_MAX,
+    fdRangeIndex: fdRangeIndex,
 
     IT: IT,
     itValue: itValue,

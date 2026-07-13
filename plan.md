@@ -14,6 +14,9 @@ Sprachen     : DE · EN · PT — vollständig (Bedienung, Feldtexte, Laien-Hilf
                Rechenweg inkl. aller Formel-/Werte-Beschriftungen). Symbole sprachneutral.
 Referenz     : Schwesterprojekt **DT-ProfiSchraube** — Arbeitsweise, Architektur, Design
                und Code-Muster werden 1:1 übernommen (Startpaket siehe Abschnitt 7).
+Deployment   : GitHub Pages — https://dietertepe.github.io/dt-profipassung-web/
+               (Repo `dt-profipassung-web`; dort liegen alle Dateien inkl. der
+               Produkt-HTML. Alles bleibt offline-fähig wie gehabt.)
 Zielgruppe   : Konstrukteure, Fertigung/QS, Ausbildung — Laie bis Profi. Preisidee 80–120 €.
 Marktlücke   : vorhandene Passungsrechner sind alt, unvollständig oder Teil teurer
                CAD/PLM-Systeme; kaum eines rechnet Pressverband-Mechanik, Thermik,
