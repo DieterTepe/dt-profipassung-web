@@ -655,6 +655,47 @@ S.PRESETS.forEach(function (P) {
   ok(checked > 3000, 'genug gueltige Zufallspaarungen geprueft (' + checked + ')');
 })();
 
+/* === 10) Parser-Roundtrip als Property (B4) =============================== *
+ * parseFit ist rein syntaktisch — daher über den vollen Buchstabensatz gültig,
+ * unabhängig von Datensatzlücken. Geprüft wird Idempotenz:
+ *   parse(str) -> format -> parse == parse(str)   (Punkt- UND Komma-Format)
+ * sowie Toleranz gegenüber Ø-Präfix und fehlenden Leerzeichen. */
+section('10) Parser-Roundtrip (Property)');
+(function () {
+  var rnd = mulberry32(0x50617373 /* "Pass" */ ^ 20260713);
+  var HOLE = ['H', 'G', 'F', 'E', 'D', 'C', 'JS', 'J', 'K', 'M', 'N', 'P', 'R', 'S', 'T', 'U', 'V', 'X', 'Y', 'Z', 'ZA', 'ZB', 'ZC'];
+  var SH   = ['h', 'g', 'f', 'e', 'd', 'c', 'js', 'j', 'k', 'm', 'n', 'p', 'r', 's', 't', 'u', 'v', 'x', 'y', 'z', 'za', 'zb', 'zc'];
+  var NOMS = [1, 3, 6, 10, 18, 30, 50, 80, 120, 180, 250, 315, 400, 500, 12.5, 50.5, 33.33, 7.25];
+  function structEq(a, b) {
+    return a.ok && b.ok && a.nominal === b.nominal &&
+      a.hole.letter === b.hole.letter && a.hole.grade === b.hole.grade &&
+      a.shaft.letter === b.shaft.letter && a.shaft.grade === b.shaft.grade;
+  }
+  var checked = 0;
+  for (var i = 0; i < 1600; i++) {
+    var N  = NOMS[Math.floor(rnd() * NOMS.length)];
+    var hL = HOLE[Math.floor(rnd() * HOLE.length)];
+    var sL = SH[Math.floor(rnd() * SH.length)];
+    var gH = 1 + Math.floor(rnd() * 16), gS = 1 + Math.floor(rnd() * 16);
+    var canon = N + ' ' + hL + gH + '/' + sL + gS;
+    var p = S.parseFit(canon);
+    ok(p.ok && p.nominal === N && p.hole.letter === hL && p.hole.grade === gH &&
+       p.shaft.letter === sL && p.shaft.grade === gS,
+       'parse kanonisch "' + canon + '"' + (p.ok ? '' : ' | ' + p.error));
+    if (!p.ok) continue;
+    checked++;
+    // Idempotenz mit Punkt-Format (intern):
+    ok(structEq(p, S.parseFit(S.formatFit(p))), 'Roundtrip Punkt "' + canon + '"');
+    // Idempotenz mit Komma-Format (Anzeige DE/PT):
+    ok(structEq(p, S.parseFit(S.formatFit(p, ','))), 'Roundtrip Komma "' + canon + '"');
+    // Ø-Präfix und fehlende Leerzeichen werden toleriert:
+    ok(structEq(p, S.parseFit('Ø' + canon)), 'Roundtrip Ø-Präfix "' + canon + '"');
+    ok(structEq(p, S.parseFit((N + '').replace('.', ',') + ' ' + hL + gH + '/' + sL + gS)),
+       'Roundtrip Komma-Eingabe "' + canon + '"');
+  }
+  ok(checked === 1600, 'alle 1600 Roundtrip-Stichproben gültig (' + checked + ')');
+})();
+
 /* === Zusammenfassung ====================================================== */
 say('\n  ========================================');
 say('  Assertions gesamt : ' + (pass + fail));

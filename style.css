@@ -511,3 +511,19 @@ input.locked { background: var(--line-soft); color: var(--muted); cursor: defaul
 /* Kompakte Fit-Kurzform oben im Ergebnis (z. B. „Ø50 H7/g6"). */
 .fit-echo { font: 700 15px/1.2 var(--font-num); color: var(--fg); letter-spacing: .3px; }
 .fit-echo .sys { font: 500 11px/1 var(--font-ui); color: var(--faint); margin-left: 8px; text-transform: uppercase; letter-spacing: .08em; }
+
+/* ---- B4: Parser-Kurzeingabe + Erklär-Sprechblasen ------------------------ */
+.fit-input { letter-spacing: .4px; text-transform: none; }
+.fit-input::placeholder { color: var(--faint); letter-spacing: normal; }
+
+.safety-card .sc-name { justify-content: flex-start; }
+.sc-q {
+  margin-left: 6px; width: 16px; height: 16px; flex: none; padding: 0;
+  border: 1px solid var(--line); border-radius: 50%; background: var(--surface);
+  color: var(--faint); font: 700 10px/1 var(--font-ui); cursor: pointer;
+}
+.sc-q:hover { color: var(--accent); border-color: var(--accent); }
+.sc-help {
+  margin-top: 8px; font-size: 11px; line-height: 1.4; color: var(--muted);
+  border-top: 1px dashed var(--line-soft); padding-top: 7px;
+}

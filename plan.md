@@ -3,8 +3,8 @@
 ## Interaktiver Toleranz- & Passungsassistent nach ISO 286 — mit Pressverband (DIN 7190), Toleranzketten (WC/RSS/Monte-Carlo), ISO 2768 und ANSI B4.1 — dreisprachig (DE/EN/PT), offline, Handy zuerst
 
 ═══════════════════════════════════════════════════════════════════════════
-Plan-Version : 1.4 · Stand 2026-07-13 · Status: **B3 (UI-Basis) gebaut & grün — visueller Handy-Test Dieter offen**
-Basislinie   : **114.191 Assertions, 0 Fehler** — prüfbar per `node test_passung.js`
+Plan-Version : 1.5 · Stand 2026-07-13 · Status: **B4 (Parser + Sprechblasen) gebaut & grün — Handy-Test Dieter offen**
+Basislinie   : **122.192 Assertions, 0 Fehler** — prüfbar per `node test_passung.js`
                ODER am Handy über **DT-ProfiPassung_Pruefstand.html** (GitHub Pages).
 Produktname  : **DT-ProfiPassung** (Arbeitstitel — vor Markteintritt Marke/Domain prüfen,
                analog Naming-Caveat der Schraube). Produktversion startet bei v0.1.0.
@@ -462,8 +462,8 @@ DoD: alle Anker aus Abschnitt 6 grün; Formel↔Tabelle-Quervergleich grün; `no
 **B2 — Engine-Kern.** `solver.js` `computeFit` (Kennwerte 1.2, Passungsart) +
 `validate.js` Kernfelder. DoD: Property-Tests (6.2) + Presets 1–3 rechnen.
 **B3 — UI-Basis.** HTML×2, `style.css`-Port, Formular Gruppe „Passung", Ergebnis-Kacheln,
-i18n-Gerüst DE/EN/PT, Theme/Sprache. DoD: erster Handy-Test Dieter. — **Code gebaut & grün (v1.4); Handy-Test offen.**
-**B4 — Parser + Sprechblasen** (2.3). DoD: Roundtrip-Property + Handy-Test.
+i18n-Gerüst DE/EN/PT, Theme/Sprache. DoD: erster Handy-Test Dieter. — **✓ bestätigt (v1.4.1): beide HTML fehlerfrei am Handy, Projektordner + GitHub aktuell.**
+**B4 — Parser + Sprechblasen** (2.3). DoD: Roundtrip-Property + Handy-Test. — **Code gebaut & grün (v1.5); Handy-Test offen.**
 **B5 — Toleranzfeld-Grafik** `schaubild.js` + Legende/Chips. DoD: Handy-Test, Merksatz erfüllt.
 **B6 — Rechenweg** `rechenweg.js` selbstprüfend für die ISO-Kette. DoD: Selbstprüfung über
 alle bisherigen Presets × 3 Sprachen.
@@ -567,6 +567,21 @@ daten→validate→solver→ui). Verifikation: node --check aller JS · i18n-Par
 DOM-Smoke 18/18 (Spiel/Übergang/Übermaß, 3 Sprachen, Theme, Fehlerbanner, unverified-
 Hinweis) · Basislinie **114.191** unverändert. daten/validate/solver/test_passung unverändert.
 **Nächster Schritt: B4 (Parser-Feld + Sprechblasen)** — Roundtrip-Property + Handy-Test.
+**v1.4.1 (2026-07-13):** Redaktionell (kein Code): B3-DoD bestätigt — Dieter hat beide
+HTML (Voll + Test) am Handy fehlerfrei gesichtet; Projektordner und GitHub aktuell.
+Freigabe für **B4**.
+**v1.5 (2026-07-13):** B4 (Parser + Sprechblasen) gebaut & grün. **ui.js**: Kurzeingabe-
+Feld oben im Formular („Ø50 H7/g6" direkt tippen) — bidirektionaler Sync über
+DTPSolver.parseFit/formatFit (Tippen → diskrete Felder + Ergebnis; diskrete Änderung/
+Preset/Reset/Sprache → kanonische Kurzform zurückgeschrieben, DE/PT-Komma, kein Loop),
+Parser-Fehler als Inline-Hinweis (4 neue Codes, DE/EN/PT); Erklär-Sprechblasen („?"-Tap)
+an allen Kennwert-Kacheln (Höchst-/Mindestspiel, Größt-/Kleinstübermaß, Größtspiel,
+Passtoleranz), dreisprachig. **style.css**: .fit-input, .sc-q, .sc-help ergänzt.
+**test_passung.js**: Abschnitt 10 — 1.600er Parser-Roundtrip-Property-Sweep (Idempotenz
+Punkt/Komma, Ø-Präfix, Komma-Eingabe) → **Basislinie 114.191 → 122.192** (+8.001).
+Verifikation: node --check · i18n-Parität 65×3 + 19×3 · DOM-Smoke B3+B4 14/14.
+HTML unverändert (Formular wird in ui.js gebaut); daten/validate/solver unverändert.
+**Nächster Schritt: B5 (Toleranzfeld-Grafik `schaubild.js`)** — Handy-Test, Merksatz erfüllt.
 
 ═══════════════════════════════════════════════════════════════════════════
 Ende plan.md · DT-ProfiPassung · Plan v1.0

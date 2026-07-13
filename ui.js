@@ -132,6 +132,47 @@
     WARN_SYSTEM_MISMATCH: { de: 'Passsystem passt nicht zum Grundbuchstaben.', en: 'Fit system does not match the basic letter.', pt: 'O sistema de ajuste não corresponde à letra básica.' }
   };
 
+  /* --- B4-Ergänzungen: Parser-Feld, Parser-Fehler, Erklär-Sprechblasen ------ */
+  (function () {
+    var s = {
+      de: {
+        fFit: 'Kurzeingabe', fFitPh: 'z. B. Ø50 H7/g6', fFitHint: 'Passung direkt eintippen — Felder unten folgen automatisch.',
+        help_rClearMax: 'Größtes Spiel: lockerster Fall (Bohrung max, Welle min).',
+        help_rClearMin: 'Kleinstes Spiel: engster Fall — bleibt bei Spielpassung > 0.',
+        help_rInterMax: 'Größtes Übermaß: fester Fall (Welle max, Bohrung min).',
+        help_rInterMin: 'Kleinstes Übermaß: schwächster Presssitz-Fall.',
+        help_rPlayMax: 'Größtes mögliches Spiel dieser Übergangspassung.',
+        help_rFitTol: 'Passtoleranz = Summe beider IT-Toleranzen (Bohrung + Welle).'
+      },
+      en: {
+        fFit: 'Quick entry', fFitPh: 'e.g. Ø50 H7/g6', fFitHint: 'Type the fit directly — the fields below follow automatically.',
+        help_rClearMax: 'Largest clearance: loosest case (hole max, shaft min).',
+        help_rClearMin: 'Smallest clearance: tightest case — stays > 0 for a clearance fit.',
+        help_rInterMax: 'Largest interference: tightest case (shaft max, hole min).',
+        help_rInterMin: 'Smallest interference: weakest press-fit case.',
+        help_rPlayMax: 'Largest possible clearance of this transition fit.',
+        help_rFitTol: 'Fit tolerance = sum of both IT tolerances (hole + shaft).'
+      },
+      pt: {
+        fFit: 'Entrada rápida', fFitPh: 'ex. Ø50 H7/g6', fFitHint: 'Digite o ajuste direto — os campos abaixo seguem automaticamente.',
+        help_rClearMax: 'Maior folga: caso mais frouxo (furo máx., eixo mín.).',
+        help_rClearMin: 'Menor folga: caso mais justo — permanece > 0 no ajuste com folga.',
+        help_rInterMax: 'Maior interferência: caso mais justo (eixo máx., furo mín.).',
+        help_rInterMin: 'Menor interferência: caso de prensagem mais fraco.',
+        help_rPlayMax: 'Maior folga possível deste ajuste incerto.',
+        help_rFitTol: 'Tolerância do ajuste = soma das duas tolerâncias IT (furo + eixo).'
+      }
+    };
+    var m = {
+      ERR_PARSE_EMPTY:    { de: 'Bitte eine Passung eingeben.', en: 'Please enter a fit.', pt: 'Insira um ajuste.' },
+      ERR_PARSE_NOMINAL:  { de: 'Nennmaß am Anfang fehlt (z. B. „50 …").', en: 'Nominal size at the start is missing (e.g. “50 …”).', pt: 'Falta a dimensão nominal no início (ex. “50 …”).' },
+      ERR_PARSE_NO_FIELDS:{ de: 'Toleranzfeld fehlt (z. B. „H7/g6").', en: 'Tolerance field missing (e.g. “H7/g6”).', pt: 'Falta o campo de tolerância (ex. “H7/g6”).' },
+      ERR_PARSE_FIELD:    { de: 'Toleranzfeld nicht lesbar — Format „H7/g6".', en: 'Tolerance field unreadable — format “H7/g6”.', pt: 'Campo de tolerância ilegível — formato “H7/g6”.' }
+    };
+    ['de', 'en', 'pt'].forEach(function (l) { for (var k in s[l]) STR[l][k] = s[l][k]; });
+    for (var c in m) MSG[c] = m[c];
+  })();
+
   /* ======================================================================= *
    * 2) Zustand + kleine Helfer
    * ======================================================================= */
@@ -162,7 +203,7 @@
    * 4) Formular aufbauen
    * ======================================================================= */
   var host, resultHost;
-  var elNominal, elSystem, elHoleL, elHoleG, elShaftL, elShaftG;
+  var elNominal, elSystem, elHoleL, elHoleG, elShaftL, elShaftG, elFit, elFitMsg;
 
   function selectFrom(list, mapLabel) {
     var sel = el('select');
@@ -196,6 +237,17 @@
   function buildForm() {
     host.textContent = '';
 
+    // Kurzeingabe (Parser): „Ø50 H7/g6" direkt tippen
+    elFit = el('input'); elFit.type = 'text'; elFit.className = 'num fit-input';
+    elFit.setAttribute('autocapitalize', 'characters'); elFit.setAttribute('spellcheck', 'false');
+    elFit.setAttribute('data-i18n-ph', 'fFitPh'); elFit.placeholder = t('fFitPh');
+    var gf = el('div', 'group-fields');
+    var ff = labeledField('fFit', null, elFit, 'fFitHint');
+    elFitMsg = el('div', 'field-msg error'); elFitMsg.hidden = true; ff.appendChild(elFitMsg);
+    gf.appendChild(ff);
+    host.appendChild(gf);
+    elFit.addEventListener('input', onFitInput);
+
     // Nennmaß + System
     elNominal = el('input'); elNominal.type = 'number'; elNominal.className = 'num';
     elNominal.min = '1'; elNominal.max = '500'; elNominal.step = 'any'; elNominal.value = '50';
@@ -224,16 +276,44 @@
     g2.appendChild(labeledField('fShaft', null, pairControl(elShaftL, elShaftG)));
     host.appendChild(g2);
 
-    // Verdrahtung: jede Änderung rechnet live; System setzt Grundbuchstaben.
+    // Verdrahtung: jede Änderung rechnet live UND spiegelt in die Kurzeingabe.
     [elNominal, elHoleL, elHoleG, elShaftL, elShaftG].forEach(function (c) {
-      c.addEventListener('input', run); c.addEventListener('change', run);
+      c.addEventListener('input', recalc); c.addEventListener('change', recalc);
     });
     elSystem.addEventListener('change', function () {
       if (elSystem.value === 'EB') elHoleL.value = 'H';
       else if (elSystem.value === 'EW') elShaftL.value = 'h';
-      run();
+      recalc();
     });
   }
+
+  /* Kurzeingabe -> diskrete Felder (kein Zurückschreiben, damit das Tippen bleibt). */
+  function onFitInput() {
+    var raw = String(elFit.value || '').trim();
+    if (raw === '') { elFitMsg.hidden = true; return; }
+    var p = S.parseFit(raw);
+    if (!p.ok) { elFitMsg.textContent = msgOf({ code: p.error || 'ERR_PARSE_FIELD' }); elFitMsg.hidden = false; return; }
+    elFitMsg.hidden = true;
+    elNominal.value = String(p.nominal);
+    if (HOLE_LETTERS.indexOf(p.hole.letter) >= 0) elHoleL.value = p.hole.letter;
+    if (GRADES.indexOf(p.hole.grade) >= 0) elHoleG.value = String(p.hole.grade);
+    if (SHAFT_LETTERS.indexOf(p.shaft.letter) >= 0) elShaftL.value = p.shaft.letter;
+    if (GRADES.indexOf(p.shaft.grade) >= 0) elShaftG.value = String(p.shaft.grade);
+    elSystem.value = p.system || 'FREE';
+    run(); // rendern, aber elFit NICHT überschreiben (Nutzer tippt gerade)
+  }
+
+  /* Kurzeingabe aus den diskreten Feldern neu schreiben (kanonisch, Locale-Komma). */
+  function refreshFitField() {
+    if (!elFit) return;
+    var inp = readInput();
+    if (isNaN(inp.nominal)) return;
+    elFit.value = S.formatFit({ nominal: inp.nominal, hole: inp.hole, shaft: inp.shaft }, lang === 'en' ? '.' : ',');
+    elFitMsg.hidden = true;
+  }
+
+  /* Rechnen + Kurzeingabe spiegeln (für diskrete Änderungen, Reset, Preset, Sprache). */
+  function recalc() { run(); refreshFitField(); }
 
   function readInput() {
     return {
@@ -258,11 +338,20 @@
   function card(nameKey, valueStr, unitKey, tone) {
     var c = el('div', 'safety-card' + (tone ? ' ' + tone : ''));
     var nm = el('div', 'sc-name'); var s = el('span'); s.setAttribute('data-i18n', nameKey); s.textContent = t(nameKey); nm.appendChild(s);
+    var help = t('help_' + nameKey);
+    var hp = null;
+    if (help && help !== 'help_' + nameKey) {
+      var q = el('button', 'sc-q', '?'); q.type = 'button'; q.setAttribute('aria-label', help); q.title = help;
+      nm.appendChild(q);
+      hp = el('div', 'sc-help', help); hp.hidden = true;
+      q.addEventListener('click', function () { hp.hidden = !hp.hidden; });
+    }
     c.appendChild(nm);
     var val = el('div', 'sc-val', valueStr);
     if (unitKey) { var u = el('span'); u.style.cssText = 'font-size:13px;color:var(--faint);margin-left:4px'; u.textContent = t(unitKey); val.appendChild(u); }
     c.appendChild(val);
     c.appendChild(el('span', 'sc-dot'));
+    if (hp) c.appendChild(hp);
     return c;
   }
 
@@ -375,7 +464,7 @@
     elHoleL.value = p.hole.letter; elHoleG.value = String(p.hole.grade);
     elShaftL.value = p.shaft.letter; elShaftG.value = String(p.shaft.grade);
     elSystem.value = p.system || 'FREE';
-    run();
+    recalc();
   }
 
   /* ======================================================================= *
@@ -395,7 +484,11 @@
     var ps = document.getElementById('presetSel'); if (ps && ps.options[0]) ps.options[0].textContent = t('examplePick');
     document.querySelectorAll('.lang-btn').forEach(function (b) { b.classList.toggle('active', b.getAttribute('data-lang') === lang); });
   }
-  function setLang(l) { lang = l; localStorage.setItem('dtp-lang', l); applyI18n(); run(); }
+  function setLang(l) {
+    lang = l; localStorage.setItem('dtp-lang', l); applyI18n();
+    if (elFit && String(elFit.value || '').trim() !== '' && !elFitMsg.hidden) onFitInput(); // Fehlertext in neuer Sprache
+    recalc();
+  }
   function applyTheme(theme) { document.documentElement.setAttribute('data-theme', theme); localStorage.setItem('dtp-theme', theme); }
 
   function applyEdition() {
@@ -428,16 +521,16 @@
     on('themeBtn', 'click', function () {
       applyTheme(document.documentElement.getAttribute('data-theme') === 'light' ? 'dark' : 'light');
     });
-    on('calcBtn', 'click', run);
+    on('calcBtn', 'click', recalc);
     on('resetBtn', 'click', function () {
       elNominal.value = '50'; elSystem.value = 'EB';
       elHoleL.value = 'H'; elHoleG.value = '7'; elShaftL.value = 'g'; elShaftG.value = '6';
-      run();
+      recalc();
     });
 
     applyEdition();
     applyI18n();
-    run();
+    recalc();
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
