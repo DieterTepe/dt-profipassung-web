@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="de" translate="no">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="google" content="notranslate">
+<title>DT-ProfiPassung – Prüfstand (Testharness im Browser)</title>
+<!-- =====================================================================
+     PRÜFSTAND — internes Werkzeug, NICHT das Produkt und NICHT die
+     Test-Edition. Lädt daten.js + test_passung.js und führt den kompletten
+     Harness im Browser aus, damit Dieter am Handy ohne Node prüfen kann:
+     https://dietertepe.github.io/dt-profipassung-web/DT-ProfiPassung_Pruefstand.html
+     Grün-Pflicht (plan.md 0.3): Nur bei „ALLES GRÜN" wird weitergebaut.
+     ===================================================================== -->
+<style>
+  :root { --ok: #1a7f37; --bad: #b3261e; --ink: #1c2733; --paper: #eef1f4; }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+         background: var(--paper); color: var(--ink); }
+  header { background: #12314f; color: #fff; padding: 14px 16px; }
+  header .mark { font-weight: 700; letter-spacing: .3px; }
+  header .tag { display: block; font-size: .8rem; opacity: .78; margin-top: 2px; }
+  main { padding: 16px; max-width: 720px; margin: 0 auto; }
+  #banner { border-radius: 10px; padding: 18px 16px; color: #fff; background: #5b6774;
+            font-size: 1rem; line-height: 1.45; }
+  #banner.ok  { background: var(--ok); }
+  #banner.bad { background: var(--bad); }
+  #banner b { font-size: 1.55rem; display: block; margin-bottom: 4px; }
+  #meta { font-size: .84rem; color: #5b6774; margin: 10px 2px 14px; }
+  pre { background: #0f1720; color: #c9d6e2; border-radius: 10px; padding: 12px;
+        font-size: .72rem; line-height: 1.5; overflow-x: auto;
+        white-space: pre-wrap; word-break: break-word; }
+</style>
+</head>
+<body>
+
+<header>
+  <span class="mark">DT-ProfiPassung</span>
+  <span class="tag">Prüfstand — kompletter Testharness im Browser (kein Node nötig)</span>
+</header>
+
+<main>
+  <div id="banner"><b>Prüfe …</b>Der ISO-286-Zahlenkern wird mit allen Assertions durchgeprüft
+    (am Handy kann das 1–2 Sekunden dauern).</div>
+  <p id="meta"></p>
+  <pre id="log">…</pre>
+</main>
+
+<script>
+  /* Wird von test_passung.js am Ende des Laufs aufgerufen: */
+  window.DTP_TEST_DONE = function (pass, fail, fails, log) {
+    var b = document.getElementById('banner');
+    if (fail === 0) {
+      b.className = 'ok';
+      b.innerHTML = '<b>ALLES GRÜN ✓</b>' +
+        pass.toLocaleString('de-DE') + ' Assertions bestanden · 0 Fehler. Weiterbauen erlaubt.';
+    } else {
+      b.className = 'bad';
+      b.innerHTML = '<b>' + fail.toLocaleString('de-DE') + ' FEHLER ✗</b>' +
+        pass.toLocaleString('de-DE') + ' bestanden — Details unten. ' +
+        'Grün-Pflicht: bitte NICHT weiterbauen, Befund an Claude geben.';
+    }
+    document.getElementById('meta').textContent =
+      'daten.js v' + (window.DTPData ? window.DTPData.VERSION : '?') + ' · ' +
+      (window.DTPData ? window.DTPData.DATA_STD : '') + ' · geprüft am ' +
+      new Date().toLocaleString('de-DE');
+    document.getElementById('log').textContent = log;
+  };
+  /* Falls eine Datei fehlt/nicht lädt, sichtbar machen statt still scheitern: */
+  window.addEventListener('error', function (e) {
+    var b = document.getElementById('banner');
+    b.className = 'bad';
+    b.innerHTML = '<b>LADEFEHLER ✗</b>' + (e.message || 'Script konnte nicht geladen werden.') +
+      ' — liegen daten.js und test_passung.js im selben Ordner?';
+  }, true);
+</script>
+<script src="daten.js"></script>
+<script src="test_passung.js"></script>
+
+</body>
+</html>

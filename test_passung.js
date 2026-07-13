@@ -13,12 +13,17 @@
  * Regel (plan.md 6.3): Assertions wachsen organisch — erweitern, nie lockern.
  * ==========================================================================*/
 'use strict';
-var D = require('./daten.js');
+/* Laeuft in Node UND im Browser (DT-ProfiPassung_Pruefstand.html): */
+var D = (typeof module === 'object' && module.exports)
+  ? require('./daten.js')
+  : globalThis.DTPData;
 
 /* --- Mini-Assert-Framework (Muster: DT-ProfiSchraube) ---------------------- */
 var pass = 0, fail = 0, fails = [];
+var OUT = [];
+function say(t) { OUT.push(t); if (typeof console !== 'undefined') console.log(t); }
 function ok(cond, msg) { if (cond) { pass++; } else { fail++; if (fails.length < 40) fails.push(msg); } }
-function section(t) { console.log('\n  === ' + t + ' ==='); }
+function section(t) { say('\n  === ' + t + ' ==='); }
 
 /* Quervergleich: bestanden, wenn Abweichung <= absTol ODER <= relTol (relativ). */
 function crossOk(got, exp, absTol, relTol, msg) {
@@ -492,15 +497,19 @@ ok(D.shaftDeviations(65, 's', 6).ei === 53 && D.shaftDeviations(66, 's', 6).ei =
 })();
 
 /* === Zusammenfassung ====================================================== */
-console.log('\n  ========================================');
-console.log('  Assertions gesamt : ' + (pass + fail));
-console.log('  bestanden         : ' + pass);
-console.log('  fehlgeschlagen    : ' + fail);
-console.log('  ========================================');
+say('\n  ========================================');
+say('  Assertions gesamt : ' + (pass + fail));
+say('  bestanden         : ' + pass);
+say('  fehlgeschlagen    : ' + fail);
+say('  ========================================');
 if (fail > 0) {
-  console.log('\n  FEHLER:');
-  fails.forEach(function (m) { console.log('   - ' + m); });
-  process.exit(1);
+  say('\n  FEHLER:');
+  fails.forEach(function (m) { say('   - ' + m); });
 } else {
-  console.log('\n  ALLE TESTS BESTANDEN — Zahlenkern steht.\n');
+  say('\n  ALLE TESTS BESTANDEN — Zahlenkern steht.');
 }
+/* Browser-Pruefstand abholen lassen; Exit-Code nur unter Node setzen: */
+if (typeof window !== 'undefined' && typeof window.DTP_TEST_DONE === 'function') {
+  window.DTP_TEST_DONE(pass, fail, fails, OUT.join('\n'));
+}
+if (fail > 0 && typeof process !== 'undefined' && process.exit) process.exit(1);

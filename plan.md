@@ -3,8 +3,9 @@
 ## Interaktiver Toleranz- & Passungsassistent nach ISO 286 — mit Pressverband (DIN 7190), Toleranzketten (WC/RSS/Monte-Carlo), ISO 2768 und ANSI B4.1 — dreisprachig (DE/EN/PT), offline, Handy zuerst
 
 ═══════════════════════════════════════════════════════════════════════════
-Plan-Version : 1.1 · Stand 2026-07-13 · Status: **B1 bestätigt** (daten.js + test_passung.js)
-Basislinie   : `node test_passung.js` → **39.035 Assertions, 0 Fehler** (Stand B1)
+Plan-Version : 1.2 · Stand 2026-07-13 · Status: **B1 + Datenpass bestätigt**
+Basislinie   : **72.127 Assertions, 0 Fehler** — prüfbar per `node test_passung.js`
+               ODER am Handy über **DT-ProfiPassung_Pruefstand.html** (GitHub Pages).
 Produktname  : **DT-ProfiPassung** (Arbeitstitel — vor Markteintritt Marke/Domain prüfen,
                analog Naming-Caveat der Schraube). Produktversion startet bei v0.1.0.
 Modell       : Einmalkauf (Vollversion) + kostenlose Testversion — **Testversion hat den
@@ -529,6 +530,12 @@ Buchstaben a b c · j · r t u v x y z za zb zc mit Zwischenstufen nachtragen �
 liefert der Kern dort ehrlich `FD_NOT_IN_DATASET`, nie Falschwerte. Entscheidungen
 Session 1: Name **DT-ProfiPassung** ✓ · Endung **`.dtp`** ✓ · B13 (ANSI) bleibt an
 Position 13.
+**v1.2 (2026-07-13):** Datenpass bestätigt — voller V1-Buchstabensatz: a b c (Feinraster,
+25 Zwischenstufen) · r t u v x y z za zb zc · j5–j7 / J6–J8 · Norm-Fußnoten (a/b und
+N>IT8 nicht bis 1 mm). Basislinie **72.127**. Neu: **DT-ProfiPassung_Pruefstand.html** —
+kompletter Harness im Browser, Dieter prüft am Handy ohne Node (Grün-Banner = weiterbauen
+erlaubt). Deployment-Zeile GitHub Pages im Kopf ergänzt. **Offen:** Tabellenbuch-Stichproben
+(2. Quelle) + j/J-Zeilen — diese Werte tragen bis dahin das Flag `unverified`.
 
 ═══════════════════════════════════════════════════════════════════════════
 Ende plan.md · DT-ProfiPassung · Plan v1.0
