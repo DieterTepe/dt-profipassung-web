@@ -3,7 +3,7 @@
 ## Interaktiver Toleranz- & Passungsassistent nach ISO 286 — mit Pressverband (DIN 7190), Toleranzketten (WC/RSS/Monte-Carlo), ISO 2768 und ANSI B4.1 — dreisprachig (DE/EN/PT), offline, Handy zuerst
 
 ═══════════════════════════════════════════════════════════════════════════
-Plan-Version : 1.3 · Stand 2026-07-13 · Status: **B2 (Engine) bestätigt**
+Plan-Version : 1.4 · Stand 2026-07-13 · Status: **B3 (UI-Basis) gebaut & grün — visueller Handy-Test Dieter offen**
 Basislinie   : **114.191 Assertions, 0 Fehler** — prüfbar per `node test_passung.js`
                ODER am Handy über **DT-ProfiPassung_Pruefstand.html** (GitHub Pages).
 Produktname  : **DT-ProfiPassung** (Arbeitstitel — vor Markteintritt Marke/Domain prüfen,
@@ -55,7 +55,14 @@ Bausteine steht fest, der Zuschnitt pro Session ist flexibel (Token-Haushalt!).
    zwischen Sessions zurückgesetzt → **nach jeder Änderung ausliefern** (outputs).
 2. **Grün-Basislinie:** `node test_passung.js` → aktuelle Assertion-Zahl aus diesem Plan
    (wird nach jedem Baustein hier fortgeschrieben), **0 Fehler**. Erst dann weiterbauen.
-3. Plan + 0.2 lesen, nächstes Ziel bestätigen, dann coden.
+   Dieter prüft **am Handy ohne Node** über **DT-ProfiPassung_Pruefstand.html** (auf GitHub
+   Pages) — grünes Banner = weiterbauen erlaubt, rotes Banner = stopp + Befund melden.
+   Diese Prüfung ist Pflicht vor jedem Weiterbau.
+3. **Dateikonvention `_s`:** Dateien mit Suffix `_s` (z. B. `style_s.css`, `solver_s.js`,
+   `daten_s.js`, `validate_s.js`) sind die **Vorlagen aus DT-ProfiSchraube** — nur zum
+   Nachschlagen/Portieren, NIE als Passungs-Datei überschreiben. Ohne `_s` = aktive
+   DT-ProfiPassung-Datei. (Dieter kennzeichnet Schrauben-Uploads so.)
+4. Plan + 0.2 lesen, nächstes Ziel bestätigen, dann coden.
 
 ### 0.4 Standard-Arbeitsablauf je Aufgabe
 Plan in Worten (Deutsch) kurz abstimmen → Datei für Datei (minimale Diffs) →
@@ -455,7 +462,7 @@ DoD: alle Anker aus Abschnitt 6 grün; Formel↔Tabelle-Quervergleich grün; `no
 **B2 — Engine-Kern.** `solver.js` `computeFit` (Kennwerte 1.2, Passungsart) +
 `validate.js` Kernfelder. DoD: Property-Tests (6.2) + Presets 1–3 rechnen.
 **B3 — UI-Basis.** HTML×2, `style.css`-Port, Formular Gruppe „Passung", Ergebnis-Kacheln,
-i18n-Gerüst DE/EN/PT, Theme/Sprache. DoD: erster Handy-Test Dieter.
+i18n-Gerüst DE/EN/PT, Theme/Sprache. DoD: erster Handy-Test Dieter. — **Code gebaut & grün (v1.4); Handy-Test offen.**
 **B4 — Parser + Sprechblasen** (2.3). DoD: Roundtrip-Property + Handy-Test.
 **B5 — Toleranzfeld-Grafik** `schaubild.js` + Legende/Chips. DoD: Handy-Test, Merksatz erfüllt.
 **B6 — Rechenweg** `rechenweg.js` selbstprüfend für die ISO-Kette. DoD: Selbstprüfung über
@@ -544,6 +551,22 @@ Trichotomie + heuristische Feinstufe, describe = Copy-Format). computeFit mutier
 Eingabe nie, akzeptiert String wie Objekt. Presets 1–3 rechnen. Prüfstand lädt jetzt
 daten→validate→solver→test. Basislinie **114.191**. **Nächster Schritt: B3 (UI-Basis)** —
 HTML×2, style.css-Port, Formular „Passung", Ergebnis-Kacheln, i18n-Gerüst DE/EN/PT.
+**v1.3.1 (2026-07-13):** Redaktionell (kein Code): Recovery-Protokoll 0.3 ergänzt um die
+Handy-Prüfpflicht via Prüfstand und die `_s`-Dateikonvention (Schrauben-Vorlagen). B3-Sprachen:
+alle drei (DE/EN/PT) von Anfang an aufsetzen (Entscheidung Dieter).
+**v1.4 (2026-07-13):** B3 (UI-Basis) gebaut & grün. Neu/portiert: **style.css**
+(1:1-Port aus style_s.css — Look „Messinstrument" unverändert; Passungs-Ergänzungen:
+Bohrung grün / Welle blau, Passungsart-Banner pa-spiel/-uebergang/-uebermass,
+Grenzmaß-Grid), **ui.js** (neu geschrieben, ersetzt die alte Schrauben-Referenz:
+i18n DE/EN/PT — 56 STR-Keys × 3 + 15 Meldungs-Codes × 3, Formular Nennmaß/System/
+Bohrung/Welle mit Live-Rechnung über DTPSolver.computeFit, Ergebnis = Kurzform +
+Passungsart-Banner + 3 Kennwert-Kacheln + 2 Grenzmaß-Tabellen + Hinweiszeilen,
+Theme/Sprache in localStorage `dtp-lang`/`dtp-theme`, DE/PT-Komma), **DT-ProfiPassung.html**
+(Vollversion) + **DT-ProfiPassung_Test.html** (`DT_EDITION='test'`, Ladereihenfolge
+daten→validate→solver→ui). Verifikation: node --check aller JS · i18n-Paritätsprüfung ·
+DOM-Smoke 18/18 (Spiel/Übergang/Übermaß, 3 Sprachen, Theme, Fehlerbanner, unverified-
+Hinweis) · Basislinie **114.191** unverändert. daten/validate/solver/test_passung unverändert.
+**Nächster Schritt: B4 (Parser-Feld + Sprechblasen)** — Roundtrip-Property + Handy-Test.
 
 ═══════════════════════════════════════════════════════════════════════════
 Ende plan.md · DT-ProfiPassung · Plan v1.0
