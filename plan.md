@@ -3,8 +3,8 @@
 ## Interaktiver Toleranz- & Passungsassistent nach ISO 286 — mit Pressverband (DIN 7190), Toleranzketten (WC/RSS/Monte-Carlo), ISO 2768 und ANSI B4.1 — dreisprachig (DE/EN/PT), offline, Handy zuerst
 
 ═══════════════════════════════════════════════════════════════════════════
-Plan-Version : 1.2 · Stand 2026-07-13 · Status: **B1 + Datenpass bestätigt**
-Basislinie   : **72.127 Assertions, 0 Fehler** — prüfbar per `node test_passung.js`
+Plan-Version : 1.3 · Stand 2026-07-13 · Status: **B2 (Engine) bestätigt**
+Basislinie   : **114.191 Assertions, 0 Fehler** — prüfbar per `node test_passung.js`
                ODER am Handy über **DT-ProfiPassung_Pruefstand.html** (GitHub Pages).
 Produktname  : **DT-ProfiPassung** (Arbeitstitel — vor Markteintritt Marke/Domain prüfen,
                analog Naming-Caveat der Schraube). Produktversion startet bei v0.1.0.
@@ -536,6 +536,14 @@ N>IT8 nicht bis 1 mm). Basislinie **72.127**. Neu: **DT-ProfiPassung_Pruefstand.
 kompletter Harness im Browser, Dieter prüft am Handy ohne Node (Grün-Banner = weiterbauen
 erlaubt). Deployment-Zeile GitHub Pages im Kopf ergänzt. **Offen:** Tabellenbuch-Stichproben
 (2. Quelle) + j/J-Zeilen — diese Werte tragen bis dahin das Flag `unverified`.
+**v1.3 (2026-07-13):** B2 (Engine-Kern) bestätigt. Neu: **validate.js** (DTPValidate —
+Feldschema, zweistufig: harte Grenzen/Warnungen, Cross-Checks Gradpaarung/System/
+unverified) und **solver.js** (DTPSolver — parseFit inkl. Ø/Komma/js/za-zc/cd-Kombis,
+formatFit-Roundtrip, computeFit nach 1.2: Grenzmaße, PS_max/PS_min, PT, Passungsart-
+Trichotomie + heuristische Feinstufe, describe = Copy-Format). computeFit mutiert die
+Eingabe nie, akzeptiert String wie Objekt. Presets 1–3 rechnen. Prüfstand lädt jetzt
+daten→validate→solver→test. Basislinie **114.191**. **Nächster Schritt: B3 (UI-Basis)** —
+HTML×2, style.css-Port, Formular „Passung", Ergebnis-Kacheln, i18n-Gerüst DE/EN/PT.
 
 ═══════════════════════════════════════════════════════════════════════════
 Ende plan.md · DT-ProfiPassung · Plan v1.0

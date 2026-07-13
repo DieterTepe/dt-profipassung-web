@@ -14,9 +14,10 @@
  * ==========================================================================*/
 'use strict';
 /* Laeuft in Node UND im Browser (DT-ProfiPassung_Pruefstand.html): */
-var D = (typeof module === 'object' && module.exports)
-  ? require('./daten.js')
-  : globalThis.DTPData;
+var isNode = (typeof module === 'object' && module.exports);
+var D = isNode ? require('./daten.js')     : globalThis.DTPData;
+var V = isNode ? require('./validate.js')  : globalThis.DTPValidate;
+var S = isNode ? require('./solver.js')    : globalThis.DTPSolver;
 
 /* --- Mini-Assert-Framework (Muster: DT-ProfiSchraube) ---------------------- */
 var pass = 0, fail = 0, fails = [];
@@ -494,6 +495,164 @@ ok(D.shaftDeviations(65, 's', 6).ei === 53 && D.shaftDeviations(66, 's', 6).ei =
   ok(s.hole === false && s.upper === -9 && s.lower === -25, 'limits: g6 als Welle erkannt');
   ok(D.limits(50, 'JS', 7).hole === true && D.limits(50, 'js', 7).hole === false,
      'limits: JS/js korrekt unterschieden');
+})();
+
+/* === 8) Validate — Feldprüfung (harte Grenzen / Warnungen) ================ */
+section('8) Validate');
+function vOk(inp, msg) { var r = V.validateFit(inp); ok(r.ok, msg + (r.ok ? '' : ' | ' + r.errors.map(function (e) { return e.code; }).join(','))); return r; }
+function vErr(inp, code, msg) {
+  var r = V.validateFit(inp);
+  ok(!r.ok && r.errors.some(function (e) { return e.code === code; }),
+     msg + ' -> ' + code + (r.ok ? ' | faelschlich ok' : ' | got ' + r.errors.map(function (e) { return e.code; }).join(',')));
+}
+function vWarn(inp, code, msg) {
+  var r = V.validateFit(inp);
+  ok(r.warnings.some(function (w) { return w.code === code; }), msg + ' -> Warnung ' + code);
+}
+// gueltige Faelle:
+vOk({ nominal: 50, hole: { letter: 'H', grade: 7 }, shaft: { letter: 'g', grade: 6 } }, '50 H7/g6 gueltig');
+vOk({ nominal: 1, hole: { letter: 'H', grade: 6 }, shaft: { letter: 'js', grade: 5 } }, '1 H6/js5 gueltig');
+vOk({ nominal: 500, hole: { letter: 'H', grade: 7 }, shaft: { letter: 'h', grade: 6 } }, '500 H7/h6 gueltig');
+// harte Grenzen:
+vErr({ nominal: 0.5, hole: { letter: 'H', grade: 7 }, shaft: { letter: 'g', grade: 6 } }, V.CODE.OUT_OF_RANGE, 'Nennmass 0,5 mm');
+vErr({ nominal: 501, hole: { letter: 'H', grade: 7 }, shaft: { letter: 'g', grade: 6 } }, V.CODE.OUT_OF_RANGE, 'Nennmass 501 mm');
+vErr({ nominal: '50', hole: { letter: 'H', grade: 7 }, shaft: { letter: 'g', grade: 6 } }, V.CODE.NOMINAL_TYPE, 'Nennmass als String');
+vErr({ nominal: 50, hole: { letter: 'H', grade: 17 }, shaft: { letter: 'g', grade: 6 } }, V.CODE.GRADE_RANGE, 'IT17 ausserhalb V1');
+vErr({ nominal: 50, hole: { letter: 'H', grade: 6.5 }, shaft: { letter: 'g', grade: 6 } }, V.CODE.GRADE_TYPE, 'IT 6,5 keine ganze Zahl');
+vErr({ nominal: 50, hole: { letter: 'H', grade: 7 }, shaft: { letter: 'g', grade: 6 }, extra: 1 } && { nominal: 50, hole: { letter: 'g', grade: 7 }, shaft: { letter: 'g', grade: 6 } }, V.CODE.LETTER_CASE, 'Bohrung mit Kleinbuchstabe');
+vErr({ nominal: 50, hole: { letter: 'H', grade: 7 }, shaft: { letter: 'G', grade: 6 } }, V.CODE.LETTER_CASE, 'Welle mit Grossbuchstabe');
+vErr({ nominal: 50, hole: { letter: 'H', grade: 7 }, shaft: { letter: 'q', grade: 6 } }, V.CODE.LETTER_UNKNOWN, 'q gibt es nicht');
+vErr({ nominal: 50, hole: { letter: 'H', grade: 7 }, shaft: { letter: 'cd', grade: 6 } }, V.CODE.FD_NOT_IN_DATASET, 'cd nicht im V1-Datensatz');
+vErr({ nominal: 24, hole: { letter: 'H', grade: 7 }, shaft: { letter: 't', grade: 6 } }, V.CODE.FD_UNDEFINED, 't bis 24 mm nicht vorgesehen');
+vErr({ nominal: 50, hole: { letter: 'H', grade: 7 } }, V.CODE.FIT_INCOMPLETE, 'Welle fehlt');
+vErr({ nominal: 50, shaft: { letter: 'g', grade: 6 } }, V.CODE.FIT_INCOMPLETE, 'Bohrung fehlt');
+// Warnungen (nicht blockierend):
+vWarn({ nominal: 50, hole: { letter: 'H', grade: 12 }, shaft: { letter: 'd', grade: 12 } }, V.CODE.COARSE_FIT, 'IT12 sehr grob (Passfunktion fraglich)');
+(function () {
+  var r = V.validateFit({ nominal: 50, hole: { letter: 'H', grade: 11 }, shaft: { letter: 'c', grade: 11 } });
+  ok(!r.warnings.some(function (w) { return w.code === V.CODE.COARSE_FIT; }),
+     'IT11 warnt NICHT (gaengige Grob-Passung H11/c11)');
+})();
+vWarn({ nominal: 50, hole: { letter: 'H', grade: 7 }, shaft: { letter: 'f', grade: 9 } }, V.CODE.GRADE_PAIR, 'Gradpaarung 7/9');
+vWarn({ nominal: 50, hole: { letter: 'J', grade: 7 }, shaft: { letter: 'h', grade: 6 } }, V.CODE.UNVERIFIED, 'J7 Zweitquelle ausstehend');
+(function () {
+  var r = V.validateFit({ nominal: 50, hole: { letter: 'H', grade: 7 }, shaft: { letter: 'g', grade: 6 } });
+  ok(r.warnings.length === 0, '50 H7/g6 ohne Warnungen (sauberer Standardfall)');
+})();
+
+/* === 9) Engine — parseFit / computeFit (Kennwerte 1.2, Passungsart) ======== */
+section('9) Engine computeFit');
+// Parser-Roundtrip (Property, plan.md 6.2):
+[['50 H7/g6', 50, 'H', 7, 'g', 6], ['Ø50 H7 / g6', 50, 'H', 7, 'g', 6],
+ ['50H7/g6', 50, 'H', 7, 'g', 6], ['50,5 H8/f7', 50.5, 'H', 8, 'f', 7],
+ ['25 H7/js6', 25, 'H', 7, 'js', 6], ['50 JS7/h6', 50, 'JS', 7, 'h', 6],
+ ['50 H7/zc6', 50, 'H', 7, 'zc', 6], ['120 H7/u8', 120, 'H', 7, 'u', 8],
+ ['1 H7/g6', 1, 'H', 7, 'g', 6]
+].forEach(function (t) {
+  var p = S.parseFit(t[0]);
+  ok(p.ok && p.nominal === t[1] && p.hole.letter === t[2] && p.hole.grade === t[3] &&
+     p.shaft.letter === t[4] && p.shaft.grade === t[5], 'parse "' + t[0] + '"' + (p.ok ? '' : ' | ' + p.error));
+  // Roundtrip: format -> parse ergibt dieselbe Struktur:
+  var rt = S.parseFit(S.formatFit(p));
+  ok(rt.nominal === p.nominal && rt.hole.letter === p.hole.letter && rt.hole.grade === p.hole.grade &&
+     rt.shaft.letter === p.shaft.letter && rt.shaft.grade === p.shaft.grade, 'Roundtrip "' + t[0] + '"');
+});
+// Parser-Fehlerpfade:
+['', 'abc', '50', '50 H7', '50 H7/', '50 /g6', '50 H7/g', '50 H7/gg6', 'H7/g6'].forEach(function (bad) {
+  var p = S.parseFit(bad);
+  ok(!p.ok, 'parse-Fehler erkannt: "' + bad + '"' + (p.ok ? ' | faelschlich ok' : ''));
+});
+
+// Abmaß-/Grenzmaß-Anker über computeFit:
+(function () {
+  var r = S.computeFit('50 H7/g6');
+  ok(r.ok && r.hole.Go === 50.025 && r.hole.Gu === 50.000, '50 H7 Grenzmasse 50,000…50,025');
+  ok(r.shaft.Go === 49.991 && r.shaft.Gu === 49.975, '50 g6 Grenzmasse 49,975…49,991');
+  ok(r.fit.PSmin === 9 && r.fit.PSmax === 50 && r.fit.art === 'SPIEL', '50 H7/g6 Spiel 9…50 (Spielpassung)');
+  ok(r.fit.PT === 41 && r.hole.T === 25 && r.shaft.T === 16, 'Passtoleranz 41 = 25+16');
+})();
+(function () {
+  var r = S.computeFit('50 H7/s6');
+  ok(r.fit.art === 'UEBERMASS' && r.fit.interferenceMin === 18 && r.fit.interferenceMax === 59,
+     '50 H7/s6 Uebermass 18…59 (Uebermasspassung)');
+  ok(r.shaft.Go === 50.059 && r.shaft.Gu === 50.043, '50 s6 Grenzmasse 50,043…50,059');
+})();
+(function () {
+  var r = S.computeFit('20 H7/k6');
+  ok(r.fit.art === 'UEBERGANG' && r.fit.PSmax === 19 && r.fit.PSmin === -15,
+     '20 H7/k6 Uebergang (+19 Spiel … -15 Uebermass)');
+})();
+(function () {
+  var r = S.computeFit('25 H7/h6');
+  ok(r.fit.art === 'SPIEL' && r.fit.PSmin === 0 && r.fit.artFein === 'SPIEL_NULL',
+     '25 H7/h6 Schiebesitz (Mindestspiel 0)');
+})();
+// describe entspricht dem Copy-Format aus plan.md:
+ok(S.describe(S.computeFit('50 H7/g6')) ===
+   'Ø50 H7/g6 — Bohrung 50,000…50,025 · Welle 49,975…49,991 · Spiel 9…50 µm (Spielpassung)',
+   'describe == Copy-Format (plan.md Beispiel)');
+
+// computeFit akzeptiert Objekt wie String identisch:
+(function () {
+  var a = S.computeFit('50 H7/g6');
+  var b = S.computeFit({ nominal: 50, hole: { letter: 'H', grade: 7 }, shaft: { letter: 'g', grade: 6 } });
+  ok(a.fit.PSmax === b.fit.PSmax && a.fit.PSmin === b.fit.PSmin && a.fit.art === b.fit.art,
+     'Objekt- und String-Eingabe liefern identisch');
+})();
+
+// Unversehrtheit: computeFit mutiert die Eingabe NIE (plan.md 6.2):
+(function () {
+  var inp = { nominal: 50, hole: { letter: 'H', grade: 7 }, shaft: { letter: 's', grade: 6 }, system: 'EB' };
+  var snap = JSON.stringify(inp);
+  S.computeFit(inp);
+  ok(JSON.stringify(inp) === snap, 'computeFit mutiert Eingabe nicht');
+})();
+
+// Fehler werden strukturiert durchgereicht:
+(function () {
+  var r = S.computeFit('600 H7/g6');
+  ok(!r.ok && r.errors[0].code === D.CODE.OUT_OF_RANGE, 'computeFit meldet OUT_OF_RANGE sauber');
+  var r2 = S.computeFit('50 H7/cd6');
+  ok(!r2.ok && r2.errors.some(function (e) { return e.code === D.CODE.FD_NOT_IN_DATASET; }), 'computeFit meldet FD_NOT_IN_DATASET');
+})();
+
+// Presets 1–3 rechnen (B2-DoD):
+S.PRESETS.forEach(function (P) {
+  var r = S.computeFit(P.fit);
+  ok(r.ok && r.fit.art === P.expect, 'Preset ' + P.id + ' (' + P.fit + ') -> ' + P.expect + (r.ok ? '' : ' | FEHLER'));
+});
+
+/* Property: Passungsart-Trichotomie konsistent zu min/max, Grenzmaß- und
+ * Passtoleranz-Identitäten, über viele Zufallspaarungen (Seed). */
+(function () {
+  var rnd = mulberry32(20260713 ^ 0x5f5e);
+  var HOLE = ['H', 'G', 'F', 'K', 'M', 'N', 'JS', 'P'];
+  var SH = ['h', 'g', 'f', 'e', 'js', 'k', 'm', 'n', 'p', 's', 'd'];
+  var checked = 0;
+  for (var i = 0; i < 6000; i++) {
+    var N = 1 + rnd() * 499;
+    var gH = 5 + Math.floor(rnd() * 6), gS = 5 + Math.floor(rnd() * 6);
+    var hL = HOLE[Math.floor(rnd() * HOLE.length)], sL = SH[Math.floor(rnd() * SH.length)];
+    var r = S.computeFit({ nominal: N, hole: { letter: hL, grade: gH }, shaft: { letter: sL, grade: gS } });
+    if (!r.ok) continue;
+    checked++;
+    var f = r.fit;
+    // Trichotomie deckungsgleich mit den Vorzeichen von PSmin/PSmax:
+    var expect = f.PSmin >= 0 ? 'SPIEL' : (f.PSmax <= 0 ? 'UEBERMASS' : 'UEBERGANG');
+    ok(f.art === expect, 'Trichotomie konsistent (' + hL + gH + '/' + sL + gS + ' @ ' + N.toFixed(2) + ')');
+    // Passtoleranz-Identität: PT = T_B + T_W = PSmax − PSmin:
+    ok(f.PT === r.hole.T + r.shaft.T && f.PT === f.PSmax - f.PSmin, 'PT-Identitaet');
+    // Grenzmaß-Identitäten (auf µm genau):
+    ok(Math.abs((r.hole.Go - r.hole.Gu) - r.hole.T / 1000) < 1e-9, 'Bohrung Go-Gu = T');
+    ok(Math.abs((r.shaft.Go - r.shaft.Gu) - r.shaft.T / 1000) < 1e-9, 'Welle Go-Gu = T');
+    ok(r.hole.Go >= r.hole.Gu && r.shaft.Go >= r.shaft.Gu, 'Go >= Gu');
+    // PSmax >= PSmin immer:
+    ok(f.PSmax >= f.PSmin, 'PSmax >= PSmin');
+    // artFein gehört zur art:
+    var feinSet = { SPIEL: /^SPIEL_/, UEBERMASS: /^PRESS_/, UEBERGANG: /^UEBERGANG_/ };
+    ok(feinSet[f.art].test(f.artFein), 'artFein passt zu art (' + f.art + '/' + f.artFein + ')');
+  }
+  ok(checked > 3000, 'genug gueltige Zufallspaarungen geprueft (' + checked + ')');
 })();
 
 /* === Zusammenfassung ====================================================== */
