@@ -3,7 +3,7 @@
 ## Interaktiver Toleranz- & Passungsassistent nach ISO 286 — mit Pressverband (DIN 7190), Toleranzketten (WC/RSS/Monte-Carlo), ISO 2768 und ANSI B4.1 — dreisprachig (DE/EN/PT), offline, Handy zuerst
 
 ═══════════════════════════════════════════════════════════════════════════
-Plan-Version : 1.5 · Stand 2026-07-13 · Status: **B4 (Parser + Sprechblasen) gebaut & grün — Handy-Test Dieter offen**
+Plan-Version : 1.6 · Stand 2026-07-13 · Status: **B5 (Toleranzfeld-Grafik) gebaut & grün — Handy-Test Dieter offen** · B4 bestätigt
 Basislinie   : **122.192 Assertions, 0 Fehler** — prüfbar per `node test_passung.js`
                ODER am Handy über **DT-ProfiPassung_Pruefstand.html** (GitHub Pages).
 Produktname  : **DT-ProfiPassung** (Arbeitstitel — vor Markteintritt Marke/Domain prüfen,
@@ -463,8 +463,8 @@ DoD: alle Anker aus Abschnitt 6 grün; Formel↔Tabelle-Quervergleich grün; `no
 `validate.js` Kernfelder. DoD: Property-Tests (6.2) + Presets 1–3 rechnen.
 **B3 — UI-Basis.** HTML×2, `style.css`-Port, Formular Gruppe „Passung", Ergebnis-Kacheln,
 i18n-Gerüst DE/EN/PT, Theme/Sprache. DoD: erster Handy-Test Dieter. — **✓ bestätigt (v1.4.1): beide HTML fehlerfrei am Handy, Projektordner + GitHub aktuell.**
-**B4 — Parser + Sprechblasen** (2.3). DoD: Roundtrip-Property + Handy-Test. — **Code gebaut & grün (v1.5); Handy-Test offen.**
-**B5 — Toleranzfeld-Grafik** `schaubild.js` + Legende/Chips. DoD: Handy-Test, Merksatz erfüllt.
+**B4 — Parser + Sprechblasen** (2.3). DoD: Roundtrip-Property + Handy-Test. — **✓ bestätigt (v1.5.1).**
+**B5 — Toleranzfeld-Grafik** `schaubild.js` + Legende/Chips. DoD: Handy-Test, Merksatz erfüllt. — **Code gebaut & grün (v1.6); Handy-Test offen.**
 **B6 — Rechenweg** `rechenweg.js` selbstprüfend für die ISO-Kette. DoD: Selbstprüfung über
 alle bisherigen Presets × 3 Sprachen.
 **B7 — Freiform + ISO 2768.** DoD: Anker ISO-2768-Tabelle, Freiform-Presets.
@@ -582,6 +582,20 @@ Punkt/Komma, Ø-Präfix, Komma-Eingabe) → **Basislinie 114.191 → 122.192** (
 Verifikation: node --check · i18n-Parität 65×3 + 19×3 · DOM-Smoke B3+B4 14/14.
 HTML unverändert (Formular wird in ui.js gebaut); daten/validate/solver unverändert.
 **Nächster Schritt: B5 (Toleranzfeld-Grafik `schaubild.js`)** — Handy-Test, Merksatz erfüllt.
+**v1.5.1 (2026-07-13):** Redaktionell: B4-DoD bestätigt — Dieter hat die Kurzeingabe/
+Sprechblasen am Handy fehlerfrei geprüft; Projektordner + GitHub aktuell.
+**v1.6 (2026-07-13):** B5 (Toleranzfeld-Grafik) gebaut & grün. Neu: **schaubild.js**
+(DTPSchaubild) — maßstäbliches Live-SVG: Nulllinie (= Nennmaß), Bohrung GRÜN / Welle BLAU
+als Balken, µm-Achse (Ticks hi/0/lo), Spiel-/Übermaßzone schraffiert (nur eindeutige Fälle),
+dezente Einblendung (reduced-motion-fähig). Rechenlogik `layout()` ist DOM-frei und getestet.
+**ui.js**: `renderViz` bindet das SVG in `#vizHost` ein + HTML-Legende mit Farb-Chips
+(alle Zahlen ES/EI/es/ei — Merksatz!), Chips antippbar → Erklärzeile (DE/EN/PT);
+Fehlerfall zeigt Platzhalter statt SVG. **style.css**: viz-svg/tf-*/viz-legend/viz-chip +
+Animation. **HTML×2**: `schaubild.js` vor `ui.js` eingebunden (daten→validate→solver→
+schaubild→ui). Verifikation: node --check · Layout-Mathematik 13/13 · i18n-Parität 73×3 +
+19×3 · DOM-Smoke B5 15/15 (SVG, 2 Balken, Nulllinie, Zonen, Legendenzahlen, Chip-Taps,
+Fehler-Platzhalter). Basislinie **122.192** unverändert. daten/validate/solver/test_passung
+unverändert. **Nächster Schritt: B6 (Rechenweg `rechenweg.js`)** — aufklappbar, selbstprüfend, dreisprachig.
 
 ═══════════════════════════════════════════════════════════════════════════
 Ende plan.md · DT-ProfiPassung · Plan v1.0

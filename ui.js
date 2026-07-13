@@ -173,6 +173,37 @@
     for (var c in m) MSG[c] = m[c];
   })();
 
+  /* --- B5-Ergänzungen: Toleranzfeld-Grafik (Legende + Erklärchips) --------- */
+  (function () {
+    var s = {
+      de: {
+        vizLegend: 'Legende', vizZero: 'Nulllinie = Nennmaß',
+        vizBore: 'Bohrung', vizShaft: 'Welle',
+        vizBoreHelp: 'Grün = Bohrung. Der Balken zeigt das Toleranzfeld über/an der Nulllinie.',
+        vizShaftHelp: 'Blau = Welle. Liegt das Feld unter der Bohrung, entsteht Spiel; darüber Übermaß.',
+        vizFitHelp: 'Lage der beiden Felder zueinander ergibt die Passungsart.',
+        vizPlaceholder: 'Grafik erscheint nach gültiger Eingabe.'
+      },
+      en: {
+        vizLegend: 'Legend', vizZero: 'Zero line = nominal size',
+        vizBore: 'Hole', vizShaft: 'Shaft',
+        vizBoreHelp: 'Green = hole. The bar shows the tolerance zone above/at the zero line.',
+        vizShaftHelp: 'Blue = shaft. Below the hole gives clearance; above it gives interference.',
+        vizFitHelp: 'The relative position of both zones gives the type of fit.',
+        vizPlaceholder: 'The graphic appears after a valid entry.'
+      },
+      pt: {
+        vizLegend: 'Legenda', vizZero: 'Linha zero = dimensão nominal',
+        vizBore: 'Furo', vizShaft: 'Eixo',
+        vizBoreHelp: 'Verde = furo. A barra mostra o campo de tolerância acima/na linha zero.',
+        vizShaftHelp: 'Azul = eixo. Abaixo do furo gera folga; acima, interferência.',
+        vizFitHelp: 'A posição relativa dos dois campos define o tipo de ajuste.',
+        vizPlaceholder: 'O gráfico aparece após uma entrada válida.'
+      }
+    };
+    ['de', 'en', 'pt'].forEach(function (l) { for (var k in s[l]) STR[l][k] = s[l][k]; });
+  })();
+
   /* ======================================================================= *
    * 2) Zustand + kleine Helfer
    * ======================================================================= */
@@ -202,7 +233,7 @@
   /* ======================================================================= *
    * 4) Formular aufbauen
    * ======================================================================= */
-  var host, resultHost;
+  var host, resultHost, vizHost;
   var elNominal, elSystem, elHoleL, elHoleG, elShaftL, elShaftG, elFit, elFitMsg;
 
   function selectFrom(list, mapLabel) {
@@ -434,6 +465,55 @@
       });
       resultHost.appendChild(box);
     }
+
+    renderViz(res);
+  }
+
+  /* Toleranzfeld-Grafik (B5): SVG aus schaubild.js + HTML-Legende mit Farb-Chips. */
+  function renderViz(res) {
+    if (!vizHost) return;
+    vizHost.textContent = '';
+    var SB = window.DTPSchaubild;
+    if (!SB) { clearViz(); return; }
+    var i = res.input;
+    vizHost.appendChild(SB.svg(res, {
+      hole: i.hole.letter + i.hole.grade,
+      shaft: i.shaft.letter + i.shaft.grade,
+      unit: t('unit_um')
+    }));
+
+    var leg = el('div', 'viz-legend');
+    function chip(cls, name, sub, helpKey) {
+      var c = el('div', 'viz-chip');
+      var head = el('div', 'vc-head');
+      head.appendChild(el('span', 'vc-swatch ' + cls));
+      head.appendChild(el('span', 'vc-name', name));
+      c.appendChild(head);
+      if (sub) c.appendChild(el('span', 'vc-sub', sub));
+      var help = t(helpKey);
+      if (help && help !== helpKey) {
+        var hp = el('div', 'vc-help', help); hp.hidden = true;
+        c.appendChild(hp);
+        c.setAttribute('role', 'button'); c.setAttribute('tabindex', '0'); c.title = help;
+        c.addEventListener('click', function () { hp.hidden = !hp.hidden; });
+      }
+      return c;
+    }
+    leg.appendChild(chip('bore', t('vizBore') + ' ' + i.hole.letter + i.hole.grade,
+      'ES ' + sgn(res.hole.upper) + ' · EI ' + sgn(res.hole.lower) + ' µm', 'vizBoreHelp'));
+    leg.appendChild(chip('shaft', t('vizShaft') + ' ' + i.shaft.letter + i.shaft.grade,
+      'es ' + sgn(res.shaft.upper) + ' · ei ' + sgn(res.shaft.lower) + ' µm', 'vizShaftHelp'));
+    vizHost.appendChild(leg);
+    vizHost.appendChild(el('div', 'viz-zero-note', t('vizZero')));
+  }
+
+  function clearViz() {
+    if (!vizHost) return;
+    vizHost.textContent = '';
+    var ph = el('div', 'viz-placeholder');
+    ph.appendChild(el('div', 'big', t('vizSoon')));
+    ph.appendChild(el('div', null, t('vizPlaceholder')));
+    vizHost.appendChild(ph);
   }
 
   function renderErrors(errors) {
@@ -445,6 +525,7 @@
     if (errors.length > 1) body.appendChild(el('span', 'vb-note', errors.slice(1).map(msgOf).join(' · ')));
     banner.appendChild(body);
     resultHost.appendChild(banner);
+    clearViz();
   }
 
   /* ======================================================================= *
@@ -507,6 +588,7 @@
   function init() {
     host = document.getElementById('formHost');
     resultHost = document.getElementById('resultHost');
+    vizHost = document.getElementById('vizHost');
     if (!host || !resultHost) return;
 
     applyTheme(localStorage.getItem('dtp-theme') || 'dark');
