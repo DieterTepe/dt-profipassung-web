@@ -20,6 +20,7 @@ var V = isNode ? require('./validate.js')  : globalThis.DTPValidate;
 var S = isNode ? require('./solver.js')    : globalThis.DTPSolver;
 var RW = isNode ? require('./rechenweg.js') : globalThis.DTPRechenweg;
 var FF = isNode ? require('./freiform.js')  : globalThis.DTPFreiform;
+var TH = isNode ? require('./thermik.js')   : globalThis.DTPThermik;
 
 /* --- Mini-Assert-Framework (Muster: DT-ProfiSchraube) ---------------------- */
 var pass = 0, fail = 0, fails = [];
@@ -790,6 +791,53 @@ section('12) ISO 2768-1 Allgemeintoleranzen (Freiform)');
 
   // 12e) Presets rechnen alle:
   FF.PRESETS.forEach(function (P) { ok(FF.general(P.nominal, P.cls).ok, 'Freiform-Preset rechnet: ' + P.label); });
+})();
+
+/* === 13) Thermik-Check (B8) ============================================== *
+ * ΔS = (α_Bohrung − α_Welle)·(T−20)·D/1000 [µm]; das Fenster verschiebt sich um
+ * ΔS; Passungsart kann umschlagen. Sweep über Werkstoffe × Temperaturen × Fits. */
+section('13) Thermik-Check');
+(function () {
+  if (!TH || !TH.compute) { ok(false, 'DTPThermik nicht geladen'); return; }
+  var r1 = function (x) { return Math.round(x * 10) / 10; };
+  var mats = ['steel', 'alu', 'brass', 'cast_iron', 'titanium', 'pom'];
+  var fits = ['50 H7/g6', '40 H7/p6', '20 H7/k6', '100 H8/f7'];
+  var temps = [-40, 20, 80, 150, 250];
+
+  fits.forEach(function (fitStr) {
+    var f = S.computeFit(fitStr);
+    if (!f.ok) { ok(false, 'Basisfit rechnet: ' + fitStr); return; }
+    mats.forEach(function (mh) {
+      mats.forEach(function (ms) {
+        var ah = TH.MAT[mh].alpha, as = TH.MAT[ms].alpha;
+        temps.forEach(function (T) {
+          var r = TH.compute(f, { alphaHole: ah, alphaShaft: as, T: T });
+          var dSraw = (ah - as) * (T - 20) * f.input.nominal / 1000;
+          ok(r.ok, 'compute ok ' + fitStr + ' ' + mh + '/' + ms + ' @' + T);
+          ok(r.dS === r1(dSraw), 'ΔS-Formel ' + fitStr + ' ' + mh + '/' + ms + ' @' + T);
+          ok(r.PSmaxT === r1(f.fit.PSmax + dSraw) && r.PSminT === r1(f.fit.PSmin + dSraw), 'Fensterverschiebung ' + fitStr + ' @' + T);
+          var artExp = (f.fit.PSmin + dSraw) >= 0 ? 'SPIEL' : (f.fit.PSmax + dSraw) <= 0 ? 'UEBERMASS' : 'UEBERGANG';
+          ok(r.artT === artExp, 'artT konsistent ' + fitStr + ' ' + mh + '/' + ms + ' @' + T);
+          ok(r.umschlag === (artExp !== f.fit.art), 'Umschlag-Flag ' + fitStr + ' @' + T);
+          // Vorzeichenregeln:
+          if (T > 20 && ah > as) ok(r.dS >= 0, 'Vorzeichen +ΔT, αh>αs -> ΔS≥0');
+          if (T > 20 && ah < as) ok(r.dS <= 0, 'Vorzeichen +ΔT, αh<αs -> ΔS≤0');
+          if (T === 20) ok(r.dS === 0 && !r.umschlag, 'T=20 neutral');
+        });
+      });
+    });
+  });
+
+  // Plan-Anker: Alu-Welle in Stahl-Bohrung, Erwärmung -> Spiel sinkt.
+  var fa = S.computeFit('50 H7/g6');
+  ok(TH.compute(fa, { alphaHole: TH.MAT.steel.alpha, alphaShaft: TH.MAT.alu.alpha, T: 80 }).dS < 0, 'Anker: Alu-Welle in Stahl, +ΔT -> Spiel sinkt');
+  // Umschlag-Demo:
+  var fp = S.compute ? null : null;
+  var rp = TH.compute(S.computeFit('40 H7/p6'), { alphaHole: TH.MAT.alu.alpha, alphaShaft: TH.MAT.steel.alpha, T: 80 });
+  ok(rp.umschlag === true && rp.art20 === 'UEBERMASS', 'Anker: 40 H7/p6 Alu/Stahl 80 °C -> Umschlag aus Übermaß');
+  // MAT-Richtwert-Anker:
+  ok(TH.MAT.steel.alpha === 11.5 && TH.MAT.alu.alpha === 23 && TH.MAT.brass.alpha === 18.5, 'MAT-α-Anker Stahl/Alu/Messing');
+  TH.PRESETS.forEach(function (P) { ok(S.computeFit(P.fit).ok && TH.MAT[P.hole] && TH.MAT[P.shaft], 'Thermik-Preset gültig: ' + P.label); });
 })();
 
 /* === Zusammenfassung ====================================================== */

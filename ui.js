@@ -10,7 +10,7 @@
 (function () {
   'use strict';
 
-  var D = window.DTPData, V = window.DTPValidate, S = window.DTPSolver, FF = window.DTPFreiform;
+  var D = window.DTPData, V = window.DTPValidate, S = window.DTPSolver, FF = window.DTPFreiform, TH = window.DTPThermik;
 
   /* ======================================================================= *
    * 1) i18n — Bedien- und Ergebnistexte
@@ -272,11 +272,40 @@
     for (var c in m) MSG[c] = m[c];
   })();
 
+  /* --- B8: Thermik-Check --------------------------------------------------- */
+  (function () {
+    var s = {
+      de: {
+        thEnable: 'Passung bei Betriebstemperatur prüfen', thTemp: 'Betriebstemperatur',
+        thMatHole: 'Werkstoff Bohrung', thMatShaft: 'Werkstoff Welle',
+        thHeading: 'Thermik', thAt: 'bei', thUmschlag: 'Passungsumschlag', thVs20: 'gegenüber 20 °C',
+        unit_c: '°C'
+      },
+      en: {
+        thEnable: 'Check fit at operating temperature', thTemp: 'Operating temperature',
+        thMatHole: 'Hole material', thMatShaft: 'Shaft material',
+        thHeading: 'Thermal', thAt: 'at', thUmschlag: 'Fit type changes', thVs20: 'vs. 20 °C',
+        unit_c: '°C'
+      },
+      pt: {
+        thEnable: 'Verificar ajuste na temperatura de operação', thTemp: 'Temperatura de operação',
+        thMatHole: 'Material do furo', thMatShaft: 'Material do eixo',
+        thHeading: 'Térmico', thAt: 'a', thUmschlag: 'Mudança do tipo de ajuste', thVs20: 'em relação a 20 °C',
+        unit_c: '°C'
+      }
+    };
+    ['de', 'en', 'pt'].forEach(function (l) { for (var k in s[l]) STR[l][k] = s[l][k]; });
+  })();
+
   /* ======================================================================= *
    * 2) Zustand + kleine Helfer
    * ======================================================================= */
   var lang = localStorage.getItem('dtp-lang') || 'de';
   var mode = localStorage.getItem('dtp-mode') || 'fit';   // 'fit' | 'freiform'
+  var thEnabled = localStorage.getItem('dtp-th-on') === '1';
+  var thT = parseFloat(localStorage.getItem('dtp-th-t'));  if (isNaN(thT)) thT = 80;
+  var thHole = localStorage.getItem('dtp-th-hole') || 'steel';
+  var thShaft = localStorage.getItem('dtp-th-shaft') || 'alu';
   var edition = (window.DT_EDITION === 'test') ? 'test' : 'full';
 
   // Auffindbarkeit der ⓘ-Sprechblasen: einmaliger, begrenzter Puls; endet dauerhaft,
@@ -304,6 +333,7 @@
   function fmtMm(x) { return decComma(Number(x).toFixed(3)); }
   function fmtUm(x) { return decComma(Number.isInteger(x) ? String(x) : Number(x).toFixed(1)); }
   function sgn(x) { return (x > 0 ? '+' : '') + fmtUm(x); }
+  function fmtNum(x) { return decComma(String(x)); }
 
   /* ======================================================================= *
    * 3) Buchstaben-/Grad-Listen (häufige zuerst)
@@ -318,6 +348,7 @@
   var host, resultHost, vizHost;
   var elNominal, elSystem, elHoleL, elHoleG, elShaftL, elShaftG, elFit, elFitMsg;
   var elFfNominal, elFfClass;
+  var elThEnable, elThT, elThHole, elThShaft, elThBox;
   var FFCLASSES = ['f', 'm', 'c', 'v'];
 
   function selectFrom(list, mapLabel, placeholder) {
@@ -417,6 +448,8 @@
     g2.appendChild(labeledField('fShaft', null, pairControl(elShaftL, elShaftG)));
     host.appendChild(g2);
 
+    host.appendChild(buildThermikSection());
+
     // Verdrahtung: jede Änderung rechnet live UND spiegelt in die Kurzeingabe.
     [elNominal, elHoleL, elHoleG, elShaftL, elShaftG].forEach(function (c) {
       c.addEventListener('input', recalc); c.addEventListener('change', recalc);
@@ -438,6 +471,56 @@
     g.appendChild(labeledField('ffClass', null, elFfClass, 'hintFfClass'));
     host.appendChild(g);
     [elFfNominal, elFfClass].forEach(function (c) { c.addEventListener('input', run); c.addEventListener('change', run); });
+  }
+
+  function matSelect(value) {
+    var sel = el('select');
+    (TH ? TH.MAT_ORDER : []).forEach(function (key) {
+      var o = el('option', null, TH.MAT[key].label[lang] || TH.MAT[key].label.de);
+      o.value = key; sel.appendChild(o);
+    });
+    sel.value = value;
+    return sel;
+  }
+
+  function persistThermik() {
+    try {
+      localStorage.setItem('dtp-th-on', thEnabled ? '1' : '0');
+      localStorage.setItem('dtp-th-t', String(thT));
+      localStorage.setItem('dtp-th-hole', thHole);
+      localStorage.setItem('dtp-th-shaft', thShaft);
+    } catch (e) {}
+  }
+
+  /* Optionaler „Betrieb (Thermik)"-Bereich: Betriebstemperatur + Werkstoffe. */
+  function buildThermikSection() {
+    var box = el('div', 'thermik-box');
+    var head = el('label', 'thermik-head');
+    elThEnable = el('input'); elThEnable.type = 'checkbox'; elThEnable.checked = thEnabled;
+    head.appendChild(elThEnable);
+    var ht = el('span'); ht.setAttribute('data-i18n', 'thEnable'); ht.textContent = t('thEnable'); head.appendChild(ht);
+    box.appendChild(head);
+
+    elThBox = el('div', 'thermik-fields'); elThBox.hidden = !thEnabled;
+    elThT = el('input'); elThT.type = 'number'; elThT.className = 'num'; elThT.step = 'any'; elThT.value = String(thT);
+    elThHole = matSelect(thHole);
+    elThShaft = matSelect(thShaft);
+    var g = el('div', 'group-fields');
+    g.appendChild(labeledField('thTemp', 'unit_c', elThT, null));
+    elThBox.appendChild(g);
+    var g2 = el('div', 'group-fields');
+    g2.appendChild(labeledField('thMatHole', null, elThHole, null));
+    g2.appendChild(labeledField('thMatShaft', null, elThShaft, null));
+    elThBox.appendChild(g2);
+    box.appendChild(elThBox);
+
+    elThEnable.addEventListener('change', function () {
+      thEnabled = elThEnable.checked; elThBox.hidden = !thEnabled; persistThermik(); recalc();
+    });
+    elThT.addEventListener('input', function () { var v = parseFloat(String(elThT.value).replace(',', '.')); if (!isNaN(v)) thT = v; persistThermik(); recalc(); });
+    elThHole.addEventListener('change', function () { thHole = elThHole.value; persistThermik(); recalc(); });
+    elThShaft.addEventListener('change', function () { thShaft = elThShaft.value; persistThermik(); recalc(); });
+    return box;
   }
 
   /* Kurzeingabe -> diskrete Felder (kein Zurückschreiben, damit das Tippen bleibt). */
@@ -617,8 +700,48 @@
       resultHost.appendChild(box);
     }
 
+    renderThermik(res);
     renderRechenweg(res);
     renderViz(res);
+  }
+
+  /* Thermik-Ergebnis (B8): Passung bei Betriebstemperatur + Umschlag-Warnung. */
+  function renderThermik(res) {
+    if (!thEnabled || !TH || !TH.compute) return;
+    var mh = TH.MAT[thHole], ms = TH.MAT[thShaft];
+    if (!mh || !ms) return;
+    var r = TH.compute(res, { alphaHole: mh.alpha, alphaShaft: ms.alpha, T: thT });
+    if (!r.ok) return;
+
+    var box = el('div', 'thermik-result');
+    var head = el('div', 'th-head');
+    head.appendChild(el('span', 'th-title', t('thHeading')));
+    head.appendChild(el('span', 'th-at', t('thAt') + ' ' + fmtNum(r.T) + ' °C'));
+    box.appendChild(head);
+
+    // Umschlag-Warnung (falls Passungsart wechselt):
+    if (r.umschlag) {
+      var w = el('div', 'th-umschlag');
+      w.appendChild(el('span', 'th-uic', '⚠'));
+      w.appendChild(el('span', null, t('thUmschlag') + ': ' + t('art' + r.art20) + ' → ' + t('art' + r.artT)));
+      box.appendChild(w);
+    }
+
+    // Spiel/Übermaß bei T als Bereich:
+    var line = el('div', 'th-line');
+    var label = r.artT === 'UEBERMASS' ? t('rInterMax') : t('rClearMax');
+    // Bereich PSminT … PSmaxT (µm), vorzeichenrichtig:
+    line.appendChild(el('span', 'th-k', t('art' + r.artT)));
+    var v = el('span', 'th-v'); v.textContent = sgn(r.PSminT) + ' … ' + sgn(r.PSmaxT) + ' µm'; line.appendChild(v);
+    box.appendChild(line);
+
+    // ΔS-Zeile:
+    var ds = el('div', 'th-ds');
+    ds.textContent = 'ΔS = ' + sgn(r.dS) + ' µm  ·  ' + t('thVs20') + '  ·  '
+      + mh.label[lang] + ' (α ' + fmtNum(mh.alpha) + ') / ' + ms.label[lang] + ' (α ' + fmtNum(ms.alpha) + ')';
+    box.appendChild(ds);
+
+    resultHost.appendChild(box);
   }
 
   /* Aufklappbarer, selbstprüfender Rechenweg (B6). */
@@ -790,6 +913,9 @@
       (S.PRESETS || []).forEach(function (P) {
         var o = el('option', null, P.fit); o.value = P.fit; sel.appendChild(o);
       });
+      (TH && TH.PRESETS || []).forEach(function (P, idx) {
+        var o = el('option', null, P.label); o.value = 'TH|' + idx; sel.appendChild(o);
+      });
     }
   }
   function applyPreset(str) {
@@ -798,6 +924,18 @@
       if (mode !== 'freiform') { mode = 'freiform'; try { localStorage.setItem('dtp-mode', mode); } catch (e) {} buildForm(); }
       elFfNominal.value = parts[1]; elFfClass.value = parts[2];
       run(); return;
+    }
+    if (str.indexOf('TH|') === 0) {
+      var P = TH && TH.PRESETS[parseInt(str.split('|')[1], 10)];
+      var pt = P && S.parseFit(P.fit); if (!P || !pt || !pt.ok) return;
+      if (mode !== 'fit') { mode = 'fit'; try { localStorage.setItem('dtp-mode', mode); } catch (e) {} }
+      thEnabled = true; thHole = P.hole; thShaft = P.shaft; thT = P.T; persistThermik();
+      buildForm();
+      elNominal.value = String(pt.nominal);
+      elHoleL.value = pt.hole.letter; elHoleG.value = String(pt.hole.grade);
+      elShaftL.value = pt.shaft.letter; elShaftG.value = String(pt.shaft.grade);
+      elSystem.value = pt.system || 'FREE';
+      recalc(); return;
     }
     var p = S.parseFit(str);
     if (!p || !p.ok) return;
@@ -825,6 +963,13 @@
     }
     if (mode === 'freiform' && elFfClass && elFfClass.options.length >= 4) {
       FFCLASSES.forEach(function (c, i) { if (elFfClass.options[i]) elFfClass.options[i].textContent = c + ' – ' + t('ffClass_' + c); });
+    }
+    if (mode === 'fit' && elThHole && TH) {
+      TH.MAT_ORDER.forEach(function (key, i) {
+        var lab = TH.MAT[key].label[lang] || TH.MAT[key].label.de;
+        if (elThHole.options[i]) elThHole.options[i].textContent = lab;
+        if (elThShaft.options[i]) elThShaft.options[i].textContent = lab;
+      });
     }
     var ps = document.getElementById('presetSel'); if (ps && ps.options[0]) ps.options[0].textContent = t('examplePick');
     document.querySelectorAll('.lang-btn').forEach(function (b) { b.classList.toggle('active', b.getAttribute('data-lang') === lang); });

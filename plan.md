@@ -3,8 +3,8 @@
 ## Interaktiver Toleranz- & Passungsassistent nach ISO 286 — mit Pressverband (DIN 7190), Toleranzketten (WC/RSS/Monte-Carlo), ISO 2768 und ANSI B4.1 — dreisprachig (DE/EN/PT), offline, Handy zuerst
 
 ═══════════════════════════════════════════════════════════════════════════
-Plan-Version : 1.8 · Stand 2026-07-13 · Status: **B7 (Freiform + ISO 2768) gebaut & grün — Handy-Test offen** · ⓘ-Feinschliff & B6 bestätigt
-Basislinie   : **133.258 Assertions, 0 Fehler** — prüfbar per `node test_passung.js`
+Plan-Version : 1.9 · Stand 2026-07-13 · Status: **B8 (Thermik-Check) gebaut & grün — Handy-Test offen** · B7 bestätigt
+Basislinie   : **137.366 Assertions, 0 Fehler** — prüfbar per `node test_passung.js`
                ODER am Handy über **DT-ProfiPassung_Pruefstand.html** (GitHub Pages).
 Produktname  : **DT-ProfiPassung** (Arbeitstitel — vor Markteintritt Marke/Domain prüfen,
                analog Naming-Caveat der Schraube). Produktversion startet bei v0.1.0.
@@ -467,8 +467,8 @@ i18n-Gerüst DE/EN/PT, Theme/Sprache. DoD: erster Handy-Test Dieter. — **✓ b
 **B5 — Toleranzfeld-Grafik** `schaubild.js` + Legende/Chips. DoD: Handy-Test, Merksatz erfüllt. — **✓ bestätigt (v1.6.1).**
 **B6 — Rechenweg** `rechenweg.js` selbstprüfend für die ISO-Kette. DoD: Selbstprüfung über
 alle bisherigen Presets × 3 Sprachen. — **✓ bestätigt (v1.7.2), inkl. Handy-Test-Fixes.**
-**B7 — Freiform + ISO 2768.** DoD: Anker ISO-2768-Tabelle, Freiform-Presets. — **Code gebaut & grün (v1.8); Handy-Test offen.**
-**B8 — Thermik-Check** (F5). DoD: Vorzeichen-/Umschlag-Tests, Preset 80 °C.
+**B7 — Freiform + ISO 2768.** DoD: Anker ISO-2768-Tabelle, Freiform-Presets. — **✓ bestätigt (v1.8.1), Voll- & Testversion.**
+**B8 — Thermik-Check** (F5). DoD: Vorzeichen-/Umschlag-Tests, Preset 80 °C. — **Code gebaut & grün (v1.9); Handy-Test offen.**
 **B9 — Beratungs-Module** (F6–F9: Oberfläche, Kostenampel, Messmittel, Schmierspalt).
 DoD: Regel-Tests, alle Hinweise als Codes dreisprachig.
 **B10 — Pressverband DIN 7190** (F4, größter Physik-Baustein; ggf. 2 Sessions:
@@ -660,6 +660,22 @@ i18n modusabhängig. **schaubild.js**: `svgGeneral` — symmetrisches ±-Band um
 133.258** (+1.493). Verifikation: node --check · Freiform-Logik 15/15 · i18n-Parität 97×3 +
 24×3 · DOM-Smoke B7 23/23. daten/validate/solver/rechenweg unverändert.
 **Nächster Schritt: B8 (Thermik).**
+**v1.8.1 (2026-07-13):** Redaktionell: B7-DoD bestätigt — Freiform/ISO 2768 in Voll- &
+Testversion am Handy fehlerfrei; Projektordner + GitHub aktuell. Freigabe für B8.
+**v1.9 (2026-07-13):** B8 (Thermik-Check) gebaut & grün. Neu: **thermik.js** (DTPThermik) —
+Werkstoffbibliothek MAT (10 Werkstoffe, α/E/ν/Re als Richtwerte) + `compute(fit,{αh,αs,T,T0})`:
+ΔS = (α_Bohrung − α_Welle)·(T−20)·D/1000 [µm], verschiebt PS_max/PS_min, erkennt
+Passungsumschlag; DOM-frei/testbar, Preset „40 H7/p6 Stahl in Alu 80 °C" (Umschlag-Demo).
+**ui.js**: optionaler **„Betrieb (Thermik)"-Bereich** im Passungs-Modus (Checkbox +
+Betriebstemperatur + Werkstoff Bohrung/Welle, alles in localStorage gemerkt); Ergebnisblock
+mit Spiel/Übermaß bei T, ΔS-Zeile und **Umschlag-Warnung**; Thermik-Preset in der Beispiel-
+liste; run()/Presets/i18n modus- & sprachbewusst. **style.css**: Thermik-Bereich/-Ergebnis.
+**HTML×2 + Prüfstand**: thermik.js eingebunden (…→freiform→thermik→schaubild→ui).
+**test_passung.js**: Abschnitt 13 — Thermik-Sweep (Formel, Fensterverschiebung, Vorzeichen,
+Umschlag) + Plan-Anker + MAT-Richtwert-Anker → **Basislinie 133.258 → 137.366** (+4.108).
+Verifikation: node --check · Thermik-Logik 14/14 · i18n-Parität 106×3 + 24×3 · DOM-Smoke B8
+15/15. daten/validate/solver/rechenweg/freiform/schaubild unverändert.
+**Nächster Schritt: B9 (Beratungs-Module / Passungs-Empfehlungen).**
 
 ═══════════════════════════════════════════════════════════════════════════
 Ende plan.md · DT-ProfiPassung · Plan v1.0
