@@ -19,6 +19,7 @@ var D = isNode ? require('./daten.js')     : globalThis.DTPData;
 var V = isNode ? require('./validate.js')  : globalThis.DTPValidate;
 var S = isNode ? require('./solver.js')    : globalThis.DTPSolver;
 var RW = isNode ? require('./rechenweg.js') : globalThis.DTPRechenweg;
+var FF = isNode ? require('./freiform.js')  : globalThis.DTPFreiform;
 
 /* --- Mini-Assert-Framework (Muster: DT-ProfiSchraube) ---------------------- */
 var pass = 0, fail = 0, fails = [];
@@ -727,6 +728,68 @@ section('11) Rechenweg-Selbstprüfung (Property)');
   var rwn = RW.build(neg);
   ok(rwn.allOk === false, 'Selbstprüfung erkennt verfälschtes PS_min');
   ok(rwn.steps[6].ok === false, 'genau der PS_min-Schritt ist rot');
+})();
+
+/* === 12) ISO 2768-1 Allgemeintoleranzen (Freiform, B7) ==================== *
+ * Jede Tabellenzelle als Anker + voller Nennmaß-Sweep (dev == Tabelle je Bereich,
+ * Grenzen „bis einschließlich", ehrliche Lücken v<3 / f>2000) + Bereichsränder. */
+section('12) ISO 2768-1 Allgemeintoleranzen (Freiform)');
+(function () {
+  if (!FF || !FF.general) { ok(false, 'DTPFreiform nicht geladen'); return; }
+  var r3 = function (x) { return Math.round(x * 1000) / 1000; };
+  var reps = [2, 5, 20, 75, 250, 700, 1500, 3000];   // je einer strikt im Bereich i
+
+  // 12a) Alle 4×8 Zellen als Anker:
+  FF.CLASSES.forEach(function (cls) {
+    for (var i = 0; i < FF.RANGES.length; i++) {
+      var exp = FF.DEV[cls][i];
+      var r = FF.general(reps[i], cls);
+      if (exp == null) {
+        ok(!r.ok && r.code === FF.CODE.UNDEFINED, 'ISO2768 ' + cls + ' Bereich#' + i + ' nicht vorgesehen');
+      } else {
+        ok(r.ok && r.dev === exp, 'ISO2768 ' + cls + ' @' + reps[i] + ' -> ±' + exp);
+        ok(r.dev_um === Math.round(exp * 1000), 'ISO2768 ' + cls + ' @' + reps[i] + ' dev_um');
+        ok(r.tol_um === Math.round(2 * exp * 1000), 'ISO2768 ' + cls + ' @' + reps[i] + ' tol_um');
+        ok(r.Go === r3(reps[i] + exp) && r.Gu === r3(reps[i] - exp), 'ISO2768 ' + cls + ' @' + reps[i] + ' Grenzmaße');
+      }
+    }
+  });
+
+  // 12b) Voller Sweep: general() muss zur Tabelle + rangeIndex passen (auch an Grenzen).
+  var noms = [];
+  FF.RANGES.forEach(function (hi, i) {
+    var lo = (i === 0) ? FF.LOW : FF.RANGES[i - 1];
+    noms.push(lo, hi, r3((lo + hi) / 2), r3(lo + 0.001), r3(hi - 0.001));
+  });
+  // zusätzlich deterministische Zufallsproben:
+  var rnd = mulberry32(0x32373638 /* "2768" */);
+  for (var k = 0; k < 300; k++) noms.push(r3(FF.LOW + rnd() * (4000 - FF.LOW)));
+
+  noms.forEach(function (n) {
+    FF.CLASSES.forEach(function (cls) {
+      var idx = FF.rangeIndex(n);
+      var r = FF.general(n, cls);
+      if (idx < 0) { ok(!r.ok, 'Sweep >max unmöglich @' + n); return; }
+      var exp = FF.DEV[cls][idx];
+      if (exp == null) ok(!r.ok && r.code === FF.CODE.UNDEFINED, 'Sweep Lücke ' + cls + ' @' + n);
+      else ok(r.ok && r.dev === exp && r.Go === r3(n + exp) && r.Gu === r3(n - exp), 'Sweep ' + cls + ' @' + n + ' -> ±' + exp);
+    });
+  });
+
+  // 12c) Bereichsränder exakt „bis einschließlich":
+  ok(FF.general(3, 'v').ok === false, '3 mm: v weiterhin nicht vorgesehen (Bereich 0)');
+  ok(FF.general(3, 'c').dev === 0.2 && FF.general(3.001, 'c').dev === 0.3, 'Grenze 3: c 3→0,2 · 3,001→0,3');
+  ok(FF.general(2000, 'f').dev === 0.5 && !FF.general(2000.001, 'f').ok, 'Grenze 2000: f 0,5, danach Lücke');
+  ok(FF.general(4000, 'm').dev === 2 && !FF.general(4000.001, 'm').ok, 'Grenze 4000: m 2, danach >max');
+
+  // 12d) Fehlercodes:
+  ok(FF.general(0.4, 'm').code === FF.CODE.BELOW_MIN, '< 0,5 -> BELOW_MIN');
+  ok(FF.general(9e9, 'm').code === FF.CODE.ABOVE_MAX, 'riesig -> ABOVE_MAX');
+  ok(FF.general(50, 'q').code === FF.CODE.CLASS_UNKNOWN, 'Klasse q -> CLASS_UNKNOWN');
+  ok(FF.general(NaN, 'm').code === FF.CODE.NOMINAL_TYPE, 'NaN -> NOMINAL_TYPE');
+
+  // 12e) Presets rechnen alle:
+  FF.PRESETS.forEach(function (P) { ok(FF.general(P.nominal, P.cls).ok, 'Freiform-Preset rechnet: ' + P.label); });
 })();
 
 /* === Zusammenfassung ====================================================== */

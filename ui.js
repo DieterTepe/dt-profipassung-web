@@ -10,7 +10,7 @@
 (function () {
   'use strict';
 
-  var D = window.DTPData, V = window.DTPValidate, S = window.DTPSolver;
+  var D = window.DTPData, V = window.DTPValidate, S = window.DTPSolver, FF = window.DTPFreiform;
 
   /* ======================================================================= *
    * 1) i18n — Bedien- und Ergebnistexte
@@ -239,10 +239,44 @@
     ['de', 'en', 'pt'].forEach(function (l) { for (var k in s[l]) STR[l][k] = s[l][k]; });
   })();
 
+  /* --- B7: Freiform + ISO 2768 -------------------------------------------- */
+  (function () {
+    var s = {
+      de: {
+        modeFit: 'Passung', modeFreiform: 'Freiform',
+        ffClass: 'Toleranzklasse', rFfDev: '± Abmaß', ffRange: 'Bereich',
+        ffClass_f: 'fein', ffClass_m: 'mittel', ffClass_c: 'grob', ffClass_v: 'sehr grob',
+        hintFfNominal: 'Nennmaß 0,5–4000 mm.', hintFfClass: 'ISO-2768-Allgemeintoleranz (f fein … v sehr grob).'
+      },
+      en: {
+        modeFit: 'Fit', modeFreiform: 'General',
+        ffClass: 'Tolerance class', rFfDev: '± deviation', ffRange: 'Range',
+        ffClass_f: 'fine', ffClass_m: 'medium', ffClass_c: 'coarse', ffClass_v: 'very coarse',
+        hintFfNominal: 'Nominal size 0.5–4000 mm.', hintFfClass: 'ISO 2768 general tolerance (f fine … v very coarse).'
+      },
+      pt: {
+        modeFit: 'Ajuste', modeFreiform: 'Geral',
+        ffClass: 'Classe de tolerância', rFfDev: '± desvio', ffRange: 'Faixa',
+        ffClass_f: 'fina', ffClass_m: 'média', ffClass_c: 'grosseira', ffClass_v: 'muito grosseira',
+        hintFfNominal: 'Dimensão nominal 0,5–4000 mm.', hintFfClass: 'Tolerância geral ISO 2768 (f fina … v muito grosseira).'
+      }
+    };
+    var m = {
+      FF_NOMINAL_TYPE: { de: 'Nennmaß muss eine Zahl sein.', en: 'Nominal size must be a number.', pt: 'A dimensão nominal deve ser um número.' },
+      FF_BELOW_MIN: { de: 'ISO 2768 gilt erst ab 0,5 mm.', en: 'ISO 2768 applies from 0.5 mm.', pt: 'ISO 2768 aplica-se a partir de 0,5 mm.' },
+      FF_ABOVE_MAX: { de: 'Über 4000 mm nicht in ISO 2768-1.', en: 'Above 4000 mm not in ISO 2768-1.', pt: 'Acima de 4000 mm não consta na ISO 2768-1.' },
+      FF_CLASS_UNKNOWN: { de: 'Toleranzklasse unbekannt (f/m/c/v).', en: 'Unknown tolerance class (f/m/c/v).', pt: 'Classe de tolerância desconhecida (f/m/c/v).' },
+      FF_UNDEFINED: { de: 'Für „{cls}" ist dieser Nennmaßbereich in ISO 2768-1 nicht vorgesehen.', en: 'For “{cls}” this size range is not defined in ISO 2768-1.', pt: 'Para “{cls}” esta faixa não está definida na ISO 2768-1.' }
+    };
+    ['de', 'en', 'pt'].forEach(function (l) { for (var k in s[l]) STR[l][k] = s[l][k]; });
+    for (var c in m) MSG[c] = m[c];
+  })();
+
   /* ======================================================================= *
    * 2) Zustand + kleine Helfer
    * ======================================================================= */
   var lang = localStorage.getItem('dtp-lang') || 'de';
+  var mode = localStorage.getItem('dtp-mode') || 'fit';   // 'fit' | 'freiform'
   var edition = (window.DT_EDITION === 'test') ? 'test' : 'full';
 
   // Auffindbarkeit der ⓘ-Sprechblasen: einmaliger, begrenzter Puls; endet dauerhaft,
@@ -283,6 +317,8 @@
    * ======================================================================= */
   var host, resultHost, vizHost;
   var elNominal, elSystem, elHoleL, elHoleG, elShaftL, elShaftG, elFit, elFitMsg;
+  var elFfNominal, elFfClass;
+  var FFCLASSES = ['f', 'm', 'c', 'v'];
 
   function selectFrom(list, mapLabel, placeholder) {
     var sel = el('select');
@@ -316,7 +352,32 @@
 
   function buildForm() {
     host.textContent = '';
+    host.appendChild(buildModeSwitch());
+    if (mode === 'freiform') { buildFreiformFormInner(); return; }
+    buildFitFormInner();
+  }
 
+  function buildModeSwitch() {
+    var seg = el('div', 'mode-switch'); seg.setAttribute('role', 'tablist');
+    [['fit', 'modeFit'], ['freiform', 'modeFreiform']].forEach(function (pair) {
+      var b = el('button', 'mode-btn' + (mode === pair[0] ? ' active' : ''), t(pair[1]));
+      b.type = 'button'; b.setAttribute('data-mode', pair[0]);
+      b.setAttribute('data-i18n', pair[1]); b.setAttribute('role', 'tab');
+      b.setAttribute('aria-selected', mode === pair[0] ? 'true' : 'false');
+      b.addEventListener('click', function () {
+        if (mode === pair[0]) return;
+        mode = pair[0];
+        try { localStorage.setItem('dtp-mode', mode); } catch (e) {}
+        buildForm();
+        var psx = document.getElementById('presetSel'); if (psx) fillPresets(psx);
+        run();
+      });
+      seg.appendChild(b);
+    });
+    return seg;
+  }
+
+  function buildFitFormInner() {
     // Kurzeingabe (Parser): „Ø50 H7/g6" direkt tippen
     elFit = el('input'); elFit.type = 'text'; elFit.className = 'num fit-input';
     elFit.setAttribute('autocapitalize', 'characters'); elFit.setAttribute('spellcheck', 'false');
@@ -367,6 +428,18 @@
     });
   }
 
+  function buildFreiformFormInner() {
+    elFfNominal = el('input'); elFfNominal.type = 'number'; elFfNominal.className = 'num';
+    elFfNominal.min = '0.5'; elFfNominal.max = '4000'; elFfNominal.step = 'any'; elFfNominal.value = '50';
+    elFfClass = selectFrom(FFCLASSES, function (c) { return c + ' – ' + t('ffClass_' + c); });
+    elFfClass.value = 'm';
+    var g = el('div', 'group-fields');
+    g.appendChild(labeledField('fNominal', 'unit_mm', elFfNominal, 'hintFfNominal'));
+    g.appendChild(labeledField('ffClass', null, elFfClass, 'hintFfClass'));
+    host.appendChild(g);
+    [elFfNominal, elFfClass].forEach(function (c) { c.addEventListener('input', run); c.addEventListener('change', run); });
+  }
+
   /* Kurzeingabe -> diskrete Felder (kein Zurückschreiben, damit das Tippen bleibt). */
   function onFitInput() {
     var raw = String(elFit.value || '').trim();
@@ -385,7 +458,7 @@
 
   /* Kurzeingabe aus den diskreten Feldern neu schreiben (kanonisch, Locale-Komma). */
   function refreshFitField() {
-    if (!elFit) return;
+    if (mode !== 'fit' || !elFit) return;
     var inp = readInput();
     if (isNaN(inp.nominal) || !inp.hole.letter || isNaN(inp.hole.grade) || !inp.shaft.letter || isNaN(inp.shaft.grade)) return;
     elFit.value = S.formatFit({ nominal: inp.nominal, hole: inp.hole, shaft: inp.shaft }, lang === 'en' ? '.' : ',');
@@ -408,6 +481,11 @@
    * 5) Rechnen + Rendern
    * ======================================================================= */
   function run() {
+    if (mode === 'freiform') return runFreiform();
+    return runFit();
+  }
+
+  function runFit() {
     if (!S) { resultHost.textContent = 'DTPSolver nicht geladen.'; return; }
     var inp = readInput();
     var missing = [];
@@ -417,6 +495,14 @@
     if (missing.length) { renderIncomplete(missing); return; }
     var res = S.computeFit(inp);
     if (res.ok) renderResult(res); else renderErrors(res.errors);
+  }
+
+  function runFreiform() {
+    if (!FF) { resultHost.textContent = 'DTPFreiform nicht geladen.'; return; }
+    var n = parseFloat(String(elFfNominal.value).replace(',', '.'));
+    if (isNaN(n)) { renderIncomplete(['fNominal']); return; }
+    var res = FF.general(n, elFfClass.value);
+    if (res.ok) renderFreiform(res); else renderFreiformError(res);
   }
 
   /* Unvollständige Eingabe: neutraler Hinweis, welche Felder noch fehlen. */
@@ -629,19 +715,93 @@
     clearViz();
   }
 
+  /* Freiform (ISO 2768) — Ergebnisanzeige. */
+  function renderFreiform(res) {
+    resultHost.textContent = '';
+    var i = res.input;
+    var echo = el('div', 'fit-echo');
+    echo.textContent = 'Ø' + (Number.isInteger(i.nominal) ? i.nominal : fmtMm(i.nominal)) + ' ISO 2768-' + i.cls;
+    echo.style.marginBottom = '12px';
+    resultHost.appendChild(echo);
+
+    var banner = el('div', 'verdict-banner pa-spiel');
+    banner.appendChild(el('span', 'vb-dot', '▬'));
+    var body = el('div', 'vb-body');
+    body.appendChild(el('span', 'vb-text', t('ffClass_' + i.cls) + ' (ISO 2768-' + i.cls + ')'));
+    body.appendChild(el('span', 'vb-note', t('ffRange') + ' ' + fmtMm(res.range.low) + '…' + fmtMm(res.range.high) + ' mm'));
+    banner.appendChild(body);
+    resultHost.appendChild(banner);
+
+    var grid = el('div', 'safety-grid');
+    grid.appendChild(card('rFfDev', '±' + fmtMm(res.dev), 'unit_mm', 'ok'));
+    grid.appendChild(card('rTol', fmtMm(res.tol), 'unit_mm'));
+    resultHost.appendChild(grid);
+
+    var tbl = el('table', 'kv-table'); tbl.style.marginTop = '8px';
+    var cap = el('caption'); cap.textContent = 'ISO 2768-' + i.cls; tbl.appendChild(cap);
+    function row(k, valStr, unit) {
+      var tr = el('tr');
+      var a = el('td', 'k'); a.setAttribute('data-i18n', k); a.textContent = t(k); tr.appendChild(a);
+      var b = el('td', 'v'); var sp = el('span'); sp.textContent = valStr; var u = el('span', 'u'); u.textContent = unit; sp.appendChild(u); b.appendChild(sp); tr.appendChild(b);
+      return tr;
+    }
+    tbl.appendChild(row('rUpperDev', '+' + fmtMm(res.dev), 'mm'));
+    tbl.appendChild(row('rLowerDev', fmtMm(res.lower), 'mm'));
+    tbl.appendChild(row('rMaxSize', fmtMm(res.Go), 'mm'));
+    tbl.appendChild(row('rMinSize', fmtMm(res.Gu), 'mm'));
+    tbl.appendChild(row('rTol', fmtMm(res.tol) + ' (' + res.tol_um + ' µm)', 'mm'));
+    resultHost.appendChild(tbl);
+
+    renderFreiformViz(res);
+  }
+
+  function renderFreiformError(res) {
+    resultHost.textContent = '';
+    var banner = el('div', 'verdict-banner bad');
+    banner.appendChild(el('span', 'vb-dot', '✕'));
+    var b = el('div', 'vb-body');
+    b.appendChild(el('span', 'vb-text', msgOf(res)));
+    banner.appendChild(b);
+    resultHost.appendChild(banner);
+    clearViz();
+  }
+
+  function renderFreiformViz(res) {
+    if (!vizHost) return;
+    vizHost.textContent = '';
+    var SB = window.DTPSchaubild;
+    if (!SB || !SB.svgGeneral) { clearViz(); return; }
+    vizHost.appendChild(SB.svgGeneral(res, { label: 'ISO 2768-' + res.input.cls, unit: t('unit_um') }));
+    vizHost.appendChild(el('div', 'viz-zero-note', t('vizZero')));
+  }
+
   /* ======================================================================= *
    * 6) Beispiele (Presets aus solver.js)
    * ======================================================================= */
   function fillPresets(sel) {
     sel.textContent = '';
     var first = el('option', null, t('examplePick')); first.value = ''; sel.appendChild(first);
-    (S.PRESETS || []).forEach(function (P) {
-      var o = el('option', null, P.fit); o.value = P.fit; sel.appendChild(o);
-    });
+    if (mode === 'freiform') {
+      (FF && FF.PRESETS || []).forEach(function (P) {
+        var o = el('option', null, P.label || (P.nominal + ' ISO 2768-' + P.cls));
+        o.value = 'FF|' + P.nominal + '|' + P.cls; sel.appendChild(o);
+      });
+    } else {
+      (S.PRESETS || []).forEach(function (P) {
+        var o = el('option', null, P.fit); o.value = P.fit; sel.appendChild(o);
+      });
+    }
   }
   function applyPreset(str) {
+    if (str.indexOf('FF|') === 0) {
+      var parts = str.split('|');
+      if (mode !== 'freiform') { mode = 'freiform'; try { localStorage.setItem('dtp-mode', mode); } catch (e) {} buildForm(); }
+      elFfNominal.value = parts[1]; elFfClass.value = parts[2];
+      run(); return;
+    }
     var p = S.parseFit(str);
     if (!p || !p.ok) return;
+    if (mode !== 'fit') { mode = 'fit'; try { localStorage.setItem('dtp-mode', mode); } catch (e) {} buildForm(); }
     elNominal.value = String(p.nominal);
     elHoleL.value = p.hole.letter; elHoleG.value = String(p.hole.grade);
     elShaftL.value = p.shaft.letter; elShaftG.value = String(p.shaft.grade);
@@ -662,6 +822,9 @@
       elSystem.options[0].textContent = t('sysEB');
       elSystem.options[1].textContent = t('sysEW');
       elSystem.options[2].textContent = t('sysFree');
+    }
+    if (mode === 'freiform' && elFfClass && elFfClass.options.length >= 4) {
+      FFCLASSES.forEach(function (c, i) { if (elFfClass.options[i]) elFfClass.options[i].textContent = c + ' – ' + t('ffClass_' + c); });
     }
     var ps = document.getElementById('presetSel'); if (ps && ps.options[0]) ps.options[0].textContent = t('examplePick');
     document.querySelectorAll('.lang-btn').forEach(function (b) { b.classList.toggle('active', b.getAttribute('data-lang') === lang); });
@@ -715,6 +878,11 @@
     });
     on('calcBtn', 'click', recalc);
     on('resetBtn', 'click', function () {
+      if (mode === 'freiform') {
+        if (elFfNominal) elFfNominal.value = '';
+        run();
+        return;
+      }
       elNominal.value = ''; elSystem.value = 'FREE';
       elHoleL.value = ''; elHoleG.value = ''; elShaftL.value = ''; elShaftG.value = '';
       if (elFit) elFit.value = '';

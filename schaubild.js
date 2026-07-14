@@ -130,5 +130,33 @@
     return s;
   }
 
-  return { layout: layout, svg: svg, DIM: DIM };
+  /* Freiform/ISO-2768: symmetrisches ±-Band um die Nulllinie. */
+  function svgGeneral(res, labels) {
+    labels = labels || {};
+    var dev = res.dev_um;                       // ± in µm
+    var hi = dev * 1.4, lo = -dev * 1.4;
+    if (hi - lo < 1) { hi = 10; lo = -10; }
+    var span = hi - lo;
+    var plotW = DIM.W - DIM.padL - DIM.padR, plotH = DIM.H - DIM.padT - DIM.padB;
+    function y(um) { return DIM.padT + (hi - um) / span * plotH; }
+    var s = elNS('svg', { viewBox: '0 0 ' + DIM.W + ' ' + DIM.H, class: 'viz-svg', role: 'img', preserveAspectRatio: 'xMidYMid meet' });
+    var x = DIM.padL + plotW * 0.30, w = plotW * 0.40;
+    s.appendChild(elNS('rect', { x: num(x), y: num(y(dev)), width: num(w), height: num(y(-dev) - y(dev)), rx: 2, class: 'tf-bar tf-bore' }));
+    s.appendChild(elNS('line', { x1: DIM.padL, y1: num(y(0)), x2: DIM.W - DIM.padR, y2: num(y(0)), class: 'tf-zero' }));
+    [dev, 0, -dev].forEach(function (v) {
+      var yy = num(y(v));
+      s.appendChild(elNS('line', { x1: DIM.padL - 3, y1: yy, x2: DIM.padL, y2: yy, class: 'tf-tickmark' }));
+      var tx = elNS('text', { x: DIM.padL - 6, y: yy + 3, class: 'tf-tick', 'text-anchor': 'end' });
+      tx.textContent = (v > 0 ? '+' : '') + Math.round(v); s.appendChild(tx);
+    });
+    var un = elNS('text', { x: DIM.padL - 6, y: DIM.padT - 8, class: 'tf-axunit', 'text-anchor': 'end' });
+    un.textContent = labels.unit || 'µm'; s.appendChild(un);
+    if (labels.label) {
+      var t2 = elNS('text', { x: num(x + w / 2), y: DIM.padT - 8, class: 'tf-collabel tf-bore-fg', 'text-anchor': 'middle' });
+      t2.textContent = labels.label; s.appendChild(t2);
+    }
+    return s;
+  }
+
+  return { layout: layout, svg: svg, svgGeneral: svgGeneral, DIM: DIM };
 });

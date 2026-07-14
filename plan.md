@@ -3,8 +3,8 @@
 ## Interaktiver Toleranz- & Passungsassistent nach ISO 286 — mit Pressverband (DIN 7190), Toleranzketten (WC/RSS/Monte-Carlo), ISO 2768 und ANSI B4.1 — dreisprachig (DE/EN/PT), offline, Handy zuerst
 
 ═══════════════════════════════════════════════════════════════════════════
-Plan-Version : 1.7.3 · Stand 2026-07-13 · Status: **ⓘ-UX-Feinschliff gebaut & grün — Handy-Test offen** · B6 bestätigt · nächstes: B7
-Basislinie   : **131.765 Assertions, 0 Fehler** — prüfbar per `node test_passung.js`
+Plan-Version : 1.8 · Stand 2026-07-13 · Status: **B7 (Freiform + ISO 2768) gebaut & grün — Handy-Test offen** · ⓘ-Feinschliff & B6 bestätigt
+Basislinie   : **133.258 Assertions, 0 Fehler** — prüfbar per `node test_passung.js`
                ODER am Handy über **DT-ProfiPassung_Pruefstand.html** (GitHub Pages).
 Produktname  : **DT-ProfiPassung** (Arbeitstitel — vor Markteintritt Marke/Domain prüfen,
                analog Naming-Caveat der Schraube). Produktversion startet bei v0.1.0.
@@ -467,7 +467,7 @@ i18n-Gerüst DE/EN/PT, Theme/Sprache. DoD: erster Handy-Test Dieter. — **✓ b
 **B5 — Toleranzfeld-Grafik** `schaubild.js` + Legende/Chips. DoD: Handy-Test, Merksatz erfüllt. — **✓ bestätigt (v1.6.1).**
 **B6 — Rechenweg** `rechenweg.js` selbstprüfend für die ISO-Kette. DoD: Selbstprüfung über
 alle bisherigen Presets × 3 Sprachen. — **✓ bestätigt (v1.7.2), inkl. Handy-Test-Fixes.**
-**B7 — Freiform + ISO 2768.** DoD: Anker ISO-2768-Tabelle, Freiform-Presets.
+**B7 — Freiform + ISO 2768.** DoD: Anker ISO-2768-Tabelle, Freiform-Presets. — **Code gebaut & grün (v1.8); Handy-Test offen.**
 **B8 — Thermik-Check** (F5). DoD: Vorzeichen-/Umschlag-Tests, Preset 80 °C.
 **B9 — Beratungs-Module** (F6–F9: Oberfläche, Kostenampel, Messmittel, Schmierspalt).
 DoD: Regel-Tests, alle Hinweise als Codes dreisprachig.
@@ -643,6 +643,23 @@ User erstmals eine Sprechblase ODER einen Legenden-Chip antippt (in `localStorag
 respektiert (dann ruhiges ⓘ ohne Bewegung). Geändert nur ui.js + style.css; Verifikation:
 node --check · DOM-Smoke 11/11 · Basislinie 131.765 unverändert.
 (Der 10-Sek-Longpress-Reset auf die Marke bleibt B15-Scope.)
+
+**v1.7.4 (2026-07-13):** Redaktionell: ⓘ-UX-Feinschliff von Dieter am Handy bestätigt
+(„alles läuft super"); Projektordner + GitHub aktuell.
+**v1.8 (2026-07-13):** B7 (Freiform + ISO 2768) gebaut & grün. Neu: **freiform.js**
+(DTPFreiform) — ISO 2768-1 Allgemeintoleranzen für Längenmaße als Datentabelle (f/m/c/v ×
+8 Nennmaßbereiche, ± in mm) + `general(nominal,cls)` (Abmaße/Grenzmaße/Toleranz, ehrliche
+Lücken v<3 mm & f>2000 mm, Grenzen „bis einschließlich"), DOM-frei/testbar, Presets.
+**ui.js**: Modus-Umschalter **Passung ⇄ Freiform** (segmentiert, in localStorage `dtp-mode`),
+eigenes Freiform-Formular (Nennmaß + Klasse f/m/c/v), Freiform-Ergebnis (Echo, Klasse+Bereich-
+Banner, ±Abmaß-/Toleranz-Kacheln, Grenzmaß-Tabelle) + ehrliche Fehler; run()/Presets/Leeren/
+i18n modusabhängig. **schaubild.js**: `svgGeneral` — symmetrisches ±-Band um die Nulllinie.
+**style.css**: Modus-Umschalter. **HTML×2 + Prüfstand**: freiform.js eingebunden
+(…→solver→rechenweg→freiform→schaubild→ui). **test_passung.js**: Abschnitt 12 — ISO-2768-Anker
+(alle 32 Zellen) + Voll-Sweep + Bereichsränder + Lücken/Fehlercodes → **Basislinie 131.765 →
+133.258** (+1.493). Verifikation: node --check · Freiform-Logik 15/15 · i18n-Parität 97×3 +
+24×3 · DOM-Smoke B7 23/23. daten/validate/solver/rechenweg unverändert.
+**Nächster Schritt: B8 (Thermik).**
 
 ═══════════════════════════════════════════════════════════════════════════
 Ende plan.md · DT-ProfiPassung · Plan v1.0

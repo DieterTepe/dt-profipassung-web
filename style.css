@@ -582,3 +582,11 @@ input.locked { background: var(--line-soft); color: var(--muted); cursor: defaul
 .rw-check { color: var(--ok); font-size: 13px; text-align: center; }
 .rw-check.bad { color: var(--bad); }
 .rw-step.bad { background: var(--bad-soft); }
+
+/* ---- B7: Modus-Umschaltung (Passung | Freiform) -------------------------- */
+.mode-switch { display: inline-flex; gap: 2px; padding: 3px; margin-bottom: 14px;
+  background: var(--bg2); border: 1px solid var(--line); border-radius: var(--radius-sm); }
+.mode-btn { padding: 7px 16px; border: 0; background: none; color: var(--muted);
+  font: 600 13px var(--font-ui); cursor: pointer; border-radius: calc(var(--radius-sm) - 3px); transition: background .15s, color .15s; }
+.mode-btn:hover { color: var(--fg); }
+.mode-btn.active { background: var(--surface); color: var(--accent); box-shadow: 0 1px 2px rgba(0,0,0,.25); }
