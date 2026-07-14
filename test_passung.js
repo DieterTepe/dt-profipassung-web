@@ -18,6 +18,7 @@ var isNode = (typeof module === 'object' && module.exports);
 var D = isNode ? require('./daten.js')     : globalThis.DTPData;
 var V = isNode ? require('./validate.js')  : globalThis.DTPValidate;
 var S = isNode ? require('./solver.js')    : globalThis.DTPSolver;
+var RW = isNode ? require('./rechenweg.js') : globalThis.DTPRechenweg;
 
 /* --- Mini-Assert-Framework (Muster: DT-ProfiSchraube) ---------------------- */
 var pass = 0, fail = 0, fails = [];
@@ -694,6 +695,38 @@ section('10) Parser-Roundtrip (Property)');
        'Roundtrip Komma-Eingabe "' + canon + '"');
   }
   ok(checked === 1600, 'alle 1600 Roundtrip-Stichproben gültig (' + checked + ')');
+})();
+
+/* === 11) Rechenweg-Selbstprüfung als Property (B6) ======================== *
+ * Für jede gültige Passung MUSS der post-hoc-Rechenweg 9 Schritte liefern, alle
+ * mit ✓ (allOk), und die Schluss-Passungsart mit dem Solver übereinstimmen.
+ * Zusätzlich Negativkontrolle: ein verfälschter Wert MUSS ein rotes Kreuz geben. */
+section('11) Rechenweg-Selbstprüfung (Property)');
+(function () {
+  if (!RW || !RW.build) { ok(false, 'DTPRechenweg nicht geladen'); return; }
+  var HOLE = ['H', 'G', 'F', 'E', 'K', 'M', 'N', 'P'];
+  var SH = ['h', 'g', 'f', 'e', 'd', 's', 'k', 'm', 'n', 'p'];
+  var NOMS = [1, 3, 10, 30, 50, 120, 250, 400];
+  var GR = [5, 6, 7, 8, 9];
+  var seen = 0;
+  for (var a = 0; a < HOLE.length; a++)
+    for (var b = 0; b < SH.length; b++)
+      for (var n = 0; n < NOMS.length; n++)
+        for (var g = 0; g < GR.length; g++) {
+          var res = S.computeFit({ nominal: NOMS[n], hole: { letter: HOLE[a], grade: GR[g] }, shaft: { letter: SH[b], grade: GR[g] } });
+          if (!res.ok) continue;
+          seen++;
+          var rw = RW.build(res);
+          ok(rw.steps.length === 9, 'Rechenweg 9 Schritte ' + HOLE[a] + GR[g] + '/' + SH[b] + GR[g] + ' @' + NOMS[n]);
+          ok(rw.allOk === true, 'Rechenweg allOk ' + HOLE[a] + GR[g] + '/' + SH[b] + GR[g] + ' @' + NOMS[n]);
+          ok(rw.steps[8].art === res.fit.art, 'Rechenweg-Art == Solver ' + HOLE[a] + GR[g] + '/' + SH[b] + GR[g] + ' @' + NOMS[n]);
+        }
+  ok(seen > 500, 'ausreichend gültige Fälle geprüft (' + seen + ')');
+  // Negativkontrolle:
+  var neg = S.computeFit('50 H7/g6'); neg.fit.PSmin -= 7;
+  var rwn = RW.build(neg);
+  ok(rwn.allOk === false, 'Selbstprüfung erkennt verfälschtes PS_min');
+  ok(rwn.steps[6].ok === false, 'genau der PS_min-Schritt ist rot');
 })();
 
 /* === Zusammenfassung ====================================================== */

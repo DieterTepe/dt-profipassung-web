@@ -3,8 +3,8 @@
 ## Interaktiver Toleranz- & Passungsassistent nach ISO 286 — mit Pressverband (DIN 7190), Toleranzketten (WC/RSS/Monte-Carlo), ISO 2768 und ANSI B4.1 — dreisprachig (DE/EN/PT), offline, Handy zuerst
 
 ═══════════════════════════════════════════════════════════════════════════
-Plan-Version : 1.6 · Stand 2026-07-13 · Status: **B5 (Toleranzfeld-Grafik) gebaut & grün — Handy-Test Dieter offen** · B4 bestätigt
-Basislinie   : **122.192 Assertions, 0 Fehler** — prüfbar per `node test_passung.js`
+Plan-Version : 1.7 · Stand 2026-07-13 · Status: **B6 (Rechenweg) gebaut & grün — Handy-Test Dieter offen** · B5 bestätigt
+Basislinie   : **131.765 Assertions, 0 Fehler** — prüfbar per `node test_passung.js`
                ODER am Handy über **DT-ProfiPassung_Pruefstand.html** (GitHub Pages).
 Produktname  : **DT-ProfiPassung** (Arbeitstitel — vor Markteintritt Marke/Domain prüfen,
                analog Naming-Caveat der Schraube). Produktversion startet bei v0.1.0.
@@ -464,9 +464,9 @@ DoD: alle Anker aus Abschnitt 6 grün; Formel↔Tabelle-Quervergleich grün; `no
 **B3 — UI-Basis.** HTML×2, `style.css`-Port, Formular Gruppe „Passung", Ergebnis-Kacheln,
 i18n-Gerüst DE/EN/PT, Theme/Sprache. DoD: erster Handy-Test Dieter. — **✓ bestätigt (v1.4.1): beide HTML fehlerfrei am Handy, Projektordner + GitHub aktuell.**
 **B4 — Parser + Sprechblasen** (2.3). DoD: Roundtrip-Property + Handy-Test. — **✓ bestätigt (v1.5.1).**
-**B5 — Toleranzfeld-Grafik** `schaubild.js` + Legende/Chips. DoD: Handy-Test, Merksatz erfüllt. — **Code gebaut & grün (v1.6); Handy-Test offen.**
+**B5 — Toleranzfeld-Grafik** `schaubild.js` + Legende/Chips. DoD: Handy-Test, Merksatz erfüllt. — **✓ bestätigt (v1.6.1).**
 **B6 — Rechenweg** `rechenweg.js` selbstprüfend für die ISO-Kette. DoD: Selbstprüfung über
-alle bisherigen Presets × 3 Sprachen.
+alle bisherigen Presets × 3 Sprachen. — **Code gebaut & grün (v1.7); Handy-Test offen.**
 **B7 — Freiform + ISO 2768.** DoD: Anker ISO-2768-Tabelle, Freiform-Presets.
 **B8 — Thermik-Check** (F5). DoD: Vorzeichen-/Umschlag-Tests, Preset 80 °C.
 **B9 — Beratungs-Module** (F6–F9: Oberfläche, Kostenampel, Messmittel, Schmierspalt).
@@ -596,6 +596,22 @@ schaubild→ui). Verifikation: node --check · Layout-Mathematik 13/13 · i18n-P
 19×3 · DOM-Smoke B5 15/15 (SVG, 2 Balken, Nulllinie, Zonen, Legendenzahlen, Chip-Taps,
 Fehler-Platzhalter). Basislinie **122.192** unverändert. daten/validate/solver/test_passung
 unverändert. **Nächster Schritt: B6 (Rechenweg `rechenweg.js`)** — aufklappbar, selbstprüfend, dreisprachig.
+**v1.6.1 (2026-07-13):** Redaktionell: B5-DoD bestätigt — Toleranzfeld-Grafik am Handy grün;
+Projektordner + GitHub aktuell.
+**v1.7 (2026-07-13):** B6 (Rechenweg) gebaut & grün. Neu: **rechenweg.js** (DTPRechenweg) —
+post-hoc, SELBSTPRÜFENDER Rechenweg: rekonstruiert 9 Schritte (IT-Grundtoleranzen →
+Grenzabmaße B/W → Grenzmaße B/W → PS_max → PS_min → Passtoleranz mit Gegenprobe →
+Passungsart) aus den Primärgrößen und prüft jeden gegen das Solver-Ergebnis (✓/✗). Rechnet
+nichts für die Anzeige neu — Solver bleibt maßgeblich. Symbole sprachneutral, DOM-frei,
+separat getestet (inkl. Negativkontrolle: verfälschter Wert erzeugt rotes Kreuz). **ui.js**:
+`renderRechenweg` — aufklappbares Panel unter dem Ergebnis, Schritt-Titel dreisprachig,
+Formelzeilen mobil scrollbar, „alle Schritte geprüft"-Badge; Fehlerfall zeigt kein Panel.
+**style.css**: .rechenweg/.rw-*. **HTML×2 + Prüfstand**: `rechenweg.js` nach solver.js
+eingebunden (daten→validate→solver→rechenweg→schaubild→ui). **test_passung.js**: Abschnitt 11
+— Rechenweg-Property-Sweep (>500 gültige Fälle: 9 Schritte, allOk, Art==Solver) + Negativ-
+kontrolle → **Basislinie 122.192 → 131.765** (+9.573). Verifikation: node --check ·
+Rechenweg-Logik 23/23 · i18n-Parität 85×3 + 19×3 · DOM-Smoke B6 14/14. daten/validate/
+solver/schaubild unverändert. **Nächster Schritt: B7 (Freiform + ISO 2768)**.
 
 ═══════════════════════════════════════════════════════════════════════════
 Ende plan.md · DT-ProfiPassung · Plan v1.0

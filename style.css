@@ -567,3 +567,26 @@ input.locked { background: var(--line-soft); color: var(--muted); cursor: defaul
 .vc-sub { display: block; margin-top: 4px; font: 500 12px var(--font-num); color: var(--muted); }
 .vc-help { margin-top: 7px; font-size: 11px; line-height: 1.4; color: var(--muted); border-top: 1px dashed var(--line-soft); padding-top: 6px; }
 .viz-zero-note { margin-top: 8px; font-size: 11px; color: var(--faint); }
+
+/* ---- B6: Aufklappbarer, selbstprüfender Rechenweg ------------------------ */
+.rechenweg { margin-top: 14px; border: 1px solid var(--line); border-radius: var(--radius-sm); overflow: hidden; }
+.rw-toggle {
+  width: 100%; display: flex; align-items: center; gap: 8px; padding: 10px 12px;
+  background: var(--bg2); border: 0; cursor: pointer; color: var(--fg); font: 600 13px var(--font-ui); text-align: left;
+}
+.rw-toggle:hover { background: var(--surface); }
+.rw-chev { color: var(--faint); font-size: 11px; width: 12px; }
+.rw-cap { flex: 1; }
+.rw-allok { font: 600 11px var(--font-ui); color: var(--ok); }
+.rw-allok.bad { color: var(--bad); }
+.rw-body { padding: 4px 0; }
+.rw-step {
+  display: grid; grid-template-columns: 22px 1fr 20px; gap: 8px; align-items: start;
+  padding: 8px 12px; border-top: 1px solid var(--line-soft);
+}
+.rw-num { color: var(--faint); font: 600 11px var(--font-num); text-align: right; padding-top: 2px; }
+.rw-title { font-size: 12px; font-weight: 600; color: var(--fg); }
+.rw-expr { margin-top: 3px; font: 500 12px/1.5 var(--font-num); color: var(--muted); overflow-x: auto; white-space: nowrap; -webkit-overflow-scrolling: touch; }
+.rw-check { color: var(--ok); font-size: 13px; text-align: center; }
+.rw-check.bad { color: var(--bad); }
+.rw-step.bad { background: var(--bad-soft); }

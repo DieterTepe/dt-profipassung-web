@@ -204,6 +204,31 @@
     ['de', 'en', 'pt'].forEach(function (l) { for (var k in s[l]) STR[l][k] = s[l][k]; });
   })();
 
+  /* --- B6-Ergänzungen: Rechenweg (Panel + Schritt-Titel) ------------------- */
+  (function () {
+    var s = {
+      de: {
+        rwHeading: 'Rechenweg', rwAllOk: 'alle Schritte geprüft', rwFail: 'Prüfung fehlgeschlagen',
+        rwTitleIT: 'IT-Grundtoleranzen', rwTitleDevBore: 'Grenzabmaße Bohrung', rwTitleDevShaft: 'Grenzabmaße Welle',
+        rwTitleLimBore: 'Grenzmaße Bohrung', rwTitleLimShaft: 'Grenzmaße Welle',
+        rwClearMax: 'Höchstspiel', rwClearMin: 'Mindestspiel', rwFitTol: 'Passtoleranz', rwArt: 'Passungsart'
+      },
+      en: {
+        rwHeading: 'Calculation', rwAllOk: 'all steps verified', rwFail: 'verification failed',
+        rwTitleIT: 'Fundamental tolerances', rwTitleDevBore: 'Limit deviations, hole', rwTitleDevShaft: 'Limit deviations, shaft',
+        rwTitleLimBore: 'Limits, hole', rwTitleLimShaft: 'Limits, shaft',
+        rwClearMax: 'Maximum clearance', rwClearMin: 'Minimum clearance', rwFitTol: 'Fit tolerance', rwArt: 'Type of fit'
+      },
+      pt: {
+        rwHeading: 'Cálculo', rwAllOk: 'todos os passos verificados', rwFail: 'verificação falhou',
+        rwTitleIT: 'Tolerâncias fundamentais', rwTitleDevBore: 'Desvios-limite, furo', rwTitleDevShaft: 'Desvios-limite, eixo',
+        rwTitleLimBore: 'Dimensões-limite, furo', rwTitleLimShaft: 'Dimensões-limite, eixo',
+        rwClearMax: 'Folga máxima', rwClearMin: 'Folga mínima', rwFitTol: 'Tolerância do ajuste', rwArt: 'Tipo de ajuste'
+      }
+    };
+    ['de', 'en', 'pt'].forEach(function (l) { for (var k in s[l]) STR[l][k] = s[l][k]; });
+  })();
+
   /* ======================================================================= *
    * 2) Zustand + kleine Helfer
    * ======================================================================= */
@@ -466,7 +491,43 @@
       resultHost.appendChild(box);
     }
 
+    renderRechenweg(res);
     renderViz(res);
+  }
+
+  /* Aufklappbarer, selbstprüfender Rechenweg (B6). */
+  function renderRechenweg(res) {
+    var RWm = window.DTPRechenweg;
+    if (!RWm || !RWm.build) return;
+    var data = RWm.build(res, { um: sgn, umU: fmtUm, mm: fmtMm });
+
+    var wrap = el('div', 'rechenweg');
+    var btn = el('button', 'rw-toggle'); btn.type = 'button';
+    var chev = el('span', 'rw-chev', '▸');
+    var cap = el('span', 'rw-cap', t('rwHeading'));
+    var badge = el('span', 'rw-allok' + (data.allOk ? '' : ' bad'), data.allOk ? '✓ ' + t('rwAllOk') : '✗ ' + t('rwFail'));
+    btn.appendChild(chev); btn.appendChild(cap); btn.appendChild(badge);
+
+    var body = el('div', 'rw-body'); body.hidden = true;
+    data.steps.forEach(function (st, idx) {
+      var row = el('div', 'rw-step' + (st.ok ? '' : ' bad'));
+      row.appendChild(el('span', 'rw-num', String(idx + 1)));
+      var main = el('div', 'rw-main');
+      main.appendChild(el('div', 'rw-title', t(st.key) + (st.art ? ' — ' + t('art' + st.art) : '')));
+      main.appendChild(el('div', 'rw-expr', st.expr));
+      row.appendChild(main);
+      row.appendChild(el('span', 'rw-check' + (st.ok ? '' : ' bad'), st.ok ? '✓' : '✗'));
+      body.appendChild(row);
+    });
+
+    btn.addEventListener('click', function () {
+      body.hidden = !body.hidden;
+      chev.textContent = body.hidden ? '▸' : '▾';
+      btn.setAttribute('aria-expanded', body.hidden ? 'false' : 'true');
+    });
+    btn.setAttribute('aria-expanded', 'false');
+    wrap.appendChild(btn); wrap.appendChild(body);
+    resultHost.appendChild(wrap);
   }
 
   /* Toleranzfeld-Grafik (B5): SVG aus schaubild.js + HTML-Legende mit Farb-Chips. */
