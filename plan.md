@@ -3,7 +3,7 @@
 ## Interaktiver Toleranz- & Passungsassistent nach ISO 286 — mit Pressverband (DIN 7190), Toleranzketten (WC/RSS/Monte-Carlo), ISO 2768 und ANSI B4.1 — dreisprachig (DE/EN/PT), offline, Handy zuerst
 
 ═══════════════════════════════════════════════════════════════════════════
-Plan-Version : 1.7 · Stand 2026-07-13 · Status: **B6 (Rechenweg) gebaut & grün — Handy-Test Dieter offen** · B5 bestätigt
+Plan-Version : 1.7.1 · Stand 2026-07-13 · Status: **B6 (Rechenweg) gebaut & grün — Handy-Test-Fixes eingearbeitet, Re-Test offen** · B5 bestätigt
 Basislinie   : **131.765 Assertions, 0 Fehler** — prüfbar per `node test_passung.js`
                ODER am Handy über **DT-ProfiPassung_Pruefstand.html** (GitHub Pages).
 Produktname  : **DT-ProfiPassung** (Arbeitstitel — vor Markteintritt Marke/Domain prüfen,
@@ -482,6 +482,8 @@ DoD: WC≥RSS-Invariante, MC-Determinismus (Seed), MC≈analytisch-Anker.
 **B14 — Ausgaben** (F14; `report.js`-Port: RTF/CSV/Copy/Snippet/.dtp/Druck).
 DoD: RTF-Rahmen/Escaping über alle Presets × 3 Sprachen, `.dtp`-Round-Trip, CSV-Logik.
 **B15 — Edition/Registrierung/Impressum** (F17; Port). DoD: Gating-Sektion, beide Builds.
+  → Enthält die **dezente Vollversions-Kennzeichnung mit Käufername** (tiefer platziert, wie
+  bei DT-ProfiSchraube); bis dahin zeigt die Vollversion oben bewusst keinen Balken.
 **B16 — Feinschliff:** Explorer-Inhalte komplett, restliche Presets, Code-Audit
 (wie Schraube v4.8.1), Backlog leeren, Build-/Obfuskierungs-Vorbereitung.
 
@@ -612,6 +614,19 @@ eingebunden (daten→validate→solver→rechenweg→schaubild→ui). **test_pas
 kontrolle → **Basislinie 122.192 → 131.765** (+9.573). Verifikation: node --check ·
 Rechenweg-Logik 23/23 · i18n-Parität 85×3 + 19×3 · DOM-Smoke B6 14/14. daten/validate/
 solver/schaubild unverändert. **Nächster Schritt: B7 (Freiform + ISO 2768)**.
+**v1.7.1 (2026-07-13):** Fixes aus Dieters B6-Handy-Test (nur ui.js + style.css):
+(1) **Rechenweg klappte nicht** — Ursache: mitportierter Schrauben-Rechenweg-CSS-Block
+enthielt `.rw-body{display:flex}`, das das `[hidden]` überschrieb (offen beim Start,
+Toggle wirkungslos). Toter/kollidierender Schrauben-Block entfernt; Auf-/Zuklappen jetzt
+über `.rw-body.collapsed{display:none}` + `classList.toggle` (robust). Druck-CSS erzwingt
+`.rw-body.collapsed` sichtbar. (2) **Vollversion** zeigt keinen grünen Editionsbalken mehr
+(nur Testversion behält den gelben oben); die dezente Kennzeichnung der Vollversion mit
+**Käufername** folgt in **B15 (Registrierung)** — Notiz dort verankert. (3) **„Leeren"**
+leert nun wirklich alle Eingabefelder (Nennmaß, Kurzeingabe, Bohrung/Welle via „—"-Platzhalter)
+statt 50 H7/g6 zu setzen. (4) **Unvollständige Eingabe** zeigt einen neutralen Hinweis
+„Bitte ausfüllen: …" mit den fehlenden Feldern (dreisprachig), statt rotem Fehler/Default;
+Grafik → Platzhalter. Verifikation: node --check · DOM-Smoke 14/14 · i18n-Parität 86×3 + 19×3 ·
+Basislinie **131.765** unverändert. rechenweg.js/HTML/Kern unverändert.
 
 ═══════════════════════════════════════════════════════════════════════════
 Ende plan.md · DT-ProfiPassung · Plan v1.0

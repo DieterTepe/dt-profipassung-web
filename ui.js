@@ -229,6 +229,16 @@
     ['de', 'en', 'pt'].forEach(function (l) { for (var k in s[l]) STR[l][k] = s[l][k]; });
   })();
 
+  /* --- B6.1: Hinweis bei unvollständiger Eingabe --------------------------- */
+  (function () {
+    var s = {
+      de: { hintIncomplete: 'Bitte ausfüllen:' },
+      en: { hintIncomplete: 'Please complete:' },
+      pt: { hintIncomplete: 'Preencha:' }
+    };
+    ['de', 'en', 'pt'].forEach(function (l) { for (var k in s[l]) STR[l][k] = s[l][k]; });
+  })();
+
   /* ======================================================================= *
    * 2) Zustand + kleine Helfer
    * ======================================================================= */
@@ -261,8 +271,9 @@
   var host, resultHost, vizHost;
   var elNominal, elSystem, elHoleL, elHoleG, elShaftL, elShaftG, elFit, elFitMsg;
 
-  function selectFrom(list, mapLabel) {
+  function selectFrom(list, mapLabel, placeholder) {
     var sel = el('select');
+    if (placeholder) { var ph = el('option', null, '—'); ph.value = ''; sel.appendChild(ph); }
     list.forEach(function (v) {
       var o = el('option', null, mapLabel ? mapLabel(v) : String(v));
       o.value = String(v);
@@ -322,10 +333,10 @@
     host.appendChild(leg);
 
     // Bohrung + Welle (Buchstabe + Grad)
-    elHoleL = selectFrom(HOLE_LETTERS); elHoleL.value = 'H';
-    elHoleG = selectFrom(GRADES, function (g) { return 'IT' + g; }); elHoleG.value = '7';
-    elShaftL = selectFrom(SHAFT_LETTERS); elShaftL.value = 'g';
-    elShaftG = selectFrom(GRADES, function (g) { return 'IT' + g; }); elShaftG.value = '6';
+    elHoleL = selectFrom(HOLE_LETTERS, null, true); elHoleL.value = 'H';
+    elHoleG = selectFrom(GRADES, function (g) { return 'IT' + g; }, true); elHoleG.value = '7';
+    elShaftL = selectFrom(SHAFT_LETTERS, null, true); elShaftL.value = 'g';
+    elShaftG = selectFrom(GRADES, function (g) { return 'IT' + g; }, true); elShaftG.value = '6';
 
     var g2 = el('div', 'group-fields');
     g2.appendChild(labeledField('fHole', null, pairControl(elHoleL, elHoleG)));
@@ -363,7 +374,7 @@
   function refreshFitField() {
     if (!elFit) return;
     var inp = readInput();
-    if (isNaN(inp.nominal)) return;
+    if (isNaN(inp.nominal) || !inp.hole.letter || isNaN(inp.hole.grade) || !inp.shaft.letter || isNaN(inp.shaft.grade)) return;
     elFit.value = S.formatFit({ nominal: inp.nominal, hole: inp.hole, shaft: inp.shaft }, lang === 'en' ? '.' : ',');
     elFitMsg.hidden = true;
   }
@@ -386,9 +397,22 @@
   function run() {
     if (!S) { resultHost.textContent = 'DTPSolver nicht geladen.'; return; }
     var inp = readInput();
-    if (isNaN(inp.nominal)) { renderErrors([{ code: 'ERR_NOMINAL_TYPE', field: 'nominal' }]); return; }
+    var missing = [];
+    if (isNaN(inp.nominal)) missing.push('fNominal');
+    if (!inp.hole.letter || isNaN(inp.hole.grade)) missing.push('fHole');
+    if (!inp.shaft.letter || isNaN(inp.shaft.grade)) missing.push('fShaft');
+    if (missing.length) { renderIncomplete(missing); return; }
     var res = S.computeFit(inp);
     if (res.ok) renderResult(res); else renderErrors(res.errors);
+  }
+
+  /* Unvollständige Eingabe: neutraler Hinweis, welche Felder noch fehlen. */
+  function renderIncomplete(missing) {
+    resultHost.textContent = '';
+    var b = el('div', 'status-banner idle');
+    b.textContent = t('hintIncomplete') + ' ' + missing.map(function (k) { return t(k); }).join(', ');
+    resultHost.appendChild(b);
+    clearViz();
   }
 
   function card(nameKey, valueStr, unitKey, tone) {
@@ -508,7 +532,7 @@
     var badge = el('span', 'rw-allok' + (data.allOk ? '' : ' bad'), data.allOk ? '✓ ' + t('rwAllOk') : '✗ ' + t('rwFail'));
     btn.appendChild(chev); btn.appendChild(cap); btn.appendChild(badge);
 
-    var body = el('div', 'rw-body'); body.hidden = true;
+    var body = el('div', 'rw-body collapsed');
     data.steps.forEach(function (st, idx) {
       var row = el('div', 'rw-step' + (st.ok ? '' : ' bad'));
       row.appendChild(el('span', 'rw-num', String(idx + 1)));
@@ -521,9 +545,9 @@
     });
 
     btn.addEventListener('click', function () {
-      body.hidden = !body.hidden;
-      chev.textContent = body.hidden ? '▸' : '▾';
-      btn.setAttribute('aria-expanded', body.hidden ? 'false' : 'true');
+      var collapsed = body.classList.toggle('collapsed');
+      chev.textContent = collapsed ? '▸' : '▾';
+      btn.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
     });
     btn.setAttribute('aria-expanded', 'false');
     wrap.appendChild(btn); wrap.appendChild(body);
@@ -636,9 +660,18 @@
   function applyEdition() {
     var bar = document.getElementById('editionBar');
     if (!bar) return;
-    bar.hidden = false;
-    bar.className = 'edition-bar ' + (edition === 'test' ? 'test' : 'full');
-    bar.textContent = edition === 'test' ? t('editionTest') : t('editionFull');
+    if (edition === 'test') {
+      // Testversion: dezenter gelber Hinweisbalken oben.
+      bar.hidden = false;
+      bar.className = 'edition-bar test';
+      bar.textContent = t('editionTest');
+    } else {
+      // Vollversion: kein Balken oben. Die dezente Kennzeichnung (mit Käufername)
+      // folgt in B15 (Registrierung), wie bei DT-ProfiSchraube.
+      bar.hidden = true;
+      bar.className = 'edition-bar full';
+      bar.textContent = '';
+    }
   }
 
   /* ======================================================================= *
@@ -666,9 +699,11 @@
     });
     on('calcBtn', 'click', recalc);
     on('resetBtn', 'click', function () {
-      elNominal.value = '50'; elSystem.value = 'EB';
-      elHoleL.value = 'H'; elHoleG.value = '7'; elShaftL.value = 'g'; elShaftG.value = '6';
-      recalc();
+      elNominal.value = ''; elSystem.value = 'FREE';
+      elHoleL.value = ''; elHoleG.value = ''; elShaftL.value = ''; elShaftG.value = '';
+      if (elFit) elFit.value = '';
+      if (elFitMsg) elFitMsg.hidden = true;
+      run(); // zeigt „Bitte ausfüllen: …" — schreibt nichts zurück
     });
 
     applyEdition();
