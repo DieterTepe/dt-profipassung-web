@@ -3,7 +3,7 @@
 ## Interaktiver Toleranz- & Passungsassistent nach ISO 286 — mit Pressverband (DIN 7190), Toleranzketten (WC/RSS/Monte-Carlo), ISO 2768 und ANSI B4.1 — dreisprachig (DE/EN/PT), offline, Handy zuerst
 
 ═══════════════════════════════════════════════════════════════════════════
-Plan-Version : 1.7.2 · Stand 2026-07-13 · Status: **B6 (Rechenweg) bestätigt** (inkl. Handy-Test-Fixes) · nächstes: B7
+Plan-Version : 1.7.3 · Stand 2026-07-13 · Status: **ⓘ-UX-Feinschliff gebaut & grün — Handy-Test offen** · B6 bestätigt · nächstes: B7
 Basislinie   : **131.765 Assertions, 0 Fehler** — prüfbar per `node test_passung.js`
                ODER am Handy über **DT-ProfiPassung_Pruefstand.html** (GitHub Pages).
 Produktname  : **DT-ProfiPassung** (Arbeitstitel — vor Markteintritt Marke/Domain prüfen,
@@ -482,8 +482,12 @@ DoD: WC≥RSS-Invariante, MC-Determinismus (Seed), MC≈analytisch-Anker.
 **B14 — Ausgaben** (F14; `report.js`-Port: RTF/CSV/Copy/Snippet/.dtp/Druck).
 DoD: RTF-Rahmen/Escaping über alle Presets × 3 Sprachen, `.dtp`-Round-Trip, CSV-Logik.
 **B15 — Edition/Registrierung/Impressum** (F17; Port). DoD: Gating-Sektion, beide Builds.
-  → Enthält die **dezente Vollversions-Kennzeichnung mit Käufername** (tiefer platziert, wie
-  bei DT-ProfiSchraube); bis dahin zeigt die Vollversion oben bewusst keinen Balken.
+  → Vollversion zeigt eine **dezente Kennzeichnung „Vollversion"** (Platzierung/Stil wie
+  DT-ProfiSchraube, siehe Referenzbild `1000020291.png` im Projektordner); nach Registrierung
+  steht der **Käufername dahinter** („Vollversion – <Name>"), ohne Registrierung nur
+  „Vollversion". Bis B15 zeigt die Vollversion oben bewusst keinen Balken.
+  → **Versteckter Reset:** 10 s langer Druck auf die Marke „DT-ProfiPassung" links oben setzt
+  die Benutzer-/Registrierungsdaten zurück (genau wie bei DT-ProfiSchraube).
 **B16 — Feinschliff:** Explorer-Inhalte komplett, restliche Presets, Code-Audit
 (wie Schraube v4.8.1), Backlog leeren, Build-/Obfuskierungs-Vorbereitung.
 
@@ -629,6 +633,16 @@ Grafik → Platzhalter. Verifikation: node --check · DOM-Smoke 14/14 · i18n-Pa
 Basislinie **131.765** unverändert. rechenweg.js/HTML/Kern unverändert.
 **v1.7.2 (2026-07-13):** Redaktionell: B6-DoD bestätigt — Rechenweg klappt sauber, „Leeren"
 und Editionsleiste korrekt am Handy geprüft; Projektordner + GitHub aktuell. Freigabe für B7.
+
+✓ ERLEDIGT (v1.7.3) — UX-NOTIZ „Auffindbarkeit der Sprechblasen": Auf den Kennwert-Kacheln
+steht jetzt ein tappbares **ⓘ** in Akzentfarbe statt des schlichten „?". Beim Erststart läuft
+ein sanfter, LANGSAMER Aufmerksamkeits-Puls (Schein + Farbwechsel/Scale Richtung Akzent,
+2 s/Zyklus, **nur 3 Zyklen** — keine Endlos-Animation). Der Puls stoppt dauerhaft, sobald der
+User erstmals eine Sprechblase ODER einen Legenden-Chip antippt (in `localStorage`
+`dtp-tips-seen` gemerkt → in Folgesitzungen kein Puls mehr). `prefers-reduced-motion` wird
+respektiert (dann ruhiges ⓘ ohne Bewegung). Geändert nur ui.js + style.css; Verifikation:
+node --check · DOM-Smoke 11/11 · Basislinie 131.765 unverändert.
+(Der 10-Sek-Longpress-Reset auf die Marke bleibt B15-Scope.)
 
 ═══════════════════════════════════════════════════════════════════════════
 Ende plan.md · DT-ProfiPassung · Plan v1.0

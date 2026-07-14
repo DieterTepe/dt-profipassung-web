@@ -499,11 +499,21 @@ input.locked { background: var(--line-soft); color: var(--muted); cursor: defaul
 
 .safety-card .sc-name { justify-content: flex-start; }
 .sc-q {
-  margin-left: 6px; width: 16px; height: 16px; flex: none; padding: 0;
-  border: 1px solid var(--line); border-radius: 50%; background: var(--surface);
-  color: var(--faint); font: 700 10px/1 var(--font-ui); cursor: pointer;
+  margin-left: 6px; flex: none; padding: 0 2px; border: 0; background: none;
+  color: var(--accent); font: 400 15px/1 var(--font-ui); cursor: pointer;
+  border-radius: 50%; opacity: .85; transition: opacity .15s, text-shadow .2s;
 }
-.sc-q:hover { color: var(--accent); border-color: var(--accent); }
+.sc-q:hover, .sc-q:focus-visible { opacity: 1; text-shadow: 0 0 6px var(--accent); outline: none; }
+
+/* Aufmerksamkeits-Puls: langsam, dezent, NUR 3 Zyklen — endet dann von selbst.
+   JS entfernt die Klasse zusätzlich beim ersten Antippen (dauerhaft, s. localStorage). */
+.sc-q.pulse { animation: scQPulse 2s ease-in-out 3; }
+@keyframes scQPulse {
+  0%, 100% { opacity: .85; color: var(--accent); text-shadow: none; transform: scale(1); }
+  50%      { opacity: 1;   color: var(--accent-bright, var(--accent)); text-shadow: 0 0 8px var(--accent); transform: scale(1.18); }
+}
+@media (prefers-reduced-motion: reduce) { .sc-q.pulse { animation: none; } }
+
 .sc-help {
   margin-top: 8px; font-size: 11px; line-height: 1.4; color: var(--muted);
   border-top: 1px dashed var(--line-soft); padding-top: 7px;

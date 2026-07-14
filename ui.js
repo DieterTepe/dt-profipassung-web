@@ -245,6 +245,19 @@
   var lang = localStorage.getItem('dtp-lang') || 'de';
   var edition = (window.DT_EDITION === 'test') ? 'test' : 'full';
 
+  // Auffindbarkeit der ⓘ-Sprechblasen: einmaliger, begrenzter Puls; endet dauerhaft,
+  // sobald der Nutzer erstmals eine Sprechblase antippt (in localStorage gemerkt).
+  var tipsSeen = localStorage.getItem('dtp-tips-seen') === '1';
+  var pulseDone = false;   // Puls nur bei der ersten Ergebnis-Anzeige je Sitzung
+  var armPulse = false;    // wird pro Render gesetzt
+  function markTipsSeen() {
+    if (tipsSeen) return;
+    tipsSeen = true;
+    try { localStorage.setItem('dtp-tips-seen', '1'); } catch (e) {}
+    var qs = document.querySelectorAll('.sc-q.pulse');
+    qs.forEach(function (q) { q.classList.remove('pulse'); });
+  }
+
   function t(k) { return (STR[lang] && STR[lang][k]) || STR.de[k] || k; }
   function interp(s, vars) { return s.replace(/\{(\w+)\}/g, function (_, k) { return (vars && vars[k] != null) ? vars[k] : '{' + k + '}'; }); }
   function msgOf(entry) {
@@ -421,10 +434,11 @@
     var help = t('help_' + nameKey);
     var hp = null;
     if (help && help !== 'help_' + nameKey) {
-      var q = el('button', 'sc-q', '?'); q.type = 'button'; q.setAttribute('aria-label', help); q.title = help;
+      var q = el('button', 'sc-q', 'ⓘ'); q.type = 'button'; q.setAttribute('aria-label', help); q.title = help;
+      if (armPulse) q.classList.add('pulse');
       nm.appendChild(q);
       hp = el('div', 'sc-help', help); hp.hidden = true;
-      q.addEventListener('click', function () { hp.hidden = !hp.hidden; });
+      q.addEventListener('click', function () { markTipsSeen(); hp.hidden = !hp.hidden; });
     }
     c.appendChild(nm);
     var val = el('div', 'sc-val', valueStr);
@@ -482,6 +496,7 @@
     resultHost.appendChild(banner);
 
     // Kennwert-Kacheln
+    armPulse = (!tipsSeen && !pulseDone);
     var grid = el('div', 'safety-grid');
     if (f.art === 'SPIEL') {
       grid.appendChild(card('rClearMin', fmtUm(f.PSmin), 'unit_um', f.PSmin > 0 ? 'ok' : 'warn'));
@@ -495,6 +510,7 @@
     }
     grid.appendChild(card('rFitTol', fmtUm(f.PT), 'unit_um'));
     resultHost.appendChild(grid);
+    if (armPulse) { pulseDone = true; armPulse = false; }
 
     // Grenzmaße Bohrung | Welle
     var lg = el('div', 'limits-grid'); lg.style.marginTop = '8px';
@@ -580,7 +596,7 @@
         var hp = el('div', 'vc-help', help); hp.hidden = true;
         c.appendChild(hp);
         c.setAttribute('role', 'button'); c.setAttribute('tabindex', '0'); c.title = help;
-        c.addEventListener('click', function () { hp.hidden = !hp.hidden; });
+        c.addEventListener('click', function () { markTipsSeen(); hp.hidden = !hp.hidden; });
       }
       return c;
     }
