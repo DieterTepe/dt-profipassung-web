@@ -97,5 +97,47 @@
     return { steps: steps, allOk: steps.every(function (s) { return s.ok; }) };
   }
 
-  return { build: build };
+  /* --- Freiform / ISO 2768 (B7) — Rechenweg -------------------------------- */
+  function buildFreiform(ff, fmt) {
+    if (!ff || !ff.ok) return { steps: [], allOk: false };
+    fmt = fmt || {};
+    var mm = fmt.mm || mmDefault, umU = fmt.umU || umPlainDefault;
+    var N = ff.input.nominal, cls = ff.input.cls, dev = ff.dev;
+    var steps = [];
+    function step(key, expr, ok) { steps.push({ key: key, expr: expr, ok: ok !== false, art: null }); }
+
+    step('rwFfLookup',
+      'ISO 2768-1 · ' + cls + ' · ' + mm(ff.range.low) + '…' + mm(ff.range.high) + ' mm  →  A = ± ' + mm(dev) + ' mm = ' + umU(ff.dev_um) + ' µm', true);
+    step('rwFfGo', 'G_o = N + A = ' + N + ' + ' + mm(dev) + ' = ' + mm(ff.Go) + ' mm', eq(round3(N + dev), ff.Go));
+    step('rwFfGu', 'G_u = N − A = ' + N + ' − ' + mm(dev) + ' = ' + mm(ff.Gu) + ' mm', eq(round3(N - dev), ff.Gu));
+    step('rwFfTol', 'T = 2·A = 2 · ' + mm(dev) + ' = ' + mm(round3(2 * dev)) + ' mm = ' + umU(ff.tol_um) + ' µm', eq(round3(2 * dev), ff.tol));
+    return { steps: steps, allOk: steps.every(function (s) { return s.ok; }) };
+  }
+
+  /* --- Thermik (B8) — Rechenweg -------------------------------------------- */
+  function round1(x) { return Math.round(x * 10) / 10; }
+  function buildThermik(fit, th, fmt) {
+    if (!fit || !fit.ok || !th || !th.ok) return { steps: [], allOk: false };
+    fmt = fmt || {};
+    var um = fmt.um || umSignedDefault, n = fmt.n || function (x) { return String(x); };
+    var ah = th.alphaHole, as = th.alphaShaft, dT = th.dT, N = th.nominal;
+    var dSraw = (ah - as) * dT * N / 1000;
+    var steps = [];
+    function step(key, expr, ok, art) { steps.push({ key: key, expr: expr, ok: ok !== false, art: art || null }); }
+
+    step('rwThDelta',
+      'ΔS = (α_B − α_W)·(T − 20)·D / 1000 = (' + n(ah) + ' − ' + n(as) + ')·' + n(dT) + '·' + N + ' / 1000 = ' + um(th.dS) + ' µm',
+      eq(th.dS, round1(dSraw)));
+    step('rwThPSmax',
+      'PS_max(T) = PS_max + ΔS = ' + um(th.PSmax20) + ' + (' + um(th.dS) + ') = ' + um(th.PSmaxT) + ' µm',
+      eq(th.PSmaxT, round1(th.PSmax20 + dSraw)));
+    step('rwThPSmin',
+      'PS_min(T) = PS_min + ΔS = ' + um(th.PSmin20) + ' + (' + um(th.dS) + ') = ' + um(th.PSminT) + ' µm',
+      eq(th.PSminT, round1(th.PSmin20 + dSraw)));
+    var artExp = (th.PSmin20 + dSraw) >= 0 ? 'SPIEL' : (th.PSmax20 + dSraw) <= 0 ? 'UEBERMASS' : 'UEBERGANG';
+    step('rwThArt', 'PS_min(T) = ' + um(th.PSminT) + ' , PS_max(T) = ' + um(th.PSmaxT), th.artT === artExp, th.artT);
+    return { steps: steps, allOk: steps.every(function (s) { return s.ok; }) };
+  }
+
+  return { build: build, buildFreiform: buildFreiform, buildThermik: buildThermik };
 });

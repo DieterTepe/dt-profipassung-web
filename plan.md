@@ -3,8 +3,12 @@
 ## Interaktiver Toleranz- & Passungsassistent nach ISO 286 — mit Pressverband (DIN 7190), Toleranzketten (WC/RSS/Monte-Carlo), ISO 2768 und ANSI B4.1 — dreisprachig (DE/EN/PT), offline, Handy zuerst
 
 ═══════════════════════════════════════════════════════════════════════════
-Plan-Version : 1.9 · Stand 2026-07-13 · Status: **B8 (Thermik-Check) gebaut & grün — Handy-Test offen** · B7 bestätigt
-Basislinie   : **137.366 Assertions, 0 Fehler** — prüfbar per `node test_passung.js`
+Plan-Version : 1.9.1 · Stand 2026-07-13 · Status: **Rechenweg-Erweiterung (Freiform + Thermik) gebaut & grün — Handy-Test offen** · B8 bestätigt
+Basislinie   : **138.652 Assertions, 0 Fehler** — prüfbar per `node test_passung.js`
+STEHENDE REGEL (ab v1.9.1): **JEDE Berechnung liefert einen selbstprüfenden Rechenweg**
+(Formel + eingesetzte Werte + ✓), auch künftige Module. Der Rechenweg ist das Nachweis-
+Herzstück des Programms. rechenweg.js hat je Rechenart einen build*-Baustein; ui.js sammelt
+sie als Gruppen mit Zwischenüberschrift.
                ODER am Handy über **DT-ProfiPassung_Pruefstand.html** (GitHub Pages).
 Produktname  : **DT-ProfiPassung** (Arbeitstitel — vor Markteintritt Marke/Domain prüfen,
                analog Naming-Caveat der Schraube). Produktversion startet bei v0.1.0.
@@ -468,7 +472,7 @@ i18n-Gerüst DE/EN/PT, Theme/Sprache. DoD: erster Handy-Test Dieter. — **✓ b
 **B6 — Rechenweg** `rechenweg.js` selbstprüfend für die ISO-Kette. DoD: Selbstprüfung über
 alle bisherigen Presets × 3 Sprachen. — **✓ bestätigt (v1.7.2), inkl. Handy-Test-Fixes.**
 **B7 — Freiform + ISO 2768.** DoD: Anker ISO-2768-Tabelle, Freiform-Presets. — **✓ bestätigt (v1.8.1), Voll- & Testversion.**
-**B8 — Thermik-Check** (F5). DoD: Vorzeichen-/Umschlag-Tests, Preset 80 °C. — **Code gebaut & grün (v1.9); Handy-Test offen.**
+**B8 — Thermik-Check** (F5). DoD: Vorzeichen-/Umschlag-Tests, Preset 80 °C. — **✓ bestätigt (v1.9): 40/50 H7/p6 Stahl-in-Alu 80 °C von Dieter per Bildern geprüft, Werte korrekt.**
 **B9 — Beratungs-Module** (F6–F9: Oberfläche, Kostenampel, Messmittel, Schmierspalt).
 DoD: Regel-Tests, alle Hinweise als Codes dreisprachig.
 **B10 — Pressverband DIN 7190** (F4, größter Physik-Baustein; ggf. 2 Sessions:
@@ -676,6 +680,17 @@ Umschlag) + Plan-Anker + MAT-Richtwert-Anker → **Basislinie 133.258 → 137.36
 Verifikation: node --check · Thermik-Logik 14/14 · i18n-Parität 106×3 + 24×3 · DOM-Smoke B8
 15/15. daten/validate/solver/rechenweg/freiform/schaubild unverändert.
 **Nächster Schritt: B9 (Beratungs-Module / Passungs-Empfehlungen).**
+**v1.9.1 (2026-07-13):** Rechenweg als durchgängiges Nachweis-Prinzip (Wunsch Dieter).
+**rechenweg.js**: neue Bausteine `buildFreiform` (ISO-2768-Tabellenwert → G_o/G_u/Toleranz)
+und `buildThermik` (ΔS-Formel → PS_max(T)/PS_min(T) → Passungsart), beide selbstprüfend
+(inkl. Negativkontrolle). **ui.js**: `renderRechenweg` nimmt jetzt mehrere Gruppen mit
+Zwischenüberschrift — Fit zeigt „Passung"(+„Thermik" wenn aktiv), Freiform seinen eigenen
+Rechenweg; jede sichtbare Berechnung erscheint mit Formel + eingesetzten Werten. **style.css**:
+`.rw-subhead`. **test_passung.js**: Abschnitt 14 — Freiform-/Thermik-Rechenweg-Sweeps + Negativ-
+kontrollen → **Basislinie 137.366 → 138.652** (+1.286). Verifikation: node --check ·
+Rechenweg-Erweiterung 6/6 · i18n-Parität 114×3 · DOM-Smoke 10/10 (Fit 9 Schritte, Fit+Thermik
+13 mit 2 Zwischenüberschriften, Freiform 4). daten/validate/solver/freiform/thermik/schaubild
+unverändert. Ab jetzt gilt die stehende Regel oben für ALLE weiteren Rechenmodule.
 
 ═══════════════════════════════════════════════════════════════════════════
 Ende plan.md · DT-ProfiPassung · Plan v1.0

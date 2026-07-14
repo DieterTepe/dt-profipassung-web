@@ -840,6 +840,48 @@ section('13) Thermik-Check');
   TH.PRESETS.forEach(function (P) { ok(S.computeFit(P.fit).ok && TH.MAT[P.hole] && TH.MAT[P.shaft], 'Thermik-Preset gültig: ' + P.label); });
 })();
 
+/* === 14) Rechenweg für Freiform + Thermik (B8.1) ========================= *
+ * Jede Berechnung muss einen selbstprüfenden Rechenweg liefern (allOk). */
+section('14) Rechenweg Freiform + Thermik');
+(function () {
+  if (!RW || !RW.buildFreiform || !RW.buildThermik) { ok(false, 'Rechenweg-Erweiterung nicht geladen'); return; }
+  // Freiform:
+  var noms = [1, 3, 10, 30, 50, 120, 400, 1000, 2000, 12.5, 50.5];
+  FF.CLASSES.forEach(function (cls) {
+    noms.forEach(function (n) {
+      var ff = FF.general(n, cls);
+      if (!ff.ok) return;
+      var rw = RW.buildFreiform(ff);
+      ok(rw.steps.length === 4, 'Freiform-Rechenweg 4 Schritte ' + n + ' ' + cls);
+      ok(rw.allOk === true, 'Freiform-Rechenweg allOk ' + n + ' ' + cls);
+    });
+  });
+  // Thermik:
+  var mats = ['steel', 'alu', 'brass', 'titanium', 'pom'];
+  var fits = ['50 H7/g6', '40 H7/p6', '20 H7/k6', '100 H8/f7'];
+  var temps = [-40, 20, 80, 150];
+  fits.forEach(function (fitStr) {
+    var f = S.computeFit(fitStr); if (!f.ok) return;
+    mats.forEach(function (mh) {
+      mats.forEach(function (ms) {
+        temps.forEach(function (T) {
+          var th = TH.compute(f, { alphaHole: TH.MAT[mh].alpha, alphaShaft: TH.MAT[ms].alpha, T: T });
+          var rw = RW.buildThermik(f, th);
+          ok(rw.steps.length === 4, 'Thermik-Rechenweg 4 Schritte ' + fitStr + ' ' + mh + '/' + ms + ' @' + T);
+          ok(rw.allOk === true, 'Thermik-Rechenweg allOk ' + fitStr + ' ' + mh + '/' + ms + ' @' + T);
+          ok(rw.steps[3].art === th.artT, 'Thermik-Rechenweg Schluss-Art ' + fitStr + ' @' + T);
+        });
+      });
+    });
+  });
+  // Negativkontrollen:
+  var ffb = FF.general(50, 'm'); ffb.Go = ffb.Go + 1;
+  ok(RW.buildFreiform(ffb).allOk === false, 'Freiform-Rechenweg erkennt verfälschtes G_o');
+  var f2 = S.computeFit('40 H7/p6'); var th2 = TH.compute(f2, { alphaHole: TH.MAT.alu.alpha, alphaShaft: TH.MAT.steel.alpha, T: 80 });
+  th2.PSminT = th2.PSminT + 5;
+  ok(RW.buildThermik(f2, th2).allOk === false, 'Thermik-Rechenweg erkennt verfälschtes PS_min(T)');
+})();
+
 /* === Zusammenfassung ====================================================== */
 say('\n  ========================================');
 say('  Assertions gesamt : ' + (pass + fail));

@@ -297,6 +297,28 @@
     ['de', 'en', 'pt'].forEach(function (l) { for (var k in s[l]) STR[l][k] = s[l][k]; });
   })();
 
+  /* --- B8.1: Rechenweg-Titel für Freiform + Thermik ----------------------- */
+  (function () {
+    var s = {
+      de: {
+        rwFfLookup: 'Tabellenwert (ISO 2768-1)', rwFfGo: 'Höchstmaß', rwFfGu: 'Mindestmaß', rwFfTol: 'Toleranz',
+        rwThDelta: 'Spielverschiebung ΔS', rwThPSmax: 'Höchstspiel bei Betriebstemperatur',
+        rwThPSmin: 'Mindestspiel bei Betriebstemperatur', rwThArt: 'Passungsart bei Betriebstemperatur'
+      },
+      en: {
+        rwFfLookup: 'Table value (ISO 2768-1)', rwFfGo: 'Maximum size', rwFfGu: 'Minimum size', rwFfTol: 'Tolerance',
+        rwThDelta: 'Clearance shift ΔS', rwThPSmax: 'Max. clearance at operating temp.',
+        rwThPSmin: 'Min. clearance at operating temp.', rwThArt: 'Type of fit at operating temp.'
+      },
+      pt: {
+        rwFfLookup: 'Valor da tabela (ISO 2768-1)', rwFfGo: 'Dimensão máxima', rwFfGu: 'Dimensão mínima', rwFfTol: 'Tolerância',
+        rwThDelta: 'Deslocamento da folga ΔS', rwThPSmax: 'Folga máx. na temp. de operação',
+        rwThPSmin: 'Folga mín. na temp. de operação', rwThArt: 'Tipo de ajuste na temp. de operação'
+      }
+    };
+    ['de', 'en', 'pt'].forEach(function (l) { for (var k in s[l]) STR[l][k] = s[l][k]; });
+  })();
+
   /* ======================================================================= *
    * 2) Zustand + kleine Helfer
    * ======================================================================= */
@@ -701,7 +723,13 @@
     }
 
     renderThermik(res);
-    renderRechenweg(res);
+    // Rechenweg als Nachweis: Passung (+ Thermik, falls aktiv).
+    var groups = [{ data: window.DTPRechenweg.build(res, rwFmt()) }];
+    if (thEnabled && TH && TH.MAT[thHole] && TH.MAT[thShaft]) {
+      var thr = TH.compute(res, { alphaHole: TH.MAT[thHole].alpha, alphaShaft: TH.MAT[thShaft].alpha, T: thT });
+      if (thr.ok) { groups[0].titleKey = 'modeFit'; groups.push({ titleKey: 'thHeading', data: window.DTPRechenweg.buildThermik(res, thr, rwFmt()) }); }
+    }
+    renderRechenweg(groups);
     renderViz(res);
   }
 
@@ -745,28 +773,40 @@
   }
 
   /* Aufklappbarer, selbstprüfender Rechenweg (B6). */
-  function renderRechenweg(res) {
+  function rwFmt() { return { um: sgn, umU: fmtUm, mm: fmtMm, n: fmtNum }; }
+
+  /* Aufklappbarer, selbstprüfender Rechenweg — nimmt eine oder mehrere Gruppen
+   * [{ titleKey?, data:{steps,allOk} }]. So erscheint JEDE Berechnung als Nachweis. */
+  function renderRechenweg(groups) {
     var RWm = window.DTPRechenweg;
-    if (!RWm || !RWm.build) return;
-    var data = RWm.build(res, { um: sgn, umU: fmtUm, mm: fmtMm });
+    if (!RWm) return;
+    groups = (groups || []).filter(function (g) { return g && g.data && g.data.steps && g.data.steps.length; });
+    if (!groups.length) return;
+    var allOk = groups.every(function (g) { return g.data.allOk; });
+    var multi = groups.length > 1;
 
     var wrap = el('div', 'rechenweg');
     var btn = el('button', 'rw-toggle'); btn.type = 'button';
     var chev = el('span', 'rw-chev', '▸');
     var cap = el('span', 'rw-cap', t('rwHeading'));
-    var badge = el('span', 'rw-allok' + (data.allOk ? '' : ' bad'), data.allOk ? '✓ ' + t('rwAllOk') : '✗ ' + t('rwFail'));
+    var badge = el('span', 'rw-allok' + (allOk ? '' : ' bad'), allOk ? '✓ ' + t('rwAllOk') : '✗ ' + t('rwFail'));
     btn.appendChild(chev); btn.appendChild(cap); btn.appendChild(badge);
 
     var body = el('div', 'rw-body collapsed');
-    data.steps.forEach(function (st, idx) {
-      var row = el('div', 'rw-step' + (st.ok ? '' : ' bad'));
-      row.appendChild(el('span', 'rw-num', String(idx + 1)));
-      var main = el('div', 'rw-main');
-      main.appendChild(el('div', 'rw-title', t(st.key) + (st.art ? ' — ' + t('art' + st.art) : '')));
-      main.appendChild(el('div', 'rw-expr', st.expr));
-      row.appendChild(main);
-      row.appendChild(el('span', 'rw-check' + (st.ok ? '' : ' bad'), st.ok ? '✓' : '✗'));
-      body.appendChild(row);
+    var idx = 0;
+    groups.forEach(function (g) {
+      if (multi && g.titleKey) body.appendChild(el('div', 'rw-subhead', t(g.titleKey)));
+      g.data.steps.forEach(function (st) {
+        idx++;
+        var row = el('div', 'rw-step' + (st.ok ? '' : ' bad'));
+        row.appendChild(el('span', 'rw-num', String(idx)));
+        var main = el('div', 'rw-main');
+        main.appendChild(el('div', 'rw-title', t(st.key) + (st.art ? ' — ' + t('art' + st.art) : '')));
+        main.appendChild(el('div', 'rw-expr', st.expr));
+        row.appendChild(main);
+        row.appendChild(el('span', 'rw-check' + (st.ok ? '' : ' bad'), st.ok ? '✓' : '✗'));
+        body.appendChild(row);
+      });
     });
 
     btn.addEventListener('click', function () {
@@ -876,6 +916,8 @@
     resultHost.appendChild(tbl);
 
     renderFreiformViz(res);
+    if (window.DTPRechenweg && window.DTPRechenweg.buildFreiform)
+      renderRechenweg([{ data: window.DTPRechenweg.buildFreiform(res, rwFmt()) }]);
   }
 
   function renderFreiformError(res) {
