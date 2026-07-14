@@ -3,7 +3,7 @@
 ## Interaktiver Toleranz- & Passungsassistent nach ISO 286 — mit Pressverband (DIN 7190), Toleranzketten (WC/RSS/Monte-Carlo), ISO 2768 und ANSI B4.1 — dreisprachig (DE/EN/PT), offline, Handy zuerst
 
 ═══════════════════════════════════════════════════════════════════════════
-Plan-Version : 1.7.1 · Stand 2026-07-13 · Status: **B6 (Rechenweg) gebaut & grün — Handy-Test-Fixes eingearbeitet, Re-Test offen** · B5 bestätigt
+Plan-Version : 1.7.2 · Stand 2026-07-13 · Status: **B6 (Rechenweg) bestätigt** (inkl. Handy-Test-Fixes) · nächstes: B7
 Basislinie   : **131.765 Assertions, 0 Fehler** — prüfbar per `node test_passung.js`
                ODER am Handy über **DT-ProfiPassung_Pruefstand.html** (GitHub Pages).
 Produktname  : **DT-ProfiPassung** (Arbeitstitel — vor Markteintritt Marke/Domain prüfen,
@@ -466,7 +466,7 @@ i18n-Gerüst DE/EN/PT, Theme/Sprache. DoD: erster Handy-Test Dieter. — **✓ b
 **B4 — Parser + Sprechblasen** (2.3). DoD: Roundtrip-Property + Handy-Test. — **✓ bestätigt (v1.5.1).**
 **B5 — Toleranzfeld-Grafik** `schaubild.js` + Legende/Chips. DoD: Handy-Test, Merksatz erfüllt. — **✓ bestätigt (v1.6.1).**
 **B6 — Rechenweg** `rechenweg.js` selbstprüfend für die ISO-Kette. DoD: Selbstprüfung über
-alle bisherigen Presets × 3 Sprachen. — **Code gebaut & grün (v1.7); Handy-Test offen.**
+alle bisherigen Presets × 3 Sprachen. — **✓ bestätigt (v1.7.2), inkl. Handy-Test-Fixes.**
 **B7 — Freiform + ISO 2768.** DoD: Anker ISO-2768-Tabelle, Freiform-Presets.
 **B8 — Thermik-Check** (F5). DoD: Vorzeichen-/Umschlag-Tests, Preset 80 °C.
 **B9 — Beratungs-Module** (F6–F9: Oberfläche, Kostenampel, Messmittel, Schmierspalt).
@@ -627,6 +627,8 @@ statt 50 H7/g6 zu setzen. (4) **Unvollständige Eingabe** zeigt einen neutralen 
 „Bitte ausfüllen: …" mit den fehlenden Feldern (dreisprachig), statt rotem Fehler/Default;
 Grafik → Platzhalter. Verifikation: node --check · DOM-Smoke 14/14 · i18n-Parität 86×3 + 19×3 ·
 Basislinie **131.765** unverändert. rechenweg.js/HTML/Kern unverändert.
+**v1.7.2 (2026-07-13):** Redaktionell: B6-DoD bestätigt — Rechenweg klappt sauber, „Leeren"
+und Editionsleiste korrekt am Handy geprüft; Projektordner + GitHub aktuell. Freigabe für B7.
 
 ═══════════════════════════════════════════════════════════════════════════
 Ende plan.md · DT-ProfiPassung · Plan v1.0
