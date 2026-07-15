@@ -182,8 +182,6 @@
         vizBoreHelp: 'Grün = Bohrung. Der Balken zeigt das Toleranzfeld über/an der Nulllinie.',
         vizShaftHelp: 'Blau = Welle. Liegt das Feld unter der Bohrung, entsteht Spiel; darüber Übermaß.',
         vizFitHelp: 'Lage der beiden Felder zueinander ergibt die Passungsart.',
-        vizTherm: 'Betriebstemperatur',
-        vizThermHelp: 'Gestrichelt = Lage der Welle bei Betriebstemperatur. Die Toleranzfelder gelten bei 20 °C (DIN EN ISO 1); durch unterschiedliche Wärmeausdehnung verschiebt sich das Spiel um ΔS.',
         vizPlaceholder: 'Grafik erscheint nach gültiger Eingabe.'
       },
       en: {
@@ -192,8 +190,6 @@
         vizBoreHelp: 'Green = hole. The bar shows the tolerance zone above/at the zero line.',
         vizShaftHelp: 'Blue = shaft. Below the hole gives clearance; above it gives interference.',
         vizFitHelp: 'The relative position of both zones gives the type of fit.',
-        vizTherm: 'Operating temperature',
-        vizThermHelp: 'Dashed = shaft position at operating temperature. The tolerance zones apply at 20 °C (DIN EN ISO 1); differing thermal expansion shifts the clearance by ΔS.',
         vizPlaceholder: 'The graphic appears after a valid entry.'
       },
       pt: {
@@ -202,8 +198,6 @@
         vizBoreHelp: 'Verde = furo. A barra mostra o campo de tolerância acima/na linha zero.',
         vizShaftHelp: 'Azul = eixo. Abaixo do furo gera folga; acima, interferência.',
         vizFitHelp: 'A posição relativa dos dois campos define o tipo de ajuste.',
-        vizTherm: 'Temperatura de serviço',
-        vizThermHelp: 'Tracejado = posição do eixo à temperatura de serviço. Os campos de tolerância valem a 20 °C (DIN EN ISO 1); a dilatação térmica diferente desloca a folga em ΔS.',
         vizPlaceholder: 'O gráfico aparece após uma entrada válida.'
       }
     };
@@ -832,20 +826,11 @@
     var SB = window.DTPSchaubild;
     if (!SB) { clearViz(); return; }
     var i = res.input;
-
-    // Thermik-Overlay: Lage bei Betriebstemperatur (nur wenn Bereich aktiv & gültig).
-    var therm = null;
-    if (thEnabled && TH && TH.MAT[thHole] && TH.MAT[thShaft]) {
-      var thr = TH.compute(res, { alphaHole: TH.MAT[thHole].alpha, alphaShaft: TH.MAT[thShaft].alpha, T: thT });
-      if (thr.ok) therm = { dS: thr.dS, artT: thr.artT, T: thr.T };
-    }
-
     vizHost.appendChild(SB.svg(res, {
       hole: i.hole.letter + i.hole.grade,
       shaft: i.shaft.letter + i.shaft.grade,
-      unit: t('unit_um'),
-      tLabel: therm ? (fmtNum(therm.T) + ' °C') : null
-    }, therm));
+      unit: t('unit_um')
+    }));
 
     var leg = el('div', 'viz-legend');
     function chip(cls, name, sub, helpKey) {
@@ -868,10 +853,6 @@
       'ES ' + sgn(res.hole.upper) + ' · EI ' + sgn(res.hole.lower) + ' µm', 'vizBoreHelp'));
     leg.appendChild(chip('shaft', t('vizShaft') + ' ' + i.shaft.letter + i.shaft.grade,
       'es ' + sgn(res.shaft.upper) + ' · ei ' + sgn(res.shaft.lower) + ' µm', 'vizShaftHelp'));
-    if (therm) {
-      leg.appendChild(chip('therm-t', t('vizTherm'),
-        fmtNum(therm.T) + ' °C · ΔS ' + sgn(therm.dS) + ' µm', 'vizThermHelp'));
-    }
     vizHost.appendChild(leg);
     vizHost.appendChild(el('div', 'viz-zero-note', t('vizZero')));
   }

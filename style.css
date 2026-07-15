@@ -402,7 +402,7 @@ input.locked { background: var(--line-soft); color: var(--muted); cursor: defaul
      Container (Rechenweg) dürfen umbrechen. */
   .verdict-banner, .safety-grid, .kv-table, .improve-box, .schaubild, .sb-vals { break-inside: avoid; }
   .rw-step { break-inside: avoid; }
-  .rw-body { display: block !important; }
+  .rw-body.collapsed { display: block !important; }
   /* Schaubild vollständig und nicht überbreit auf die Seite bringen */
   .schaubild { max-width: 100%; height: auto; }
   .card { break-inside: auto; }
@@ -412,26 +412,7 @@ input.locked { background: var(--line-soft); color: var(--muted); cursor: defaul
     background: none; box-shadow: none; }
 }
 
-/* --------------------------------------------------------------- Rechenweg - */
-.rechenweg { margin-top: 16px; border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--surface2); overflow: hidden; }
-.rechenweg > summary { list-style: none; cursor: pointer; padding: 11px 13px; display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
-.rechenweg > summary::-webkit-details-marker { display: none; }
-.rechenweg > summary::before { content: '▸'; color: var(--accent); font-size: 12px; transition: transform .15s ease; }
-.rechenweg[open] > summary::before { transform: rotate(90deg); }
-.rw-title { font-weight: 700; color: var(--accent); letter-spacing: .02em; }
-.rw-hint { font-size: 12px; color: var(--faint); }
-.rw-body { padding: 4px 13px 14px; display: flex; flex-direction: column; gap: 12px; }
-.rw-step { border-left: 3px solid var(--line); padding: 8px 0 8px 12px; }
-.rw-step.is-safety { border-left-color: var(--accent); }
-.rw-head { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; }
-.rw-phase { flex: none; font: 700 11px/1 var(--font-num); color: var(--accent); background: var(--accent-soft); padding: 3px 6px; border-radius: 5px; }
-.rw-name { font-weight: 600; font-size: 13.5px; color: var(--muted); }
-.rw-ok { margin-left: auto; color: var(--ok); font-size: 13px; cursor: help; }
-.rw-formula { font-family: var(--font-math); font-size: 14px; color: var(--fg, #cdd7df); white-space: pre; overflow-x: auto; padding-bottom: 2px; }
-.rw-sub { font-family: var(--font-num); font-size: 12px; color: var(--faint); white-space: pre; overflow-x: auto; margin-top: 3px; }
-.rw-res { font-family: var(--font-num); font-weight: 700; color: var(--accent); margin-top: 4px; }
-.rw-note { font-size: 12px; color: var(--muted); margin-top: 5px; line-height: 1.45; }
-.rw-ref { font-size: 10.5px; color: var(--faint); text-transform: uppercase; letter-spacing: .06em; margin-top: 4px; }
+/* (Schrauben-Rechenweg-CSS entfernt — B6 nutzt eigene Struktur, Stile am Dateiende) */
 
 /* ------------------------------------------------ Verspannungsschaubild --- */
 .schaubild { width: 100%; height: auto; display: block; }
@@ -518,11 +499,21 @@ input.locked { background: var(--line-soft); color: var(--muted); cursor: defaul
 
 .safety-card .sc-name { justify-content: flex-start; }
 .sc-q {
-  margin-left: 6px; width: 16px; height: 16px; flex: none; padding: 0;
-  border: 1px solid var(--line); border-radius: 50%; background: var(--surface);
-  color: var(--faint); font: 700 10px/1 var(--font-ui); cursor: pointer;
+  margin-left: 6px; flex: none; padding: 0 2px; border: 0; background: none;
+  color: var(--accent); font: 400 15px/1 var(--font-ui); cursor: pointer;
+  border-radius: 50%; opacity: .85; transition: opacity .15s, text-shadow .2s;
 }
-.sc-q:hover { color: var(--accent); border-color: var(--accent); }
+.sc-q:hover, .sc-q:focus-visible { opacity: 1; text-shadow: 0 0 6px var(--accent); outline: none; }
+
+/* Aufmerksamkeits-Puls: langsam, dezent, NUR 3 Zyklen — endet dann von selbst.
+   JS entfernt die Klasse zusätzlich beim ersten Antippen (dauerhaft, s. localStorage). */
+.sc-q.pulse { animation: scQPulse 2s ease-in-out 3; }
+@keyframes scQPulse {
+  0%, 100% { opacity: .85; color: var(--accent); text-shadow: none; transform: scale(1); }
+  50%      { opacity: 1;   color: var(--accent-bright, var(--accent)); text-shadow: 0 0 8px var(--accent); transform: scale(1.18); }
+}
+@media (prefers-reduced-motion: reduce) { .sc-q.pulse { animation: none; } }
+
 .sc-help {
   margin-top: 8px; font-size: 11px; line-height: 1.4; color: var(--muted);
   border-top: 1px dashed var(--line-soft); padding-top: 7px;
@@ -551,14 +542,6 @@ input.locked { background: var(--line-soft); color: var(--muted); cursor: defaul
 @keyframes tfIn { from { opacity: 0; } to { opacity: 1; } }
 @media (prefers-reduced-motion: reduce) { .tf-bar, .tf-band { animation: none; } }
 
-/* v1.9.2 — Thermik-Overlay: Lage bei Betriebstemperatur T (dezent, gestrichelt).
-   Bewusst ohne Animation → automatisch reduced-motion-sicher. */
-.tf-ghost-shaft      { fill: none; stroke: var(--shaft); stroke-width: 1; stroke-dasharray: 3 2.5; opacity: .55; }
-.tf-band-t           { fill: none; stroke-width: 1.2; stroke-dasharray: 3 2.5; opacity: .85; }
-.tf-band-t-spiel     { stroke: var(--bore); }
-.tf-band-t-uebermass { stroke: var(--brass); }
-.tf-tlabel           { fill: var(--muted); font: 600 9px var(--font-num); letter-spacing: .04em; }
-
 /* Legende: Farb-Chips mit Zahlen (Merksatz), antippbar */
 .viz-legend { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
 @media (max-width: 460px) { .viz-legend { grid-template-columns: 1fr; } }
@@ -571,8 +554,64 @@ input.locked { background: var(--line-soft); color: var(--muted); cursor: defaul
 .vc-swatch { width: 12px; height: 12px; border-radius: 3px; flex: none; }
 .vc-swatch.bore  { background: var(--bore); }
 .vc-swatch.shaft { background: var(--shaft); }
-.vc-swatch.therm-t { background: transparent; border: 1.5px dashed var(--muted); }
 .vc-name { font-size: 13px; font-weight: 600; color: var(--fg); }
 .vc-sub { display: block; margin-top: 4px; font: 500 12px var(--font-num); color: var(--muted); }
 .vc-help { margin-top: 7px; font-size: 11px; line-height: 1.4; color: var(--muted); border-top: 1px dashed var(--line-soft); padding-top: 6px; }
 .viz-zero-note { margin-top: 8px; font-size: 11px; color: var(--faint); }
+
+/* ---- B6: Aufklappbarer, selbstprüfender Rechenweg ------------------------ */
+.rechenweg { margin-top: 14px; border: 1px solid var(--line); border-radius: var(--radius-sm); overflow: hidden; }
+.rw-toggle {
+  width: 100%; display: flex; align-items: center; gap: 8px; padding: 10px 12px;
+  background: var(--bg2); border: 0; cursor: pointer; color: var(--fg); font: 600 13px var(--font-ui); text-align: left;
+}
+.rw-toggle:hover { background: var(--surface); }
+.rw-chev { color: var(--faint); font-size: 11px; width: 12px; }
+.rw-cap { flex: 1; }
+.rw-allok { font: 600 11px var(--font-ui); color: var(--ok); }
+.rw-allok.bad { color: var(--bad); }
+.rw-body { padding: 4px 0; }
+.rw-body.collapsed { display: none; }
+.rw-step {
+  display: grid; grid-template-columns: 22px 1fr 20px; gap: 8px; align-items: start;
+  padding: 8px 12px; border-top: 1px solid var(--line-soft);
+}
+.rw-num { color: var(--faint); font: 600 11px var(--font-num); text-align: right; padding-top: 2px; }
+.rw-title { font-size: 12px; font-weight: 600; color: var(--fg); }
+.rw-expr { margin-top: 3px; font: 500 12px/1.5 var(--font-num); color: var(--muted); overflow-x: auto; white-space: nowrap; -webkit-overflow-scrolling: touch; }
+.rw-check { color: var(--ok); font-size: 13px; text-align: center; }
+.rw-check.bad { color: var(--bad); }
+.rw-step.bad { background: var(--bad-soft); }
+
+/* ---- B7: Modus-Umschaltung (Passung | Freiform) -------------------------- */
+.mode-switch { display: inline-flex; gap: 2px; padding: 3px; margin-bottom: 14px;
+  background: var(--bg2); border: 1px solid var(--line); border-radius: var(--radius-sm); }
+.mode-btn { padding: 7px 16px; border: 0; background: none; color: var(--muted);
+  font: 600 13px var(--font-ui); cursor: pointer; border-radius: calc(var(--radius-sm) - 3px); transition: background .15s, color .15s; }
+.mode-btn:hover { color: var(--fg); }
+.mode-btn.active { background: var(--surface); color: var(--accent); box-shadow: 0 1px 2px rgba(0,0,0,.25); }
+
+/* ---- B8: Thermik-Bereich (Eingabe) + Ergebnisblock ----------------------- */
+.thermik-box { margin-top: 4px; padding-top: 10px; border-top: 1px dashed var(--line-soft); }
+.thermik-head { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--fg); cursor: pointer; }
+.thermik-head input { width: 16px; height: 16px; accent-color: var(--accent); }
+.thermik-fields { margin-top: 10px; }
+
+.thermik-result { margin-top: 14px; border: 1px solid color-mix(in srgb, var(--brass) 40%, var(--line));
+  border-radius: var(--radius-sm); background: var(--brass-soft); padding: 11px 13px; }
+.th-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.th-title { font: 700 13px var(--font-ui); color: var(--brass); letter-spacing: .02em; }
+.th-at { font: 600 12px var(--font-num); color: var(--muted); }
+.th-umschlag { display: flex; align-items: center; gap: 7px; margin-top: 9px; padding: 7px 9px;
+  border-radius: 7px; background: var(--warn-soft); color: color-mix(in srgb, var(--warn) 85%, var(--fg));
+  font-size: 12px; font-weight: 600; }
+.th-uic { font-size: 14px; }
+.th-line { display: flex; align-items: baseline; gap: 10px; margin-top: 10px; }
+.th-k { font-size: 12px; color: var(--muted); }
+.th-v { font: 700 15px var(--font-num); color: var(--fg); }
+.th-ds { margin-top: 7px; font: 500 11px var(--font-num); color: var(--faint); line-height: 1.5; }
+
+/* ---- B8.1: Rechenweg-Zwischenüberschrift (mehrere Berechnungsgruppen) ----- */
+.rw-subhead { padding: 9px 12px 3px; font: 700 11px var(--font-ui); letter-spacing: .06em;
+  text-transform: uppercase; color: var(--accent); border-top: 1px solid var(--line-soft); }
+.rw-subhead:first-child { border-top: 0; }
