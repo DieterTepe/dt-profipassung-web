@@ -3,7 +3,60 @@
 ## Interaktiver Toleranz- & Passungsassistent nach ISO 286 — mit Pressverband (DIN 7190), Toleranzketten (WC/RSS/Monte-Carlo), ISO 2768 und ANSI B4.1 — dreisprachig (DE/EN/PT), offline, Handy zuerst
 
 ═══════════════════════════════════════════════════════════════════════════
-Plan-Version : 1.9.1 · Stand 2026-07-13 · Status: **Rechenweg-Erweiterung (Freiform + Thermik) gebaut & grün — Handy-Test offen** · B8 bestätigt
+🚀 KICKOFF — LIES DIES ZUERST (für frische Claude-Instanz / neuer Chat)
+═══════════════════════════════════════════════════════════════════════════
+Du bist Claude und arbeitest an DT-ProfiPassung weiter. Dieser Chat ist neu; die
+komplette Wahrheit steht in diesem Plan und in den Projektdateien. So steigst du ein:
+
+1) KOMMUNIKATION: **immer Deutsch**. Dieter arbeitet am **Handy**; jeder Baustein wird erst
+   nach seiner **Handy-Bestätigung** als „bestätigt" markiert (harte Regel, nicht vorgreifen).
+
+2) ARBEITSORDNER WIEDERHERSTELLEN (Container ist leer):
+   `mkdir -p /home/claude/dtp && cp /mnt/project/* /home/claude/dtp/ 2>/dev/null`
+   Dann Basislinie prüfen: `cd /home/claude/dtp && node test_passung.js`
+   → muss **exakt die Basislinie unten** zeigen, 0 Fehler. Wenn ja: Stand ist intakt.
+   (Dieter hält /mnt/project + GitHub nach jedem Schritt aktuell = Source of Truth.)
+
+3) AKTUELLER STAND: siehe „Plan-Version/Basislinie/Status" direkt unter diesem Block sowie
+   den Changelog **am Dateiende** (neueste Einträge zuletzt). Fertige Bausteine sind in der
+   Bauabschnitts-Liste mit „✓ bestätigt" markiert.
+
+4) NÄCHSTE AUFGABE (genau hier weitermachen):
+   **v1.9.2 (Thermik-Visualisierung im Schaubild) ist gebaut & grün und wartet auf Dieters
+   Handy-Bestätigung.** Ist sie bestätigt → **B9 (Beratungs-Module / Passungs-Empfehlungen)**:
+   aus Anwendung/Kontext eine passende ISO-286-Paarung vorschlagen, mit Begründung + selbst-
+   prüfendem Rechenweg (stehende Regel). Danach **B10 Pressverband DIN 7190** (größter Physik-
+   Baustein — dafür Opus-Modell empfohlen). Ist v1.9.2 noch NICHT bestätigt: erst die gelieferten
+   Dateien (schaubild.js, ui.js, style.css) am Handy prüfen lassen — nicht vorgreifen.
+
+5) ARBEITSWEISE JE BAUSTEIN (Fließband, minimale Diffs):
+   bauen → `node --check` alle JS → i18n-Paritätsprüfung (STR/MSG in DE/EN/PT vollständig)
+   → **DOM-Smoke** (Mini-DOM-Shim in Node, führt ui.js real aus; Muster steht in früheren
+   Sessions, ad-hoc neu schreiben) → Harness `node test_passung.js` grün (Basislinie nur
+   ERWEITERN, nie Assertions lockern) → Dateien nach `/mnt/user-data/outputs/` kopieren →
+   `present_files` → knappe deutsche Zusammenfassung, welche Dateien zu überschreiben sind →
+   Dieter bestätigt am Handy → erst dann nächster Schritt. Plan.md-Kopf (Version/Basislinie/
+   Status) + Changelog am Ende bei jedem Schritt pflegen.
+
+6) STEHENDE REGELN:
+   • JEDE Berechnung liefert einen **selbstprüfenden Rechenweg** (Formel + eingesetzte Werte + ✓)
+     via rechenweg.js `build*`; ui.js sammelt sie als Gruppen. (Nachweis-Herzstück!)
+   • Normtabellenwerte sind maßgeblich (nicht Formeln); **≥2 Quellen**; ehrliche Lücken statt
+     Falschwerten (Codes wie FD_NOT_IN_DATASET/FD_UNDEFINED/FF_UNDEFINED).
+   • `_s`-Dateien in /mnt/project = Vorlagen aus DT-ProfiSchraube, **nur lesen, nie ausliefern**.
+   • Alles offline, klassische Skripte (kein ES-Module-Import), UMD/IIFE; DOM-freie Kernlogik
+     wo möglich (testbar). i18n DE/EN/PT von Anfang an, Parität Pflicht.
+
+7) MODULKARTE: daten.js (ISO-286-Zahlenkern) · validate.js (Eingabeprüfung) · solver.js
+   (computeFit/parseFit/formatFit, Presets) · freiform.js (ISO 2768) · thermik.js (MAT +
+   Thermik) · rechenweg.js (build/buildFreiform/buildThermik) · schaubild.js (Toleranzfeld-
+   SVG: svg + svgGeneral + Thermik-Overlay bei T) · ui.js (Formular, Modus Passung/Freiform, Thermik-Bereich, i18n,
+   Theme, Rechenweg, Grafik) · test_passung.js (Harness, Abschnitte 1–14) · style.css ·
+   DT-ProfiPassung.html (voll) / _Test.html (Testedition) / _Pruefstand.html (Handy-Test).
+═══════════════════════════════════════════════════════════════════════════
+
+═══════════════════════════════════════════════════════════════════════════
+Plan-Version : 1.9.2 · Stand 2026-07-15 · Status: **v1.9.2 (Thermik-Visualisierung im Schaubild) gebaut & grün — Handy-Test offen** · v1.9.1 + B8 bestätigt
 Basislinie   : **138.652 Assertions, 0 Fehler** — prüfbar per `node test_passung.js`
 STEHENDE REGEL (ab v1.9.1): **JEDE Berechnung liefert einen selbstprüfenden Rechenweg**
 (Formel + eingesetzte Werte + ✓), auch künftige Module. Der Rechenweg ist das Nachweis-
@@ -691,6 +744,25 @@ kontrollen → **Basislinie 137.366 → 138.652** (+1.286). Verifikation: node -
 Rechenweg-Erweiterung 6/6 · i18n-Parität 114×3 · DOM-Smoke 10/10 (Fit 9 Schritte, Fit+Thermik
 13 mit 2 Zwischenüberschriften, Freiform 4). daten/validate/solver/freiform/thermik/schaubild
 unverändert. Ab jetzt gilt die stehende Regel oben für ALLE weiteren Rechenmodule.
+**v1.9.1b (2026-07-13):** Plan-Infrastruktur: KICKOFF-Block ganz oben ergänzt, damit eine
+frische Claude-Instanz in einem NEUEN Chat ohne Verlaufs-Ballast exakt hier weiterarbeiten kann
+(Recovery aus /mnt/project, Basislinie-Gegenprobe, nächste Aufgabe, Arbeitsweise, Regeln,
+Modulkarte). Kein Code geändert; Basislinie unverändert.
+**v1.9.2 (2026-07-15):** v1.9.1 (Rechenweg Freiform + Thermik) am Handy bestätigt. Neu:
+**Thermik-Visualisierung im Schaubild.** **schaubild.js**: `layout(res, therm)` und
+`svg(res, labels, therm)` optional erweitert (rückwärtskompatibel) — bei aktiver Thermik wird
+DOM-frei ein Wellen-„Geist" um −ΔS verschoben (Skala weitet sich, nichts schneidet ab), die
+Spiel-/Übermaßzone **bei T** ermittelt (SPIEL/ÜBERMASS gestrichelt; ÜBERGANG ehrlich ohne Zone)
+und ein sprachneutraler „T °C"-Tag gesetzt; die Toleranzfelder bleiben bei 20 °C (DIN EN ISO 1).
+**ui.js**: `renderViz` reicht die Thermik (falls aktiv & gültig) ans SVG durch und ergänzt einen
+dezenten Legenden-Chip (T + ΔS, dreisprachige Erklärung); neue i18n-Keys `vizTherm`/`vizThermHelp`
+(DE/EN/PT). **style.css**: `.tf-ghost-shaft`, `.tf-band-t(-spiel/-uebermass)`, `.tf-tlabel`,
+gestrichelter Chip-Swatch — bewusst ohne Animation (reduced-motion-sicher). **HTML & Harness
+unberührt** (der Prüfstand lädt schaubild.js nicht → Schaubild-Layout bleibt Ad-hoc-Prüfung;
+Basislinie **138.652 unverändert**). Verifikation: node --check · Layout-Mathematik + SVG-Shim +
+i18n-Parität **54/54** · DOM-Smoke (ui.js real, Thermik-Preset) **11/11**. daten/validate/solver/
+freiform/thermik/rechenweg/test_passung unverändert.
+**Nächster Schritt: B9 (Beratungs-Module / Passungs-Empfehlungen).**
 
 ═══════════════════════════════════════════════════════════════════════════
 Ende plan.md · DT-ProfiPassung · Plan v1.0

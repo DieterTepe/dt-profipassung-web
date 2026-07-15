@@ -23,9 +23,20 @@
    * Erwartet res.hole/res.shaft mit { upper, lower } in µm (ES/EI bzw. es/ei).
    * Liefert die vertikale µm→Pixel-Abbildung, Balken-Rechtecke und Achsen-Ticks.
    */
-  function layout(res) {
+  /* therm (optional) = { dS, artT } — thermische Verschiebung des Passungsfensters
+   * bei Betriebstemperatur T. Die Toleranzfelder (Balken) selbst bleiben bei 20 °C
+   * (DIN EN ISO 1); zusätzlich wird die Welle als „Geist" um −dS verschoben und die
+   * Spiel-/Übermaßzone bei T ermittelt. dS in µm; Vorzeichen: dS>0 ⇒ Spiel wächst. */
+  function layout(res, therm) {
     var Hf = res.hole, Sf = res.shaft;
+    var hasT = !!(therm && isFinite(therm.dS) && Math.abs(therm.dS) >= 0.05);
+    var gU, gL;
     var vals = [0, Hf.upper, Hf.lower, Sf.upper, Sf.lower];
+    if (hasT) {
+      // Spiel = Bohrung − Welle; +dS (Spiel wächst) ⇔ Welle relativ um −dS verschoben.
+      gU = Sf.upper - therm.dS; gL = Sf.lower - therm.dS;
+      vals = vals.concat([gU, gL]);           // Skala weiten, damit der Geist nie abschneidet
+    }
     var lo = Math.min.apply(null, vals), hi = Math.max.apply(null, vals);
     var raw = hi - lo || 1;
     var pad = Math.max(raw * 0.15, 3);       // etwas Luft ober-/unterhalb
@@ -44,7 +55,7 @@
       return { x: x, y: yt, w: colW, h: Math.max(yb - yt, 1.5), yTop: yt, yBot: yb };
     }
 
-    // Spiel-/Übermaßzone (nur eindeutige Fälle): Höhe = Mindestspiel bzw. Kleinstübermaß.
+    // Spiel-/Übermaßzone bei 20 °C (nur eindeutige Fälle): Höhe = Mindestspiel bzw. Kleinstübermaß.
     var band = null;
     if (res.fit) {
       if (res.fit.art === 'SPIEL') {
@@ -57,11 +68,25 @@
       if (band && Math.abs(band.yBot - band.yTop) < 0.6) band = null; // zu dünn -> weglassen
     }
 
+    // Thermik-Zusatz: Wellen-„Geist" bei T + verschobene Spiel-/Übermaßzone bei T.
+    var ghost = null, bandT = null;
+    if (hasT) {
+      ghost = barRect(shaftX, gU, gL);
+      if (therm.artT === 'SPIEL') {
+        // zwischen Bohrungs-Unterkante (EI) und Wellen-Geist-Oberkante (es − dS)
+        bandT = { yTop: y(Hf.lower), yBot: y(gU), kind: 'spiel' };
+      } else if (therm.artT === 'UEBERMASS') {
+        // zwischen Bohrungs-Oberkante (ES) und Wellen-Geist-Unterkante (ei − dS)
+        bandT = { yTop: y(Hf.upper), yBot: y(gL), kind: 'uebermass' };
+      }
+      if (bandT && Math.abs(bandT.yBot - bandT.yTop) < 0.6) bandT = null; // zu dünn -> weglassen
+    }
+
     return {
       dim: DIM, lo: lo, hi: hi, span: span, y: y, y0: y(0),
       hole: barRect(holeX, Hf.upper, Hf.lower),
       shaft: barRect(shaftX, Sf.upper, Sf.lower),
-      band: band,
+      band: band, ghost: ghost, bandT: bandT, dS: hasT ? therm.dS : 0,
       ticks: [hi, 0, lo],
       cols: { holeCx: holeX + colW / 2, shaftCx: shaftX + colW / 2 }
     };
@@ -76,9 +101,9 @@
   function num(x) { return Math.round(x * 100) / 100; }
 
   /* Baut das SVG. labels = { hole:'H7', shaft:'g6', unit:'µm' } (sprachneutral). */
-  function svg(res, labels) {
+  function svg(res, labels, therm) {
     labels = labels || {};
-    var L = layout(res);
+    var L = layout(res, therm);
     var s = elNS('svg', {
       viewBox: '0 0 ' + DIM.W + ' ' + DIM.H, class: 'viz-svg',
       role: 'img', preserveAspectRatio: 'xMidYMid meet'
@@ -126,6 +151,24 @@
     }
     if (labels.hole) s.appendChild(col(L.cols.holeCx, labels.hole, 'tf-bore-fg'));
     if (labels.shaft) s.appendChild(col(L.cols.shaftCx, labels.shaft, 'tf-shaft-fg'));
+
+    // Thermik-Overlay (dezent, gestrichelt, vor den Balken): Wellen-„Geist" bei T,
+    // Spiel-/Übermaßzone bei T und ein sprachneutraler Temperatur-Tag „T °C".
+    if (L.ghost) {
+      var g = L.ghost;
+      if (L.bandT) {
+        var ty = Math.min(L.bandT.yTop, L.bandT.yBot), th = Math.abs(L.bandT.yBot - L.bandT.yTop);
+        s.appendChild(elNS('rect', {
+          x: DIM.padL, y: num(ty), width: DIM.W - DIM.padL - DIM.padR, height: num(th),
+          class: 'tf-band-t tf-band-t-' + L.bandT.kind
+        }));
+      }
+      s.appendChild(elNS('rect', { x: num(g.x), y: num(g.y), width: num(g.w), height: num(g.h), rx: 2, class: 'tf-ghost-shaft' }));
+      if (labels.tLabel) {
+        var tl = elNS('text', { x: DIM.W - DIM.padR, y: num(Math.max(g.yTop - 3, DIM.padT + 7)), class: 'tf-tlabel', 'text-anchor': 'end' });
+        tl.textContent = labels.tLabel; s.appendChild(tl);
+      }
+    }
 
     return s;
   }
