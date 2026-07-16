@@ -628,3 +628,20 @@ input.locked { background: var(--line-soft); color: var(--muted); cursor: defaul
 .vc-swatch.therm-shaft { background: transparent; border: 1.5px dashed var(--shaft); }
 /* ΔS-Notiz unter der Legende. */
 .viz-therm-note { font-size: 12px; color: var(--muted); margin-top: 4px; }
+
+/* ── B9 · Beratung: Kostenampel + Messmittel ─────────────────────────────── */
+.beratung-result { margin-top: 14px; border: 1px solid var(--line-soft); border-radius: var(--radius-sm); background: var(--surface); padding: 11px 13px; }
+.br-title { font: 700 13px var(--font-ui); color: var(--accent); letter-spacing: .02em; margin-bottom: 6px; }
+.br-sub { font: 700 11px var(--font-ui); letter-spacing: .05em; text-transform: uppercase; color: var(--muted); margin: 9px 0 4px; }
+.br-cost-row { display: flex; align-items: center; gap: 8px; margin: 3px 0; }
+.br-dot { width: 12px; height: 12px; border-radius: 50%; flex: 0 0 auto; }
+.br-dot.red { background: #e5484d; } .br-dot.yellow { background: #e5b302; } .br-dot.green { background: var(--bore); }
+.br-part { font-weight: 600; min-width: 92px; }
+.br-cost-txt { color: var(--fg); }
+.br-proc { font-size: 12px; color: var(--muted); margin: 1px 0 4px 20px; }
+.br-meas-head { font-size: 13px; color: var(--fg); margin: 5px 0 3px; }
+.br-instr { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 3px; }
+.br-chip { font-size: 12px; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--line-soft); color: var(--muted); }
+.br-chip.ok { border-color: var(--bore); color: var(--bore); }
+.br-chip.ideal { background: var(--bore-soft); border-width: 2px; font-weight: 700; }
+.br-chip.no { opacity: .65; text-decoration: line-through; }

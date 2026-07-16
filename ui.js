@@ -338,6 +338,52 @@
     ['de', 'en', 'pt'].forEach(function (l) { for (var k in s[l]) STR[l][k] = s[l][k]; });
   })();
 
+  /* --- B9: Beratung (Kostenampel + Messmittel) --------------------------- */
+  (function () {
+    var s = {
+      de: {
+        brHeading: 'Fertigung & Messtechnik', brCostTitle: 'Kostenampel',
+        brMeasTitle: 'Messmittel · goldene Regel U ≤ T/10', brProcesses: 'Verfahren',
+        brIdeal: 'ideal (U ≤ T/10)',
+        costRED: 'teuer · Schleifen/Honen, Ausschussrisiko',
+        costYELLOW: 'mittel · Feindrehen/Reiben', costGREEN: 'günstig · Standard-Drehen',
+        procLAEPPEN: 'Läppen', procHONEN: 'Honen', procRUNDSCHLEIFEN: 'Rundschleifen',
+        procREIBEN: 'Reiben', procFEINDREHEN: 'Feindrehen', procDREHEN: 'Drehen',
+        procRAEUMEN: 'Räumen', procFRAESEN: 'Fräsen', procBOHREN: 'Bohren',
+        instrMESSSCHIEBER: 'Messschieber', instrMIKROMETER: 'Bügelmessschraube',
+        instrINNENMIKRO_3P: '3-Punkt-Innenmessschraube', instrMESSUHR: 'Messuhr',
+        instrKMG: 'KMG', instrGRENZLEHRE: 'Grenzlehre'
+      },
+      en: {
+        brHeading: 'Manufacturing & metrology', brCostTitle: 'Cost indicator',
+        brMeasTitle: 'Gauges · golden rule U ≤ T/10', brProcesses: 'Processes',
+        brIdeal: 'ideal (U ≤ T/10)',
+        costRED: 'expensive · grinding/honing, scrap risk',
+        costYELLOW: 'medium · fine turning/reaming', costGREEN: 'low cost · standard turning',
+        procLAEPPEN: 'Lapping', procHONEN: 'Honing', procRUNDSCHLEIFEN: 'Cylindrical grinding',
+        procREIBEN: 'Reaming', procFEINDREHEN: 'Fine turning', procDREHEN: 'Turning',
+        procRAEUMEN: 'Broaching', procFRAESEN: 'Milling', procBOHREN: 'Drilling',
+        instrMESSSCHIEBER: 'Caliper', instrMIKROMETER: 'Micrometer',
+        instrINNENMIKRO_3P: '3-point bore micrometer', instrMESSUHR: 'Dial indicator',
+        instrKMG: 'CMM', instrGRENZLEHRE: 'Limit gauge'
+      },
+      pt: {
+        brHeading: 'Fabricação & metrologia', brCostTitle: 'Indicador de custo',
+        brMeasTitle: 'Instrumentos · regra de ouro U ≤ T/10', brProcesses: 'Processos',
+        brIdeal: 'ideal (U ≤ T/10)',
+        costRED: 'caro · retificação/brunimento, risco de refugo',
+        costYELLOW: 'médio · torneamento fino/alargamento', costGREEN: 'econômico · torneamento padrão',
+        procLAEPPEN: 'Lapidação', procHONEN: 'Brunimento', procRUNDSCHLEIFEN: 'Retificação cilíndrica',
+        procREIBEN: 'Alargamento', procFEINDREHEN: 'Torneamento fino', procDREHEN: 'Torneamento',
+        procRAEUMEN: 'Brochamento', procFRAESEN: 'Fresamento', procBOHREN: 'Furação',
+        instrMESSSCHIEBER: 'Paquímetro', instrMIKROMETER: 'Micrômetro',
+        instrINNENMIKRO_3P: 'Micrômetro interno 3 pontos', instrMESSUHR: 'Relógio comparador',
+        instrKMG: 'MMC', instrGRENZLEHRE: 'Calibrador de limites'
+      }
+    };
+    ['de', 'en', 'pt'].forEach(function (l) { for (var k in s[l]) STR[l][k] = s[l][k]; });
+  })();
+
   /* ======================================================================= *
    * 2) Zustand + kleine Helfer
    * ======================================================================= */
@@ -742,6 +788,7 @@
     }
 
     renderThermik(res);
+    renderBeratung(res);
     // Rechenweg als Nachweis: Passung (+ Thermik, falls aktiv).
     var groups = [{ data: window.DTPRechenweg.build(res, rwFmt()) }];
     if (thEnabled && TH && TH.MAT[thHole] && TH.MAT[thShaft]) {
@@ -787,6 +834,51 @@
     ds.textContent = 'ΔS = ' + sgn(r.dS) + ' µm  ·  ' + t('thVs20') + '  ·  '
       + mh.label[lang] + ' (α ' + fmtNum(mh.alpha) + ') / ' + ms.label[lang] + ' (α ' + fmtNum(ms.alpha) + ')';
     box.appendChild(ds);
+
+    resultHost.appendChild(box);
+  }
+
+  /* Beratung (B9): Kostenampel + Messmittel-Empfehlung (Richtwerte, sprachneutrale
+   * Codes aus beratung.js → hier übersetzt). Erscheint im Passungs-Ergebnis. */
+  function renderBeratung(res) {
+    var BR = window.DTPBeratung;
+    if (!BR || !BR.costTraffic) return;
+    var i = res.input;
+    var box = el('div', 'beratung-result');
+    box.appendChild(el('div', 'br-title', t('brHeading')));
+
+    // — Kostenampel (Verfahren ↔ IT) —
+    box.appendChild(el('div', 'br-sub', t('brCostTitle')));
+    [['fHole', i.hole], ['fShaft', i.shaft]].forEach(function (p) {
+      var c = BR.costTraffic(p[1].grade);
+      var row = el('div', 'br-cost-row');
+      row.appendChild(el('span', 'br-dot ' + (c.tier || ''), ''));
+      row.appendChild(el('span', 'br-part', t(p[0]) + ' ' + p[1].letter + p[1].grade));
+      row.appendChild(el('span', 'br-cost-txt', t('cost' + String(c.tier || '').toUpperCase())));
+      box.appendChild(row);
+      if (c.processes.length) {
+        box.appendChild(el('div', 'br-proc',
+          t('brProcesses') + ': ' + c.processes.map(function (k) { return t('proc' + k); }).join(', ')));
+      }
+    });
+
+    // — Messmittel (goldene Regel U ≤ T/10) —
+    box.appendChild(el('div', 'br-sub', t('brMeasTitle')));
+    [['fHole', res.hole], ['fShaft', res.shaft]].forEach(function (p) {
+      var T = p[1].upper - p[1].lower;
+      var m = BR.measurement(T);
+      box.appendChild(el('div', 'br-meas-head',
+        t(p[0]) + ': T = ' + fmtNum(T) + ' µm  →  U ≤ ' + fmtNum(Math.round(m.uGoldenUm * 10) / 10) + ' µm'));
+      var chips = el('div', 'br-instr');
+      m.instruments.forEach(function (x) {
+        var cls = 'br-chip ' + (x.suitable ? (x.golden ? 'ok ideal' : 'ok') : 'no');
+        var mark = x.suitable ? (x.golden ? ' ✓★' : ' ✓') : ' ✗';
+        var chip = el('span', cls, t('instr' + x.key) + mark);
+        if (x.golden) chip.title = t('brIdeal');
+        chips.appendChild(chip);
+      });
+      box.appendChild(chips);
+    });
 
     resultHost.appendChild(box);
   }
