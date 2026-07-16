@@ -449,6 +449,62 @@
     ['de', 'en', 'pt'].forEach(function (l) { for (var k in s[l]) STR[l][k] = s[l][k]; });
   })();
 
+  /* B10a — Laien-ⓘ je Eingabefeld: ausführliche Sprechblasen-Hilfen (DE/EN/PT).
+     Aufbau je Text: Was ist das? · Bereich · empfohlene Werte mit Begründung. */
+  (function () {
+    var s = {
+      de: {
+        fh_fFit: 'Komplette Passung in einem Rutsch eintippen — z. B. „50 H7/g6“, „Ø50 H7-g6“ oder nur „50 H7“. Großbuchstabe = Bohrung, Kleinbuchstabe = Welle. Die Felder darunter stellen sich automatisch ein und bleiben mit diesem Feld synchron.\nBereich: Nennmaß 1–500 mm (ISO-286-Tabelle).\nTipp: „50 H7/g6“ ist ein bewährtes Beispiel zum Ausprobieren — eine leichtgängige Führung.',
+        fh_fNominal: 'Gemeinsames Ausgangsmaß von Bohrung und Welle — die Zahl vor dem Toleranzkurzzeichen auf der Zeichnung (die 50 in „Ø50 H7/g6“). Von diesem Maß aus werden die erlaubten Abweichungen gerechnet.\nBereich: 1–500 mm (tabellierte ISO-286-Werte).\nGut zu wissen: Je größer das Nennmaß, desto größer die Toleranz desselben IT-Grades — das sieht die Norm bewusst so vor.',
+        fh_fSystem: 'Legt fest, welches Teil die feste „Null-Lage“ bekommt:\n• Einheitsbohrung — Bohrung immer H, die Passung wird über die Welle gesteuert. Standard im Maschinenbau, weil Bohrwerkzeuge (z. B. Reibahlen) feste Maße haben.\n• Einheitswelle — Welle immer h; sinnvoll z. B. bei blankgezogenem Wellenmaterial, auf das mehrere Teile kommen.\n• Frei — beide Seiten beliebig wählbar (Sonderfälle).\nEmpfehlung: Im Zweifel Einheitsbohrung — so arbeitet der größte Teil des Maschinenbaus.',
+        fh_fHole: 'Toleranzklasse der Bohrung. Der Buchstabe bestimmt die Lage des Toleranzfelds zur Nulllinie (H beginnt genau an der Nulllinie — deshalb ist H die übliche Wahl), die IT-Zahl die Größe des Felds: kleinere Zahl = enger = genauer = teurer.\nÜbliche Werte: H7 für normale Passbohrungen (gerieben/feingebohrt) · H8 für Gleitlager · H6 für hochgenaue Führungen.\nEmpfehlung: H7 wählen und den Passungscharakter über die Welle steuern.',
+        fh_fShaft: 'Toleranzklasse der Welle. Kleinbuchstabe = Lage zur Nulllinie (h endet genau an der Nulllinie; Richtung a wird es lockerer, Richtung z fester), IT-Zahl = Größe des Toleranzfelds.\nTypische Partner zu H7: g6 leichtgängige Führung · h6 Schiebesitz · js6/k6 wackelfreie Zentrierung · n6/p6 fester Sitz · s6 Pressverband.\nFaustregel: Welle einen IT-Grad genauer als die Bohrung (H7 + g6) — Außenflächen lassen sich leichter genau fertigen als Bohrungen.',
+        fh_ffNominal: 'Länge oder Durchmesser des Maßes, für das die Allgemeintoleranz nach ISO 2768 gelten soll — also ein Maß ohne eigene Toleranzangabe auf der Zeichnung.\nBereich: 0,5–4000 mm (Tabellenbereiche der Norm).\nHinweis: Für Maße unter 0,5 mm verlangt die Norm eine direkte Toleranzangabe am Maß selbst.',
+        fh_ffClass: 'Toleranzklasse der Allgemeintoleranzen nach ISO 2768-1 — gilt pauschal für alle Maße ohne eigene Toleranzangabe:\n• f (fein) — Feinmechanik, geschliffene Teile\n• m (mittel) — normaler Maschinenbau, Standard auf den meisten Zeichnungen\n• c (grob) — Schweißkonstruktionen, Brennteile\n• v (sehr grob) — Guss- und Schmiederohteile\nEmpfehlung: „m“, wenn das Zeichnungs-Schriftfeld nichts anderes sagt (üblich: „ISO 2768-m“).',
+        fh_thEnable: 'Alle ISO-Toleranzen gelten bei 20 °C (DIN EN ISO 1). Läuft die Paarung wärmer oder kälter, dehnen sich Bohrungsteil und Welle unterschiedlich stark aus — das Spiel kann wachsen, schrumpfen oder sogar umschlagen (aus Spiel wird Klemmung).\nEinschalten, wenn die Betriebstemperatur deutlich von 20 °C abweicht — als Faustregel ab etwa ±20 K, bei Werkstoffmix (z. B. Stahl-Welle im Alu-Gehäuse) schon früher.',
+        fh_thTemp: 'Gemeinsame Betriebstemperatur beider Teile im eingeschwungenen (stationären) Zustand.\nTypische Werte: Getriebe 60–90 °C · Elektromotor-Gehäuse 40–80 °C · Motorumfeld 100–150 °C · Außeneinsatz/Kühlung bis −40 °C.\nHinweis: Bei schnellen Temperaturwechseln (schneller als ca. 10 K/min) sind die Übergangszustände kritischer als der hier gerechnete Dauerzustand.',
+        fh_thMatHole: 'Werkstoff des Teils mit der Bohrung (Gehäuse, Nabe, Buchse) — er bestimmt, wie stark sich die Bohrung mit der Temperatur weitet.\nDaumenwerte α (10⁻⁶/K): Stahl ≈ 11,5 · Grauguss ≈ 10 · Alu ≈ 23 · Messing ≈ 19.\nEntscheidend ist der Unterschied zur Welle: ein Alu-Gehäuse um eine Stahl-Welle vergrößert das Spiel beim Erwärmen deutlich.',
+        fh_thMatShaft: 'Werkstoff der Welle bzw. des Innenteils — bestimmt dessen Wärmeausdehnung.\nDaumenwerte α (10⁻⁶/K): Stahl ≈ 11,5 · austenitischer Edelstahl ≈ 16 · Alu ≈ 23.\nDehnt sich die Welle stärker als das Bohrungsteil (z. B. Alu-Welle in Stahlbuchse), wird das Spiel beim Erwärmen kleiner — Klemmgefahr prüfen.',
+        fh_oaEnable: 'Berücksichtigt die Rautiefe Rz beider Oberflächen:\n• Spielpassung: Rauspitzen zehren am nutzbaren Spiel → wirksames Kleinstspiel und Schmierspalt-Prüfung.\n• Presspassung: Rauspitzen werden beim Fügen eingeebnet → Übermaßverlust (wichtig für den Pressverband).\nEinschalten, wenn diese Praxis-Effekte mitgerechnet werden sollen — für eine Pressverband-Rechnung ohnehin empfohlen.',
+        fh_oaRzHole: 'Gemittelte Rautiefe Rz der Bohrungsfläche in µm — steht als Oberflächenangabe auf der Zeichnung.\nTypisch je Verfahren: Schleifen/Honen 1–4 · Reiben 4–10 · Feinbohren 6,3–16 · Bohren/Drehen 16–63.\nFaustregel: Rz höchstens T/5 der Maßtoleranz — bei H7 an Ø50 (25 µm) also Rz ≤ 5 µm → Feinbearbeitung nötig.',
+        fh_oaRzShaft: 'Gemittelte Rautiefe Rz der Wellenfläche in µm — steht als Oberflächenangabe auf der Zeichnung.\nTypisch je Verfahren: Schleifen 1–4 · Feindrehen 6,3–16 · Drehen 16–63.\nFaustregel: Rz höchstens T/5 der Maßtoleranz — bei g6 an Ø50 (16 µm) also Rz ≈ 3 µm → meist Schleifen.'
+      },
+      en: {
+        fh_fFit: 'Type the complete fit in one go — e.g. "50 H7/g6", "Ø50 H7-g6" or just "50 H7". Capital letter = hole, lower-case = shaft. The fields below follow automatically and stay in sync with this field.\nRange: nominal size 1–500 mm (ISO 286 table).\nTip: "50 H7/g6" is a proven example to try — an easy-running fit.',
+        fh_fNominal: 'Common starting size of hole and shaft — the number before the tolerance code on the drawing (the 50 in "Ø50 H7/g6"). All permitted deviations are measured from this size.\nRange: 1–500 mm (tabulated ISO 286 values).\nGood to know: the larger the nominal size, the larger the tolerance of the same IT grade — the standard intends this.',
+        fh_fSystem: 'Defines which part gets the fixed "zero position":\n• Hole basis — hole is always H, the fit is controlled via the shaft. Standard in mechanical engineering because hole tools (e.g. reamers) come in fixed sizes.\n• Shaft basis — shaft is always h; useful e.g. for bright-drawn shaft material carrying several parts.\n• Free — both sides freely selectable (special cases).\nRecommendation: when in doubt, hole basis — most of mechanical engineering works this way.',
+        fh_fHole: 'Tolerance class of the hole. The letter sets the position of the tolerance zone relative to the zero line (H starts exactly at the zero line — that is why H is the usual choice), the IT number sets its size: smaller number = tighter = more precise = more expensive.\nCommon values: H7 for normal fit bores (reamed/fine-bored) · H8 for plain bearings · H6 for high-precision guides.\nRecommendation: choose H7 and control the fit character via the shaft.',
+        fh_fShaft: 'Tolerance class of the shaft. Lower-case letter = position relative to the zero line (h ends exactly at the zero line; towards a it gets looser, towards z tighter), IT number = size of the tolerance zone.\nTypical partners for H7: g6 easy-running guide · h6 sliding fit · js6/k6 play-free location · n6/p6 tight fit · s6 press fit.\nRule of thumb: shaft one IT grade finer than the hole (H7 + g6) — outer surfaces are easier to machine precisely than bores.',
+        fh_ffNominal: 'Length or diameter of the dimension the ISO 2768 general tolerance shall apply to — i.e. a dimension without its own tolerance on the drawing.\nRange: 0.5–4000 mm (table ranges of the standard).\nNote: for dimensions below 0.5 mm the standard requires a direct tolerance at the dimension itself.',
+        fh_ffClass: 'Tolerance class of the ISO 2768-1 general tolerances — applies globally to all dimensions without their own tolerance:\n• f (fine) — precision mechanics, ground parts\n• m (medium) — normal mechanical engineering, standard on most drawings\n• c (coarse) — welded structures, flame-cut parts\n• v (very coarse) — cast and forged blanks\nRecommendation: "m" unless the drawing title block says otherwise (common entry: "ISO 2768-m").',
+        fh_thEnable: 'All ISO tolerances apply at 20 °C (DIN EN ISO 1). If the pairing runs hotter or colder, hole part and shaft expand differently — the clearance can grow, shrink or even flip (clearance becomes jamming).\nSwitch on if the operating temperature clearly differs from 20 °C — as a rule of thumb from about ±20 K, with mixed materials (e.g. steel shaft in aluminium housing) even earlier.',
+        fh_thTemp: 'Common operating temperature of both parts in the settled (steady) state.\nTypical values: gearbox 60–90 °C · electric-motor housing 40–80 °C · engine environment 100–150 °C · outdoor/refrigeration down to −40 °C.\nNote: with fast temperature changes (faster than about 10 K/min) the transient states are more critical than the steady state calculated here.',
+        fh_thMatHole: 'Material of the part containing the hole (housing, hub, bushing) — it determines how much the bore widens with temperature.\nRule-of-thumb α (10⁻⁶/K): steel ≈ 11.5 · grey cast iron ≈ 10 · aluminium ≈ 23 · brass ≈ 19.\nWhat matters is the difference to the shaft: an aluminium housing around a steel shaft clearly increases the clearance when heated.',
+        fh_thMatShaft: 'Material of the shaft or inner part — determines its thermal expansion.\nRule-of-thumb α (10⁻⁶/K): steel ≈ 11.5 · austenitic stainless steel ≈ 16 · aluminium ≈ 23.\nIf the shaft expands more than the hole part (e.g. aluminium shaft in a steel bushing), the clearance shrinks when heated — check for jamming.',
+        fh_oaEnable: 'Takes the surface roughness Rz of both surfaces into account:\n• Clearance fit: roughness peaks eat into the usable clearance → effective minimum clearance and lubrication-gap check.\n• Interference fit: roughness peaks are flattened during joining → loss of interference (important for the press fit).\nSwitch on if these practical effects shall be included — recommended anyway for a press-fit calculation.',
+        fh_oaRzHole: 'Mean roughness depth Rz of the bore surface in µm — given as the surface symbol on the drawing.\nTypical per process: grinding/honing 1–4 · reaming 4–10 · fine boring 6.3–16 · drilling/turning 16–63.\nRule of thumb: Rz at most T/5 of the size tolerance — for H7 at Ø50 (25 µm) that means Rz ≤ 5 µm → fine machining required.',
+        fh_oaRzShaft: 'Mean roughness depth Rz of the shaft surface in µm — given as the surface symbol on the drawing.\nTypical per process: grinding 1–4 · fine turning 6.3–16 · turning 16–63.\nRule of thumb: Rz at most T/5 of the size tolerance — for g6 at Ø50 (16 µm) that means Rz ≈ 3 µm → usually grinding.'
+      },
+      pt: {
+        fh_fFit: 'Digite o ajuste completo de uma vez — p. ex. "50 H7/g6", "Ø50 H7-g6" ou só "50 H7". Letra maiúscula = furo, minúscula = eixo. Os campos abaixo se ajustam automaticamente e ficam sincronizados com este campo.\nFaixa: dimensão nominal 1–500 mm (tabela ISO 286).\nDica: "50 H7/g6" é um exemplo consagrado para experimentar — uma guia de giro leve.',
+        fh_fNominal: 'Dimensão de partida comum de furo e eixo — o número antes do código de tolerância no desenho (o 50 em "Ø50 H7/g6"). Os desvios permitidos são contados a partir desta dimensão.\nFaixa: 1–500 mm (valores tabelados da ISO 286).\nBom saber: quanto maior a dimensão nominal, maior a tolerância do mesmo grau IT — a norma prevê isso de propósito.',
+        fh_fSystem: 'Define qual peça recebe a "posição zero" fixa:\n• Furo-base — furo sempre H, o ajuste é controlado pelo eixo. Padrão na mecânica, pois ferramentas de furo (p. ex. alargadores) têm medidas fixas.\n• Eixo-base — eixo sempre h; útil p. ex. com material de eixo trefilado que recebe várias peças.\n• Livre — ambos os lados livres (casos especiais).\nRecomendação: na dúvida, furo-base — a maior parte da mecânica trabalha assim.',
+        fh_fHole: 'Classe de tolerância do furo. A letra define a posição do campo de tolerância em relação à linha zero (H começa exatamente na linha zero — por isso H é a escolha usual), o número IT define o tamanho: número menor = mais estreito = mais preciso = mais caro.\nValores usuais: H7 para furos de ajuste normais (alargados/mandrilados finos) · H8 para mancais de deslizamento · H6 para guias de alta precisão.\nRecomendação: escolher H7 e controlar o caráter do ajuste pelo eixo.',
+        fh_fShaft: 'Classe de tolerância do eixo. Letra minúscula = posição em relação à linha zero (h termina exatamente na linha zero; em direção a “a” fica mais folgado, em direção a “z” mais apertado), número IT = tamanho do campo.\nParceiros típicos do H7: g6 guia de giro leve · h6 ajuste deslizante · js6/k6 centragem sem folga · n6/p6 assento firme · s6 ajuste prensado.\nRegra prática: eixo um grau IT mais fino que o furo (H7 + g6) — superfícies externas são mais fáceis de usinar com precisão do que furos.',
+        fh_ffNominal: 'Comprimento ou diâmetro da cota à qual a tolerância geral ISO 2768 deve se aplicar — ou seja, uma cota sem tolerância própria no desenho.\nFaixa: 0,5–4000 mm (faixas da tabela da norma).\nNota: para cotas abaixo de 0,5 mm a norma exige tolerância indicada diretamente na cota.',
+        fh_ffClass: 'Classe de tolerância das tolerâncias gerais ISO 2768-1 — vale globalmente para todas as cotas sem tolerância própria:\n• f (fina) — mecânica de precisão, peças retificadas\n• m (média) — mecânica normal, padrão na maioria dos desenhos\n• c (grosseira) — estruturas soldadas, peças oxicortadas\n• v (muito grosseira) — brutos fundidos e forjados\nRecomendação: "m", se a legenda do desenho não disser outra coisa (usual: "ISO 2768-m").',
+        fh_thEnable: 'Todas as tolerâncias ISO valem a 20 °C (DIN EN ISO 1). Se o par trabalha mais quente ou mais frio, a peça do furo e o eixo dilatam de forma diferente — a folga pode crescer, encolher ou até inverter (folga vira travamento).\nAtivar quando a temperatura de operação difere claramente de 20 °C — como regra a partir de ±20 K; com mistura de materiais (p. ex. eixo de aço em carcaça de alumínio) ainda antes.',
+        fh_thTemp: 'Temperatura de operação comum das duas peças em regime permanente (estacionário).\nValores típicos: redutor 60–90 °C · carcaça de motor elétrico 40–80 °C · ambiente de motor 100–150 °C · uso externo/refrigeração até −40 °C.\nNota: com mudanças rápidas de temperatura (mais rápidas que ~10 K/min) os estados transitórios são mais críticos que o regime aqui calculado.',
+        fh_thMatHole: 'Material da peça com o furo (carcaça, cubo, bucha) — determina quanto o furo se alarga com a temperatura.\nValores de bolso α (10⁻⁶/K): aço ≈ 11,5 · ferro fundido cinzento ≈ 10 · alumínio ≈ 23 · latão ≈ 19.\nDecisivo é a diferença para o eixo: carcaça de alumínio em volta de eixo de aço aumenta bem a folga ao aquecer.',
+        fh_thMatShaft: 'Material do eixo ou da peça interna — determina sua dilatação térmica.\nValores de bolso α (10⁻⁶/K): aço ≈ 11,5 · inox austenítico ≈ 16 · alumínio ≈ 23.\nSe o eixo dilata mais que a peça do furo (p. ex. eixo de alumínio em bucha de aço), a folga diminui ao aquecer — verificar risco de travamento.',
+        fh_oaEnable: 'Considera a rugosidade Rz das duas superfícies:\n• Ajuste com folga: os picos de rugosidade consomem parte da folga útil → folga mínima efetiva e verificação da fresta de lubrificação.\n• Ajuste prensado: os picos são aplainados na montagem → perda de interferência (importante para o ajuste prensado).\nAtivar quando esses efeitos práticos devem entrar no cálculo — de todo modo recomendado para cálculo de ajuste prensado.',
+        fh_oaRzHole: 'Rugosidade média Rz da superfície do furo em µm — consta como símbolo de superfície no desenho.\nTípico por processo: retífica/brunimento 1–4 · alargamento 4–10 · mandrilamento fino 6,3–16 · furação/torneamento 16–63.\nRegra prática: Rz no máximo T/5 da tolerância — para H7 em Ø50 (25 µm) isso dá Rz ≤ 5 µm → exige acabamento fino.',
+        fh_oaRzShaft: 'Rugosidade média Rz da superfície do eixo em µm — consta como símbolo de superfície no desenho.\nTípico por processo: retífica 1–4 · torneamento fino 6,3–16 · torneamento 16–63.\nRegra prática: Rz no máximo T/5 da tolerância — para g6 em Ø50 (16 µm) isso dá Rz ≈ 3 µm → geralmente retífica.'
+      }
+    };
+    ['de', 'en', 'pt'].forEach(function (l) { for (var k in s[l]) STR[l][k] = s[l][k]; });
+  })();
+
   /* ======================================================================= *
    * 2) Zustand + kleine Helfer
    * ======================================================================= */
@@ -517,7 +573,28 @@
     return sel;
   }
 
-  function labeledField(labelKey, unitKey, control, hintKey) {
+  /* B10a — rechtsbündiger Laien-ⓘ-Knopf + aufklappbare Sprechblase je Feld
+     (Muster von DT-ProfiSchraube: help-btn in der Labelzeile, Text darunter).
+     labelRow: Zeile, in der der Knopf rechts sitzt · container: erhält die Sprechblase. */
+  function attachFieldHelp(labelRow, container, helpKey, labelKey) {
+    if (!helpKey) return;
+    var hb = el('button', 'help-btn', 'i'); hb.type = 'button';
+    hb.setAttribute('data-i18n-aria', labelKey || helpKey);
+    hb.setAttribute('aria-label', t(labelKey || helpKey));
+    hb.setAttribute('aria-expanded', 'false');
+    var bub = el('div', 'field-help'); bub.hidden = true;
+    bub.setAttribute('data-i18n', helpKey); bub.textContent = t(helpKey);
+    hb.addEventListener('click', function (ev) {
+      ev.preventDefault(); ev.stopPropagation();
+      markTipsSeen();
+      bub.hidden = !bub.hidden;
+      hb.setAttribute('aria-expanded', bub.hidden ? 'false' : 'true');
+    });
+    labelRow.appendChild(hb);
+    container.appendChild(bub);
+  }
+
+  function labeledField(labelKey, unitKey, control, hintKey, helpKey) {
     var f = el('div', 'field');
     var lab = el('div', 'field-label');
     var lb = el('label'); lb.setAttribute('data-i18n', labelKey); lb.textContent = t(labelKey);
@@ -526,6 +603,7 @@
     f.appendChild(lab);
     f.appendChild(control);
     if (hintKey) { var h = el('div', 'field-hint'); h.setAttribute('data-i18n', hintKey); h.textContent = t(hintKey); f.appendChild(h); }
+    attachFieldHelp(lab, f, helpKey, labelKey);
     return f;
   }
 
@@ -569,7 +647,7 @@
     elFit.setAttribute('autocapitalize', 'characters'); elFit.setAttribute('spellcheck', 'false');
     elFit.setAttribute('data-i18n-ph', 'fFitPh'); elFit.placeholder = t('fFitPh');
     var gf = el('div', 'group-fields');
-    var ff = labeledField('fFit', null, elFit, 'fFitHint');
+    var ff = labeledField('fFit', null, elFit, 'fFitHint', 'fh_fFit');
     elFitMsg = el('div', 'field-msg error'); elFitMsg.hidden = true; ff.appendChild(elFitMsg);
     gf.appendChild(ff);
     host.appendChild(gf);
@@ -581,8 +659,8 @@
     elSystem = selectFrom(['EB', 'EW', 'FREE'], function (v) { return v === 'EB' ? t('sysEB') : v === 'EW' ? t('sysEW') : t('sysFree'); });
 
     var g1 = el('div', 'group-fields');
-    g1.appendChild(labeledField('fNominal', 'unit_mm', elNominal, 'hintNominal'));
-    g1.appendChild(labeledField('fSystem', null, elSystem, 'hintSystem'));
+    g1.appendChild(labeledField('fNominal', 'unit_mm', elNominal, 'hintNominal', 'fh_fNominal'));
+    g1.appendChild(labeledField('fSystem', null, elSystem, 'hintSystem', 'fh_fSystem'));
     host.appendChild(g1);
 
     // Bohrung/Welle-Legende
@@ -599,8 +677,8 @@
     elShaftG = selectFrom(GRADES, function (g) { return 'IT' + g; }, true); elShaftG.value = '6';
 
     var g2 = el('div', 'group-fields');
-    g2.appendChild(labeledField('fHole', null, pairControl(elHoleL, elHoleG)));
-    g2.appendChild(labeledField('fShaft', null, pairControl(elShaftL, elShaftG)));
+    g2.appendChild(labeledField('fHole', null, pairControl(elHoleL, elHoleG), null, 'fh_fHole'));
+    g2.appendChild(labeledField('fShaft', null, pairControl(elShaftL, elShaftG), null, 'fh_fShaft'));
     host.appendChild(g2);
 
     host.appendChild(buildThermikSection());
@@ -623,8 +701,8 @@
     elFfClass = selectFrom(FFCLASSES, function (c) { return c + ' – ' + t('ffClass_' + c); });
     elFfClass.value = 'm';
     var g = el('div', 'group-fields');
-    g.appendChild(labeledField('fNominal', 'unit_mm', elFfNominal, 'hintFfNominal'));
-    g.appendChild(labeledField('ffClass', null, elFfClass, 'hintFfClass'));
+    g.appendChild(labeledField('fNominal', 'unit_mm', elFfNominal, 'hintFfNominal', 'fh_ffNominal'));
+    g.appendChild(labeledField('ffClass', null, elFfClass, 'hintFfClass', 'fh_ffClass'));
     host.appendChild(g);
     [elFfNominal, elFfClass].forEach(function (c) { c.addEventListener('input', run); c.addEventListener('change', run); });
   }
@@ -651,22 +729,25 @@
   /* Optionaler „Betrieb (Thermik)"-Bereich: Betriebstemperatur + Werkstoffe. */
   function buildThermikSection() {
     var box = el('div', 'thermik-box');
+    var headRow = el('div', 'thermik-head-row');
     var head = el('label', 'thermik-head');
     elThEnable = el('input'); elThEnable.type = 'checkbox'; elThEnable.checked = thEnabled;
     head.appendChild(elThEnable);
     var ht = el('span'); ht.setAttribute('data-i18n', 'thEnable'); ht.textContent = t('thEnable'); head.appendChild(ht);
-    box.appendChild(head);
+    headRow.appendChild(head);
+    box.appendChild(headRow);
+    attachFieldHelp(headRow, box, 'fh_thEnable', 'thEnable');
 
     elThBox = el('div', 'thermik-fields'); elThBox.hidden = !thEnabled;
     elThT = el('input'); elThT.type = 'number'; elThT.className = 'num'; elThT.step = 'any'; elThT.value = String(thT);
     elThHole = matSelect(thHole);
     elThShaft = matSelect(thShaft);
     var g = el('div', 'group-fields');
-    g.appendChild(labeledField('thTemp', 'unit_c', elThT, null));
+    g.appendChild(labeledField('thTemp', 'unit_c', elThT, null, 'fh_thTemp'));
     elThBox.appendChild(g);
     var g2 = el('div', 'group-fields');
-    g2.appendChild(labeledField('thMatHole', null, elThHole, null));
-    g2.appendChild(labeledField('thMatShaft', null, elThShaft, null));
+    g2.appendChild(labeledField('thMatHole', null, elThHole, null, 'fh_thMatHole'));
+    g2.appendChild(labeledField('thMatShaft', null, elThShaft, null, 'fh_thMatShaft'));
     elThBox.appendChild(g2);
     box.appendChild(elThBox);
 
@@ -691,18 +772,21 @@
   function buildOberflaecheSection() {
     var elOaEnable, elOaBox, elRzHole, elRzShaft;
     var box = el('div', 'thermik-box');
+    var headRow = el('div', 'thermik-head-row');
     var head = el('label', 'thermik-head');
     elOaEnable = el('input'); elOaEnable.type = 'checkbox'; elOaEnable.checked = oaEnabled;
     head.appendChild(elOaEnable);
     var ht = el('span'); ht.setAttribute('data-i18n', 'oaEnable'); ht.textContent = t('oaEnable'); head.appendChild(ht);
-    box.appendChild(head);
+    headRow.appendChild(head);
+    box.appendChild(headRow);
+    attachFieldHelp(headRow, box, 'fh_oaEnable', 'oaEnable');
 
     elOaBox = el('div', 'thermik-fields'); elOaBox.hidden = !oaEnabled;
     elRzHole = el('input'); elRzHole.type = 'number'; elRzHole.className = 'num'; elRzHole.step = 'any'; elRzHole.min = '0'; elRzHole.value = String(rzHole);
     elRzShaft = el('input'); elRzShaft.type = 'number'; elRzShaft.className = 'num'; elRzShaft.step = 'any'; elRzShaft.min = '0'; elRzShaft.value = String(rzShaft);
     var g = el('div', 'group-fields');
-    g.appendChild(labeledField('oaRzHole', 'unit_um', elRzHole, null));
-    g.appendChild(labeledField('oaRzShaft', 'unit_um', elRzShaft, null));
+    g.appendChild(labeledField('oaRzHole', 'unit_um', elRzHole, null, 'fh_oaRzHole'));
+    g.appendChild(labeledField('oaRzShaft', 'unit_um', elRzShaft, null, 'fh_oaRzShaft'));
     elOaBox.appendChild(g);
     box.appendChild(elOaBox);
 
@@ -1283,6 +1367,7 @@
     document.querySelectorAll('[data-i18n]').forEach(function (n) { n.textContent = t(n.getAttribute('data-i18n')); });
     document.querySelectorAll('[data-i18n-ph]').forEach(function (n) { n.setAttribute('placeholder', t(n.getAttribute('data-i18n-ph'))); });
     document.querySelectorAll('[data-i18n-title]').forEach(function (n) { n.setAttribute('title', t(n.getAttribute('data-i18n-title'))); });
+    document.querySelectorAll('[data-i18n-aria]').forEach(function (n) { n.setAttribute('aria-label', t(n.getAttribute('data-i18n-aria'))); });
     // dynamische Selektoren (System-Optionen, Beispielliste):
     if (elSystem && elSystem.options.length >= 3) {
       elSystem.options[0].textContent = t('sysEB');
