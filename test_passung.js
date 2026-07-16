@@ -21,6 +21,7 @@ var S = isNode ? require('./solver.js')    : globalThis.DTPSolver;
 var RW = isNode ? require('./rechenweg.js') : globalThis.DTPRechenweg;
 var FF = isNode ? require('./freiform.js')  : globalThis.DTPFreiform;
 var TH = isNode ? require('./thermik.js')   : globalThis.DTPThermik;
+var SB = isNode ? require('./schaubild.js') : globalThis.DTPSchaubild;
 
 /* --- Mini-Assert-Framework (Muster: DT-ProfiSchraube) ---------------------- */
 var pass = 0, fail = 0, fails = [];
@@ -880,6 +881,65 @@ section('14) Rechenweg Freiform + Thermik');
   var f2 = S.computeFit('40 H7/p6'); var th2 = TH.compute(f2, { alphaHole: TH.MAT.alu.alpha, alphaShaft: TH.MAT.steel.alpha, T: 80 });
   th2.PSminT = th2.PSminT + 5;
   ok(RW.buildThermik(f2, th2).allOk === false, 'Thermik-Rechenweg erkennt verfälschtes PS_min(T)');
+})();
+
+/* === 15) Thermik-Layout im Schaubild (v1.9.2, Variante C) ================ *
+ * DOM-frei über SB.layout(). Prüft: Identität δ_Bohrung−δ_Welle=ΔS; ohne
+ * thermal keine Ghosts (Regressionswächter, 20-°C-Bänder unangetastet);
+ * mit thermal Ghost-Versatz +ΔS/2 (Bohrung) / −ΔS/2 (Welle), gleiche geteilte
+ * Nulllinie, kein Abschneiden (Ghosts liegen im Plotbereich). */
+section('15) Thermik-Layout Schaubild');
+(function () {
+  if (!SB || !SB.layout) { ok(false, 'schaubild.js nicht geladen'); return; }
+  var EPS = 1e-6;
+  var fits = ['50 H7/g6', '40 H7/p6', '20 H7/k6', '100 H8/f7', '10 H7/h6'];
+  var mats = ['steel', 'alu', 'brass', 'titanium', 'pom', 'cast_iron'];
+  var temps = [-40, 20, 60, 120, 200];
+  var padT = SB.DIM.padT, botY = SB.DIM.H - SB.DIM.padB;
+
+  // Regressionswächter: ohne thermal existieren keine Ghosts.
+  var fRef = S.computeFit('50 H7/g6');
+  var Lref = SB.layout(fRef);
+  ok(Lref.ghostHole == null && Lref.ghostShaft == null, 'ohne thermal keine Ghost-Balken');
+  ok(Lref.thermHalf === null, 'ohne thermal thermHalf=null');
+  ok(Lref.y0 === 112, 'Nulllinie 50 H7/g6 unverändert (y0=112)');
+
+  fits.forEach(function (fitStr) {
+    var f = S.computeFit(fitStr); if (!f.ok) return;
+    mats.forEach(function (mh) {
+      mats.forEach(function (ms) {
+        temps.forEach(function (T) {
+          var th = TH.compute(f, { alphaHole: TH.MAT[mh].alpha, alphaShaft: TH.MAT[ms].alpha, T: T });
+          if (!th.ok) return;
+          var N = f.input.nominal, dT = T - 20;
+          var dh = TH.MAT[mh].alpha * dT * N / 1000, ds = TH.MAT[ms].alpha * dT * N / 1000;
+          // Identität: δ_Bohrung − δ_Welle == ΔS (roh).
+          ok(Math.abs((dh - ds) - (TH.MAT[mh].alpha - TH.MAT[ms].alpha) * dT * N / 1000) < EPS,
+             'δ-Identität ' + fitStr + ' ' + mh + '/' + ms + ' @' + T);
+
+          var L = SB.layout(f, { dS: th.dS });
+          var half = th.dS / 2;
+          ok(!!L.ghostHole && !!L.ghostShaft, 'Ghosts vorhanden ' + fitStr + ' ' + mh + '/' + ms + ' @' + T);
+          ok(L.thermHalf === half, 'thermHalf=ΔS/2 ' + fitStr + ' @' + T);
+          // Bohrungs-Ghost um +ΔS/2, Wellen-Ghost um −ΔS/2 (gegen dieselbe Nulllinie).
+          ok(Math.abs(L.ghostHole.yTop  - L.y(f.hole.upper  + half)) < EPS, 'Bohrung-Ghost +ΔS/2 ' + fitStr + ' @' + T);
+          ok(Math.abs(L.ghostShaft.yTop - L.y(f.shaft.upper - half)) < EPS, 'Welle-Ghost −ΔS/2 ' + fitStr + ' @' + T);
+          // Kein Abschneiden: Ghosts liegen innerhalb des Plotbereichs.
+          ok(L.ghostHole.y  >= padT - EPS && L.ghostHole.yBot  <= botY + EPS, 'Bohrung-Ghost im Plot ' + fitStr + ' @' + T);
+          ok(L.ghostShaft.y >= padT - EPS && L.ghostShaft.yBot <= botY + EPS, 'Welle-Ghost im Plot ' + fitStr + ' @' + T);
+          // Ghosts liegen seitlich neben den Hauptbalken (Bohrung links, Welle rechts).
+          ok(L.ghostHole.x + L.ghostHole.w <= L.hole.x + EPS, 'Bohrung-Ghost links vom Balken ' + fitStr + ' @' + T);
+          ok(L.ghostShaft.x >= L.shaft.x + L.shaft.w - EPS, 'Welle-Ghost rechts vom Balken ' + fitStr + ' @' + T);
+        });
+      });
+    });
+  });
+
+  // ΔS=0 (gleiche Werkstoffe): Ghost liegt exakt auf Höhe des Realbalkens.
+  var f0 = S.computeFit('50 H7/g6');
+  var L0 = SB.layout(f0, { dS: 0 });
+  ok(Math.abs(L0.ghostHole.yTop - L0.hole.yTop) < EPS && Math.abs(L0.ghostShaft.yTop - L0.shaft.yTop) < EPS,
+     'ΔS=0 → Ghosts auf Balkenhöhe (kein Versatz)');
 })();
 
 /* === Zusammenfassung ====================================================== */

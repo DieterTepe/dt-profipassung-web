@@ -615,3 +615,16 @@ input.locked { background: var(--line-soft); color: var(--muted); cursor: defaul
 .rw-subhead { padding: 9px 12px 3px; font: 700 11px var(--font-ui); letter-spacing: .06em;
   text-transform: uppercase; color: var(--accent); border-top: 1px solid var(--line-soft); }
 .rw-subhead:first-child { border-top: 0; }
+
+/* ── v1.9.2 · Thermik-Visualisierung im Schaubild (Variante C) ───────────── */
+/* Ghost-Bänder „bei T °C": gestrichelt, dezent, in Bauteilfarbe. */
+.tf-ghost { stroke-width: 1; stroke-dasharray: 3 2.5; fill-opacity: .16; opacity: .9; }
+.tf-ghost-bore  { stroke: var(--bore);  fill: var(--bore); }
+.tf-ghost-shaft { stroke: var(--shaft); fill: var(--shaft); }
+.tf-ghost { animation: tfIn .45s ease-out both; }
+@media (prefers-reduced-motion: reduce) { .tf-ghost { animation: none; } }
+/* Legenden-Swatches der Thermik-Chips: gestrichelter Rahmen = Ghost. */
+.vc-swatch.therm-bore  { background: transparent; border: 1.5px dashed var(--bore); }
+.vc-swatch.therm-shaft { background: transparent; border: 1.5px dashed var(--shaft); }
+/* ΔS-Notiz unter der Legende. */
+.viz-therm-note { font-size: 12px; color: var(--muted); margin-top: 4px; }

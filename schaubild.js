@@ -23,9 +23,13 @@
    * Erwartet res.hole/res.shaft mit { upper, lower } in µm (ES/EI bzw. es/ei).
    * Liefert die vertikale µm→Pixel-Abbildung, Balken-Rechtecke und Achsen-Ticks.
    */
-  function layout(res) {
+  function layout(res, thermal) {
     var Hf = res.hole, Sf = res.shaft;
     var vals = [0, Hf.upper, Hf.lower, Sf.upper, Sf.lower];
+    // Thermik (v1.9.2, Variante C): verschobene Ghost-Bänder (±ΔS/2) in die Skala
+    // einbeziehen, damit nichts abgeschnitten wird. Ohne thermal identisch wie zuvor.
+    var half = (thermal && typeof thermal.dS === 'number') ? thermal.dS / 2 : null;
+    if (half !== null) vals.push(Hf.upper + half, Hf.lower + half, Sf.upper - half, Sf.lower - half);
     var lo = Math.min.apply(null, vals), hi = Math.max.apply(null, vals);
     var raw = hi - lo || 1;
     var pad = Math.max(raw * 0.15, 3);       // etwas Luft ober-/unterhalb
@@ -42,6 +46,21 @@
     function barRect(x, upper, lower) {
       var yt = y(upper), yb = y(lower);
       return { x: x, y: yt, w: colW, h: Math.max(yb - yt, 1.5), yTop: yt, yBot: yb };
+    }
+    // Ghost-Balken: schmaler als die Hauptbalken, LINKS neben der Bohrung,
+    // RECHTS neben der Welle. Vertikaler Versatz ±ΔS/2 → sichtbarer Höhenversatz.
+    var ghostHole = null, ghostShaft = null;
+    if (half !== null) {
+      var gap = 5;
+      var leftRoom  = holeX - gap - (DIM.padL + 1);            // Platz links der Bohrung
+      var rightRoom = (DIM.W - DIM.padR - 1) - (shaftX + colW + gap); // Platz rechts der Welle
+      var gW = Math.max(6, Math.min(20, leftRoom, rightRoom)); // schmal (~5 Zeichen), passt sicher
+      var ghX = holeX - gap - gW;                              // rechte Kante direkt neben der Bohrung
+      var gsX = shaftX + colW + gap;                           // linke Kante direkt neben der Welle
+      var ghU = Hf.upper + half, ghL = Hf.lower + half;
+      var gsU = Sf.upper - half, gsL = Sf.lower - half;
+      ghostHole  = { x: ghX, y: y(ghU), w: gW, h: Math.max(y(ghL) - y(ghU), 1.5), yTop: y(ghU), yBot: y(ghL) };
+      ghostShaft = { x: gsX, y: y(gsU), w: gW, h: Math.max(y(gsL) - y(gsU), 1.5), yTop: y(gsU), yBot: y(gsL) };
     }
 
     // Spiel-/Übermaßzone (nur eindeutige Fälle): Höhe = Mindestspiel bzw. Kleinstübermaß.
@@ -62,6 +81,7 @@
       hole: barRect(holeX, Hf.upper, Hf.lower),
       shaft: barRect(shaftX, Sf.upper, Sf.lower),
       band: band,
+      ghostHole: ghostHole, ghostShaft: ghostShaft, thermHalf: half,
       ticks: [hi, 0, lo],
       cols: { holeCx: holeX + colW / 2, shaftCx: shaftX + colW / 2 }
     };
@@ -76,9 +96,9 @@
   function num(x) { return Math.round(x * 100) / 100; }
 
   /* Baut das SVG. labels = { hole:'H7', shaft:'g6', unit:'µm' } (sprachneutral). */
-  function svg(res, labels) {
+  function svg(res, labels, thermal) {
     labels = labels || {};
-    var L = layout(res);
+    var L = layout(res, thermal);
     var s = elNS('svg', {
       viewBox: '0 0 ' + DIM.W + ' ' + DIM.H, class: 'viz-svg',
       role: 'img', preserveAspectRatio: 'xMidYMid meet'
@@ -118,6 +138,10 @@
     function bar(r, cls) { return elNS('rect', { x: num(r.x), y: num(r.y), width: num(r.w), height: num(r.h), rx: 2, class: cls }); }
     s.appendChild(bar(L.hole, 'tf-bar tf-bore'));
     s.appendChild(bar(L.shaft, 'tf-bar tf-shaft'));
+
+    // Thermik-Ghosts (v1.9.2): gestrichelte Bänder „bei T °C", in Bauteilfarbe.
+    if (L.ghostHole)  s.appendChild(bar(L.ghostHole,  'tf-ghost tf-ghost-bore'));
+    if (L.ghostShaft) s.appendChild(bar(L.ghostShaft, 'tf-ghost tf-ghost-shaft'));
 
     // Spaltenüberschriften (Buchstabe+Grad), farbig, oben:
     function col(cx, txt, cls) {

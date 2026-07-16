@@ -319,6 +319,25 @@
     ['de', 'en', 'pt'].forEach(function (l) { for (var k in s[l]) STR[l][k] = s[l][k]; });
   })();
 
+  /* --- v1.9.2: Thermik-Visualisierung im Schaubild (Ghost-Chips) ---------- */
+  (function () {
+    var s = {
+      de: {
+        vizThermBoreHelp: 'Gestrichelt = Bohrung bei Betriebstemperatur. Verschoben um ΔS/2 gegen die Nulllinie; die gemeinsame Wärmedehnung ist herausgerechnet, δ ist die reale Einzeldehnung.',
+        vizThermShaftHelp: 'Gestrichelt = Welle bei Betriebstemperatur. Der Höhenversatz zwischen beiden Ghosts ist ΔS – so viel ändert sich Spiel/Übermaß gegenüber 20 °C.'
+      },
+      en: {
+        vizThermBoreHelp: 'Dashed = hole at operating temperature. Shifted by ΔS/2 vs. the zero line; the common thermal expansion is removed, δ is the real individual expansion.',
+        vizThermShaftHelp: 'Dashed = shaft at operating temperature. The height offset between both ghosts is ΔS – that is how much clearance/interference changes vs. 20 °C.'
+      },
+      pt: {
+        vizThermBoreHelp: 'Tracejado = furo na temperatura de operação. Deslocado em ΔS/2 em relação à linha zero; a dilatação térmica comum foi removida, δ é a dilatação individual real.',
+        vizThermShaftHelp: 'Tracejado = eixo na temperatura de operação. O desnível entre os dois ghosts é ΔS – o quanto a folga/interferência muda em relação a 20 °C.'
+      }
+    };
+    ['de', 'en', 'pt'].forEach(function (l) { for (var k in s[l]) STR[l][k] = s[l][k]; });
+  })();
+
   /* ======================================================================= *
    * 2) Zustand + kleine Helfer
    * ======================================================================= */
@@ -826,11 +845,25 @@
     var SB = window.DTPSchaubild;
     if (!SB) { clearViz(); return; }
     var i = res.input;
+
+    // Thermik (v1.9.2): Ghost-Lage „bei T °C" berechnen, falls Thermik aktiv.
+    var thermal = null, tr = null, dHole = 0, dShaft = 0;
+    if (thEnabled && TH && TH.compute && TH.MAT[thHole] && TH.MAT[thShaft]) {
+      var mh = TH.MAT[thHole], ms = TH.MAT[thShaft];
+      var trc = TH.compute(res, { alphaHole: mh.alpha, alphaShaft: ms.alpha, T: thT });
+      if (trc.ok) {
+        tr = trc;
+        dHole  = Math.round(mh.alpha * tr.dT * tr.nominal / 1000 * 10) / 10;
+        dShaft = Math.round(ms.alpha * tr.dT * tr.nominal / 1000 * 10) / 10;
+        thermal = { dS: tr.dS };
+      }
+    }
+
     vizHost.appendChild(SB.svg(res, {
       hole: i.hole.letter + i.hole.grade,
       shaft: i.shaft.letter + i.shaft.grade,
       unit: t('unit_um')
-    }));
+    }, thermal));
 
     var leg = el('div', 'viz-legend');
     function chip(cls, name, sub, helpKey) {
@@ -853,8 +886,21 @@
       'ES ' + sgn(res.hole.upper) + ' · EI ' + sgn(res.hole.lower) + ' µm', 'vizBoreHelp'));
     leg.appendChild(chip('shaft', t('vizShaft') + ' ' + i.shaft.letter + i.shaft.grade,
       'es ' + sgn(res.shaft.upper) + ' · ei ' + sgn(res.shaft.lower) + ' µm', 'vizShaftHelp'));
+    // Thermik-Chips (v1.9.2): gleiche Farben wie die Ghosts; δ je Bauteil.
+    if (thermal && tr) {
+      leg.appendChild(chip('therm-bore', t('vizBore') + ' ' + t('thAt') + ' ' + fmtNum(tr.T) + ' °C',
+        'δ ' + sgn(dHole) + ' µm', 'vizThermBoreHelp'));
+      leg.appendChild(chip('therm-shaft', t('vizShaft') + ' ' + t('thAt') + ' ' + fmtNum(tr.T) + ' °C',
+        'δ ' + sgn(dShaft) + ' µm', 'vizThermShaftHelp'));
+    }
     vizHost.appendChild(leg);
     vizHost.appendChild(el('div', 'viz-zero-note', t('vizZero')));
+    // Thermik-Notiz: ΔS gegenüber 20 °C, plus Umschlag-Hinweis falls zutreffend.
+    if (thermal && tr) {
+      var tn = 'ΔS = ' + sgn(tr.dS) + ' µm · ' + t('thVs20');
+      if (tr.umschlag) tn += ' · ' + t('thUmschlag') + ': ' + t('art' + tr.art20) + ' → ' + t('art' + tr.artT);
+      vizHost.appendChild(el('div', 'viz-therm-note', tn));
+    }
   }
 
   function clearViz() {
