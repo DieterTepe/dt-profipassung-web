@@ -1015,6 +1015,84 @@ section('16) Beratung Kostenampel + Messmittel');
   });
 })();
 
+/* === 17) Beratung: Oberfläche + Schmierspalt (B9, v1.9.4) ================ *
+ * DOM-frei. Oberfläche: Rz-Stufen (T/5,T/3,T/2), Rundheit T/3, wirksames
+ * Spiel/Übermaß (0,4·ΣRz bzw. 0,8·ΣRz). Schmierspalt: Stribeck-Regel ΣRz≤S_min/3,
+ * nutzbarer Spalt S_min−ΣRz, nur bei Spielpassungen. */
+section('17) Beratung Oberfläche + Schmierspalt');
+(function () {
+  if (!BR || !BR.surface || !BR.lubrication) { ok(false, 'beratung.js (surface/lubrication) fehlt'); return; }
+  var EPS = 1e-9;
+
+  // --- Rz-Stufen: Grenzen scharf über mehrere Toleranzen ---
+  [10, 25, 50, 120].forEach(function (T) {
+    ok(BR.surfaceStage(T / 5, T).stage === 'ok', 'Rz=T/5 → ok (T=' + T + ')');
+    ok(BR.surfaceStage(T / 5 + 0.01, T).stage === 'warn', 'Rz>T/5 → warn (T=' + T + ')');
+    ok(BR.surfaceStage(T / 3, T).stage === 'warn', 'Rz=T/3 → warn (T=' + T + ')');
+    ok(BR.surfaceStage(T / 3 + 0.01, T).stage === 'high', 'Rz>T/3 → high (T=' + T + ')');
+    ok(BR.surfaceStage(T / 2, T).stage === 'high', 'Rz=T/2 → high (T=' + T + ')');
+    ok(BR.surfaceStage(T / 2 + 0.01, T).stage === 'crit', 'Rz>T/2 → crit (T=' + T + ')');
+    ok(Math.abs(BR.surfaceStage(1, T).formMaxUm - T / 3) < EPS, 'Rundheit=T/3 (T=' + T + ')');
+    ok(Math.abs(BR.surfaceStage(1, T).RzMaxOkUm - T / 5) < EPS, 'RzMaxOk=T/5 (T=' + T + ')');
+  });
+  ok(BR.surfaceStage(3, 0).code === 'SURF_UNDEFINED', 'T=0 → SURF_UNDEFINED');
+
+  var spiel = ['50 H7/g6', '100 H8/f7', '25 H7/f7', '20 H7/g6', '40 H7/e8'];
+  var press = ['40 H7/p6', '60 H7/s6', '30 H7/r6'];
+  var trans = ['20 H7/k6', '25 H7/j6'];
+  var rzs = [[1.6, 1.6], [3.2, 3.2], [6.3, 3.2], [12.5, 6.3], [25, 12.5]];
+
+  function stageOf(Rz, T) { return Rz <= T / 5 + EPS ? 'ok' : Rz <= T / 3 + EPS ? 'warn' : Rz <= T / 2 + EPS ? 'high' : 'crit'; }
+
+  spiel.concat(press, trans).forEach(function (fs) {
+    var f = S.computeFit(fs); if (!f.ok) { ok(false, 'computeFit ' + fs); return; }
+    var Th = f.hole.upper - f.hole.lower, Ts = f.shaft.upper - f.shaft.lower;
+    rzs.forEach(function (rp) {
+      var RzB = rp[0], RzW = rp[1], RzSum = RzB + RzW;
+      var su = BR.surface(f, { RzB: RzB, RzW: RzW });
+      // Rz-Stufen je Bauteil konsistent:
+      ok(su.hole.stage === stageOf(RzB, Th), fs + ' Bohrung-Stufe Rz=' + RzB);
+      ok(su.shaft.stage === stageOf(RzW, Ts), fs + ' Welle-Stufe Rz=' + RzW);
+      ok(Math.abs(su.RzSumUm - RzSum) < EPS, fs + ' ΣRz Rz=' + RzB + '/' + RzW);
+      // Wirksames Spiel/Übermaß nach Passungsart:
+      if (f.fit.art === 'SPIEL') {
+        ok(su.effective.kind === 'clearance', fs + ' eff=clearance');
+        ok(Math.abs(su.effective.effUm - (f.fit.PSmin - 0.4 * RzSum)) < EPS, fs + ' S_wirk=S_min−0,4·ΣRz Rz=' + RzB);
+        ok(su.effective.code === (f.fit.PSmin - 0.4 * RzSum <= 0 ? 'CLEAR_LOSS' : 'CLEAR_OK'), fs + ' clear-Code Rz=' + RzB);
+      } else if (f.fit.art === 'UEBERMASS') {
+        ok(su.effective.kind === 'interference', fs + ' eff=interference');
+        ok(Math.abs(su.effective.effUm - (f.fit.interferenceMin - 0.8 * RzSum)) < EPS, fs + ' Ü_wirk=Ü_min−0,8·ΣRz Rz=' + RzB);
+        ok(su.effective.code === (f.fit.interferenceMin - 0.8 * RzSum <= 0 ? 'PRESS_LOSS' : 'PRESS_OK'), fs + ' press-Code Rz=' + RzB);
+      } else {
+        ok(su.effective.code === 'EFF_NA', fs + ' Übergang → EFF_NA');
+      }
+      // Schmierspalt:
+      var lu = BR.lubrication(f, { RzB: RzB, RzW: RzW });
+      if (f.fit.art === 'SPIEL') {
+        ok(lu.applies === true, fs + ' Schmierspalt gilt');
+        ok(Math.abs(lu.thresholdUm - f.fit.PSmin / 3) < EPS, fs + ' Schwelle=S_min/3 Rz=' + RzB);
+        ok(Math.abs(lu.gapWirkUm - (f.fit.PSmin - RzSum)) < EPS, fs + ' Spalt=S_min−ΣRz Rz=' + RzB);
+        ok(lu.ok === (RzSum <= f.fit.PSmin / 3 + EPS), fs + ' Stribeck-ok Rz=' + RzB);
+        ok(lu.code === (lu.ok ? 'LUBE_OK' : 'HINT_LUBRICATION'), fs + ' lube-Code Rz=' + RzB);
+      } else {
+        ok(lu.applies === false && lu.code === 'LUBE_NA', fs + ' kein Spiel → LUBE_NA');
+      }
+    });
+  });
+
+  // --- Monotonie an einer Spielpassung: mehr Rz → kleinerer Spalt, ok kippt nur einmal ---
+  var fm = S.computeFit('100 H8/f7');
+  var prevGap = Infinity, prevEff = Infinity, wasBad = false;
+  [0, 2, 4, 6, 8, 10, 14, 20].forEach(function (r) {
+    var lu = BR.lubrication(fm, { RzB: r, RzW: r });
+    ok(lu.gapWirkUm <= prevGap + EPS, 'Spalt monoton fallend Rz=' + r); prevGap = lu.gapWirkUm;
+    if (wasBad) ok(!lu.ok, 'Mischreibung bleibt bei größerem Rz=' + r);
+    if (!lu.ok) wasBad = true;
+    var su = BR.surface(fm, { RzB: r, RzW: r });
+    ok(su.effective.effUm <= prevEff + EPS, 'S_wirk monoton fallend Rz=' + r); prevEff = su.effective.effUm;
+  });
+})();
+
 /* === Zusammenfassung ====================================================== */
 say('\n  ========================================');
 say('  Assertions gesamt : ' + (pass + fail));

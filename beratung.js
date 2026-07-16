@@ -84,11 +84,70 @@
     return { tolUm: tolUm, uGoldenUm: uGolden, uWarnUm: uWarn, code: 'MEAS_OK', instruments: list };
   }
 
+  function num0(x) { x = Number(x); return (isFinite(x) && x > 0) ? x : 0; }
+
+  /* Rz-Bewertung gegen Maßtoleranz T (1.7): ideal Rz ≤ T/5; Warnstufen T/3, T/2.
+   * → { stage:'ok|warn|high|crit', code, RzMaxOkUm:T/5, formMaxUm:T/3 } (1.9). */
+  function surfaceStage(Rz, T) {
+    if (!(T > 0)) return { stage: null, code: 'SURF_UNDEFINED', RzUm: Rz, RzMaxOkUm: null, formMaxUm: null };
+    var stage, code;
+    if (Rz <= T / 5 + EPS) { stage = 'ok';   code = 'SURF_OK'; }
+    else if (Rz <= T / 3 + EPS) { stage = 'warn'; code = 'SURF_WARN'; }
+    else if (Rz <= T / 2 + EPS) { stage = 'high'; code = 'SURF_HIGH'; }
+    else { stage = 'crit'; code = 'SURF_CRIT'; }
+    return { stage: stage, code: code, RzUm: Rz, RzMaxOkUm: T / 5, formMaxUm: T / 3 };
+  }
+
+  /* Oberflächen-Check (F6, Richtwerte 1.7/1.9). rz = { RzB, RzW } in µm.
+   * Liefert je Bauteil die Rz-Stufe + Rundheits-Richtwert (T/3) und – je nach
+   * Passungsart – das „wirksame" Kleinstspiel bzw. Kleinstübermaß nach Glättung:
+   *   Spiel   : S_wirk ≈ S_min − 0,4·ΣRz
+   *   Übermaß : Ü_wirk ≈ Ü_min − 0,8·ΣRz  (Glättung mindert das Übermaß) */
+  function surface(res, rz) {
+    rz = rz || {};
+    var RzB = num0(rz.RzB), RzW = num0(rz.RzW), RzSum = RzB + RzW;
+    var Th = res.hole.upper - res.hole.lower, Ts = res.shaft.upper - res.shaft.lower;
+    var hole = surfaceStage(RzB, Th), shaft = surfaceStage(RzW, Ts);
+    hole.T = Th; shaft.T = Ts;
+    var art = res.fit.art, eff;
+    if (art === 'SPIEL') {
+      var base = res.fit.PSmin, e = base - 0.4 * RzSum;
+      eff = { kind: 'clearance', baseUm: base, factor: 0.4, deductUm: 0.4 * RzSum, effUm: e, code: (e <= 0 ? 'CLEAR_LOSS' : 'CLEAR_OK') };
+    } else if (art === 'UEBERMASS') {
+      var pb = res.fit.interferenceMin, pe = pb - 0.8 * RzSum;
+      eff = { kind: 'interference', baseUm: pb, factor: 0.8, deductUm: 0.8 * RzSum, effUm: pe, code: (pe <= 0 ? 'PRESS_LOSS' : 'PRESS_OK') };
+    } else {
+      eff = { kind: 'none', code: 'EFF_NA' };
+    }
+    return { hole: hole, shaft: shaft, RzSumUm: RzSum, effective: eff };
+  }
+
+  /* Schmierspalt-Richtwert (F9, 1.10) – nur bei Spielpassungen.
+   * Stribeck-Faustregel: Vollschmierung plausibel, wenn ΣRz ≤ S_min/3, sonst
+   * Mischreibungs-Warnung. Nutzbarer Spalt konservativ ≈ S_min − ΣRz. */
+  function lubrication(res, rz) {
+    rz = rz || {};
+    var RzB = num0(rz.RzB), RzW = num0(rz.RzW), RzSum = RzB + RzW;
+    var Smin = res.fit.PSmin;
+    if (res.fit.art !== 'SPIEL' || !(Smin > 0)) {
+      return { applies: false, code: 'LUBE_NA', SminUm: Smin, RzSumUm: RzSum };
+    }
+    var thr = Smin / 3, gap = Smin - RzSum, okFilm = RzSum <= thr + EPS;
+    return {
+      applies: true, SminUm: Smin, RzSumUm: RzSum, thresholdUm: thr,
+      gapWirkUm: gap, ratio: RzSum / Smin, ok: okFilm,
+      code: okFilm ? 'LUBE_OK' : 'HINT_LUBRICATION'
+    };
+  }
+
   return {
     PROC: PROC,
     INSTR: INSTR,
     processesForIT: processesForIT,
     costTraffic: costTraffic,
-    measurement: measurement
+    measurement: measurement,
+    surfaceStage: surfaceStage,
+    surface: surface,
+    lubrication: lubrication
   };
 });
