@@ -645,3 +645,17 @@ input.locked { background: var(--line-soft); color: var(--muted); cursor: defaul
 .br-chip.ok { border-color: var(--bore); color: var(--bore); }
 .br-chip.ideal { background: var(--bore-soft); border-width: 2px; font-weight: 700; }
 .br-chip.no { opacity: .65; text-decoration: line-through; }
+
+/* ── B9 Stufe 3b · Oberfläche + Schmierspalt ─────────────────────────────── */
+.br-surf-row { display: flex; align-items: center; gap: 8px; margin: 2px 0; flex-wrap: wrap; }
+.br-badge { font-size: 11px; font-weight: 700; padding: 1px 7px; border-radius: 999px; }
+.br-badge.surf-ok   { background: var(--bore-soft); color: var(--bore); }
+.br-badge.surf-warn { background: rgba(229,179,2,.16); color: #b98d00; }
+.br-badge.surf-high { background: rgba(229,120,2,.16); color: #c15c00; }
+.br-badge.surf-crit { background: rgba(229,72,77,.16); color: #e5484d; }
+.br-surf-txt { font-size: 12px; color: var(--muted); }
+.br-eff  { font-size: 13px; color: var(--fg); margin: 4px 0 2px; }
+.br-lube { font-size: 13px; color: var(--fg); margin: 3px 0 2px; }
+.br-lube.na { color: var(--muted); }
+.br-ok   { font-size: 12px; color: var(--bore); margin-bottom: 3px; }
+.br-warn { font-size: 12px; color: #e5484d; font-weight: 600; margin-bottom: 3px; }

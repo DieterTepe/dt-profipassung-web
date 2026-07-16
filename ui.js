@@ -384,6 +384,46 @@
     ['de', 'en', 'pt'].forEach(function (l) { for (var k in s[l]) STR[l][k] = s[l][k]; });
   })();
 
+  /* --- B9 Stufe 3b: Oberfläche (Rz) + Schmierspalt ----------------------- */
+  (function () {
+    var s = {
+      de: {
+        oaEnable: 'Oberfläche berücksichtigen (Rz)', oaRzHole: 'Rz Bohrung', oaRzShaft: 'Rz Welle',
+        brSurfTitle: 'Oberfläche · Rz', brLubeTitle: 'Schmierspalt',
+        surfOK: 'ok', surfWARN: 'grenzwertig', surfHIGH: 'zu hoch', surfCRIT: 'kritisch',
+        brIdealMax: 'ideal ≤', brForm: 'Rundheit ≤',
+        brSwirk: 'Wirksames Spiel', brUwirk: 'Wirksames Übermaß',
+        CLEAR_LOSS: 'Spiel durch Rauheit fast aufgebraucht',
+        PRESS_LOSS: 'Übermaß durch Glättung aufgebraucht — Presssitz gefährdet',
+        brGap: 'nutzbarer Spalt', brLubeOk: 'Vollschmierung plausibel',
+        HINT_LUBRICATION: 'Mischreibungsrisiko (ΣRz > S_min/3)', brLubeNA: 'nur bei Spielpassungen'
+      },
+      en: {
+        oaEnable: 'Consider surface (Rz)', oaRzHole: 'Rz hole', oaRzShaft: 'Rz shaft',
+        brSurfTitle: 'Surface · Rz', brLubeTitle: 'Lubrication gap',
+        surfOK: 'ok', surfWARN: 'borderline', surfHIGH: 'too high', surfCRIT: 'critical',
+        brIdealMax: 'ideal ≤', brForm: 'roundness ≤',
+        brSwirk: 'Effective clearance', brUwirk: 'Effective interference',
+        CLEAR_LOSS: 'clearance nearly consumed by roughness',
+        PRESS_LOSS: 'interference lost to smoothing — press fit at risk',
+        brGap: 'usable gap', brLubeOk: 'full-film feasible',
+        HINT_LUBRICATION: 'mixed-friction risk (ΣRz > S_min/3)', brLubeNA: 'clearance fits only'
+      },
+      pt: {
+        oaEnable: 'Considerar superfície (Rz)', oaRzHole: 'Rz furo', oaRzShaft: 'Rz eixo',
+        brSurfTitle: 'Superfície · Rz', brLubeTitle: 'Folga de lubrificação',
+        surfOK: 'ok', surfWARN: 'limítrofe', surfHIGH: 'alto demais', surfCRIT: 'crítico',
+        brIdealMax: 'ideal ≤', brForm: 'circularidade ≤',
+        brSwirk: 'Folga efetiva', brUwirk: 'Interferência efetiva',
+        CLEAR_LOSS: 'folga quase consumida pela rugosidade',
+        PRESS_LOSS: 'interferência perdida pelo alisamento — ajuste prensado em risco',
+        brGap: 'folga utilizável', brLubeOk: 'película completa viável',
+        HINT_LUBRICATION: 'risco de atrito misto (ΣRz > S_min/3)', brLubeNA: 'apenas ajustes com folga'
+      }
+    };
+    ['de', 'en', 'pt'].forEach(function (l) { for (var k in s[l]) STR[l][k] = s[l][k]; });
+  })();
+
   /* ======================================================================= *
    * 2) Zustand + kleine Helfer
    * ======================================================================= */
@@ -393,6 +433,9 @@
   var thT = parseFloat(localStorage.getItem('dtp-th-t'));  if (isNaN(thT)) thT = 80;
   var thHole = localStorage.getItem('dtp-th-hole') || 'steel';
   var thShaft = localStorage.getItem('dtp-th-shaft') || 'alu';
+  var oaEnabled = localStorage.getItem('dtp-oa-on') === '1';
+  var rzHole = parseFloat(localStorage.getItem('dtp-oa-rzh'));  if (isNaN(rzHole)) rzHole = 3.2;
+  var rzShaft = parseFloat(localStorage.getItem('dtp-oa-rzs')); if (isNaN(rzShaft)) rzShaft = 1.6;
   var edition = (window.DT_EDITION === 'test') ? 'test' : 'full';
 
   // Auffindbarkeit der ⓘ-Sprechblasen: einmaliger, begrenzter Puls; endet dauerhaft,
@@ -536,6 +579,7 @@
     host.appendChild(g2);
 
     host.appendChild(buildThermikSection());
+    host.appendChild(buildOberflaecheSection());
 
     // Verdrahtung: jede Änderung rechnet live UND spiegelt in die Kurzeingabe.
     [elNominal, elHoleL, elHoleG, elShaftL, elShaftG].forEach(function (c) {
@@ -607,6 +651,41 @@
     elThT.addEventListener('input', function () { var v = parseFloat(String(elThT.value).replace(',', '.')); if (!isNaN(v)) thT = v; persistThermik(); recalc(); });
     elThHole.addEventListener('change', function () { thHole = elThHole.value; persistThermik(); recalc(); });
     elThShaft.addEventListener('change', function () { thShaft = elThShaft.value; persistThermik(); recalc(); });
+    return box;
+  }
+
+  function persistOberflaeche() {
+    try {
+      localStorage.setItem('dtp-oa-on', oaEnabled ? '1' : '0');
+      localStorage.setItem('dtp-oa-rzh', String(rzHole));
+      localStorage.setItem('dtp-oa-rzs', String(rzShaft));
+    } catch (e) {}
+  }
+
+  /* Optionaler „Oberfläche (Rz)"-Bereich: Rautiefe Bohrung/Welle für F6/F9. */
+  function buildOberflaecheSection() {
+    var elOaEnable, elOaBox, elRzHole, elRzShaft;
+    var box = el('div', 'thermik-box');
+    var head = el('label', 'thermik-head');
+    elOaEnable = el('input'); elOaEnable.type = 'checkbox'; elOaEnable.checked = oaEnabled;
+    head.appendChild(elOaEnable);
+    var ht = el('span'); ht.setAttribute('data-i18n', 'oaEnable'); ht.textContent = t('oaEnable'); head.appendChild(ht);
+    box.appendChild(head);
+
+    elOaBox = el('div', 'thermik-fields'); elOaBox.hidden = !oaEnabled;
+    elRzHole = el('input'); elRzHole.type = 'number'; elRzHole.className = 'num'; elRzHole.step = 'any'; elRzHole.min = '0'; elRzHole.value = String(rzHole);
+    elRzShaft = el('input'); elRzShaft.type = 'number'; elRzShaft.className = 'num'; elRzShaft.step = 'any'; elRzShaft.min = '0'; elRzShaft.value = String(rzShaft);
+    var g = el('div', 'group-fields');
+    g.appendChild(labeledField('oaRzHole', 'unit_um', elRzHole, null));
+    g.appendChild(labeledField('oaRzShaft', 'unit_um', elRzShaft, null));
+    elOaBox.appendChild(g);
+    box.appendChild(elOaBox);
+
+    elOaEnable.addEventListener('change', function () {
+      oaEnabled = elOaEnable.checked; elOaBox.hidden = !oaEnabled; persistOberflaeche(); recalc();
+    });
+    elRzHole.addEventListener('input', function () { var v = parseFloat(String(elRzHole.value).replace(',', '.')); if (!isNaN(v) && v >= 0) rzHole = v; persistOberflaeche(); recalc(); });
+    elRzShaft.addEventListener('input', function () { var v = parseFloat(String(elRzShaft.value).replace(',', '.')); if (!isNaN(v) && v >= 0) rzShaft = v; persistOberflaeche(); recalc(); });
     return box;
   }
 
@@ -880,7 +959,47 @@
       box.appendChild(chips);
     });
 
+    // — Oberfläche (F6) + Schmierspalt (F9): nur wenn Rz-Sektion aktiviert —
+    if (oaEnabled && BR.surface) renderSurfaceLube(box, res);
+
     resultHost.appendChild(box);
+  }
+
+  /* Oberflächen- + Schmierspalt-Panel (F6/F9) mit transparenten Faustformeln. */
+  function renderSurfaceLube(box, res) {
+    function r1(x) { return Math.round(x * 10) / 10; }
+    var BR = window.DTPBeratung;
+    var su = BR.surface(res, { RzB: rzHole, RzW: rzShaft });
+
+    box.appendChild(el('div', 'br-sub', t('brSurfTitle')));
+    [['fHole', su.hole, rzHole], ['fShaft', su.shaft, rzShaft]].forEach(function (p) {
+      var st = p[1].stage;
+      var row = el('div', 'br-surf-row');
+      row.appendChild(el('span', 'br-badge surf-' + st, t('surf' + st.toUpperCase())));
+      row.appendChild(el('span', 'br-part', t(p[0]) + ': Rz ' + fmtNum(p[2]) + ' µm'));
+      row.appendChild(el('span', 'br-surf-txt', t('brIdealMax') + ' ' + fmtNum(r1(p[1].RzMaxOkUm))
+        + ' µm · ' + t('brForm') + ' ' + fmtNum(r1(p[1].formMaxUm)) + ' µm'));
+      box.appendChild(row);
+    });
+
+    var e = su.effective;
+    if (e.kind !== 'none') {
+      var lbl = e.kind === 'clearance' ? t('brSwirk') : t('brUwirk');
+      box.appendChild(el('div', 'br-eff',
+        lbl + ' ≈ ' + fmtNum(e.baseUm) + ' − ' + fmtNum(e.factor) + '·ΣRz = ' + fmtNum(r1(e.effUm)) + ' µm'));
+      if (e.code === 'CLEAR_LOSS' || e.code === 'PRESS_LOSS') box.appendChild(el('div', 'br-warn', '⚠ ' + t(e.code)));
+    }
+
+    box.appendChild(el('div', 'br-sub', t('brLubeTitle')));
+    var lu = BR.lubrication(res, { RzB: rzHole, RzW: rzShaft });
+    if (lu.applies) {
+      box.appendChild(el('div', 'br-lube',
+        'ΣRz ' + fmtNum(r1(lu.RzSumUm)) + ' µm ' + (lu.ok ? '≤' : '>') + ' S_min/3 ' + fmtNum(r1(lu.thresholdUm))
+        + ' µm · ' + t('brGap') + ' ≈ ' + fmtNum(r1(lu.gapWirkUm)) + ' µm'));
+      box.appendChild(el('div', lu.ok ? 'br-ok' : 'br-warn', (lu.ok ? '✓ ' + t('brLubeOk') : '⚠ ' + t('HINT_LUBRICATION'))));
+    } else {
+      box.appendChild(el('div', 'br-lube na', t('brLubeNA')));
+    }
   }
 
   /* Aufklappbarer, selbstprüfender Rechenweg (B6). */
