@@ -659,18 +659,3 @@ input.locked { background: var(--line-soft); color: var(--muted); cursor: defaul
 .br-lube.na { color: var(--muted); }
 .br-ok   { font-size: 12px; color: var(--bore); margin-bottom: 3px; }
 .br-warn { font-size: 12px; color: #e5484d; font-weight: 600; margin-bottom: 3px; }
-
-/* --------------------------------------------------------------------------
-   B10a — Laien-ⓘ je Eingabefeld: rechtsbündiger help-btn (Regel oben) öffnet
-   eine aufklappbare Sprechblase unter dem Feld. \n im Text = Zeilenumbruch. */
-.field-help {
-  margin-top: 2px; font-size: 12px; line-height: 1.55; color: var(--muted);
-  border-left: 3px solid var(--accent); background: var(--surface);
-  border-radius: 0 8px 8px 0; padding: 8px 10px 8px 12px; white-space: pre-line;
-}
-/* Kopfzeile der optionalen Bereiche (Thermik/Oberfläche): Schalter links, ⓘ rechts. */
-.thermik-head-row { display: flex; align-items: center; gap: 8px; }
-.thermik-head-row .thermik-head { flex: 1 1 auto; }
-.thermik-head-row + .field-help { margin-top: 8px; }
-/* Druck: Bedienhilfen gehören nicht aufs Papier. */
-@media print { .help-btn, .field-help { display: none !important; } }
