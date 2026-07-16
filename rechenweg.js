@@ -139,5 +139,43 @@
     return { steps: steps, allOk: steps.every(function (s) { return s.ok; }) };
   }
 
-  return { build: build, buildFreiform: buildFreiform, buildThermik: buildThermik };
+  /* Oberfläche + Schmierspalt (B9 F6/F9): ΣRz, Rz-Grenzwerte, wirksames Spiel/
+   * Übermaß und Schmierspalt – jeder Schritt per Umkehrrechnung selbstgeprüft. */
+  function buildOberflaeche(res, rz, fmt) {
+    if (!res || !res.ok) return { steps: [], allOk: false };
+    fmt = fmt || {};
+    var umU = fmt.umU || umPlainDefault, n = fmt.n || function (x) { return String(x); };
+    function nn(x) { x = Number(x); return (isFinite(x) && x > 0) ? x : 0; }
+    var RzB = nn(rz && rz.RzB), RzW = nn(rz && rz.RzW), RzSum = RzB + RzW;
+    var TB = res.hole.T, TS = res.shaft.T, F = res.fit;
+    var steps = [];
+    function step(key, expr, ok, art) { steps.push({ key: key, expr: expr, ok: ok !== false, art: art || null }); }
+
+    step('rwOaSum', 'ΣRz = Rz_B + Rz_W = ' + n(RzB) + ' + ' + n(RzW) + ' = ' + n(round1(RzSum)) + ' µm',
+      eq(RzSum, RzB + RzW));
+    step('rwOaLimHole', 'Rz_zul,B = T_B / 5 = ' + umU(TB) + ' / 5 = ' + n(round1(TB / 5)) + ' µm',
+      eq(round1(5 * (TB / 5)), round1(TB)));
+    step('rwOaLimShaft', 'Rz_zul,W = T_W / 5 = ' + umU(TS) + ' / 5 = ' + n(round1(TS / 5)) + ' µm',
+      eq(round1(5 * (TS / 5)), round1(TS)));
+
+    if (F.art === 'SPIEL') {
+      var Sm = F.PSmin, sw = Sm - 0.4 * RzSum;
+      step('rwOaSwirk', 'S_wirk = S_min − 0,4·ΣRz = ' + umU(Sm) + ' − 0,4·' + n(round1(RzSum)) + ' = ' + n(round1(sw)) + ' µm',
+        eq(round1(sw + 0.4 * RzSum), round1(Sm)));
+      var thr = Sm / 3, gap = Sm - RzSum, film = RzSum <= thr + 1e-9;
+      step('rwLubeThr', 'S_min / 3 = ' + umU(Sm) + ' / 3 = ' + n(round1(thr)) + ' µm',
+        eq(round1(3 * thr), round1(Sm)));
+      step('rwLubeGap', 'Spalt = S_min − ΣRz = ' + umU(Sm) + ' − ' + n(round1(RzSum)) + ' = ' + n(round1(gap)) + ' µm',
+        eq(round1(gap + RzSum), round1(Sm)));
+      step('rwLubeRule', 'ΣRz ' + (film ? '≤' : '>') + ' S_min/3 : ' + n(round1(RzSum)) + (film ? ' ≤ ' : ' > ') + n(round1(thr)) + ' µm → ' + (film ? 'Vollschmierung' : 'Mischreibung'),
+        (RzSum <= thr + 1e-9) === film, film ? 'SPIEL' : 'UEBERGANG');
+    } else if (F.art === 'UEBERMASS') {
+      var Um = F.interferenceMin, uw = Um - 0.8 * RzSum;
+      step('rwOaUwirk', 'Ü_wirk = Ü_min − 0,8·ΣRz = ' + umU(Um) + ' − 0,8·' + n(round1(RzSum)) + ' = ' + n(round1(uw)) + ' µm',
+        eq(round1(uw + 0.8 * RzSum), round1(Um)));
+    }
+    return { steps: steps, allOk: steps.every(function (s) { return s.ok; }) };
+  }
+
+  return { build: build, buildFreiform: buildFreiform, buildThermik: buildThermik, buildOberflaeche: buildOberflaeche };
 });

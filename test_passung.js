@@ -1093,6 +1093,36 @@ section('17) Beratung Oberfläche + Schmierspalt');
   });
 })();
 
+/* === 18) Rechenweg Oberfläche + Schmierspalt (B9, v1.9.5) ================ *
+ * buildOberflaeche(): jeder Schritt per Umkehrrechnung selbstgeprüft (allOk),
+ * Schrittzahl passend zur Passungsart (Spiel 7 · Übermaß 4 · Übergang 3). */
+section('18) Rechenweg Oberfläche + Schmierspalt');
+(function () {
+  if (!RW || !RW.buildOberflaeche) { ok(false, 'rechenweg.buildOberflaeche fehlt'); return; }
+  var spiel = ['50 H7/g6', '100 H8/f7', '25 H7/f7', '20 H7/g6', '40 H7/e8'];
+  var press = ['40 H7/p6', '60 H7/s6', '30 H7/r6'];
+  var trans = ['20 H7/k6', '25 H7/j6'];
+  var rzs = [[0, 0], [1.6, 1.6], [3.2, 1.6], [6.3, 3.2], [12.5, 6.3], [25, 12.5]];
+  var want = { SPIEL: 7, UEBERMASS: 4, UEBERGANG: 3 };
+
+  spiel.concat(press, trans).forEach(function (fs) {
+    var f = S.computeFit(fs); if (!f.ok) { ok(false, 'computeFit ' + fs); return; }
+    rzs.forEach(function (rp) {
+      var rw = RW.buildOberflaeche(f, { RzB: rp[0], RzW: rp[1] });
+      ok(rw.allOk === true, fs + ' Rechenweg allOk Rz=' + rp[0] + '/' + rp[1]);
+      ok(rw.steps.length === want[f.fit.art], fs + ' Schrittzahl (' + f.fit.art + ') Rz=' + rp[0]);
+      rw.steps.forEach(function (st, idx) {
+        ok(st.ok === true, fs + ' Schritt ' + idx + ' geprüft Rz=' + rp[0]);
+        ok(typeof st.expr === 'string' && /[=≤≥<>→]/.test(st.expr), fs + ' Schritt ' + idx + ' hat Formel');
+      });
+    });
+  });
+
+  // Robustheit: ungültige Eingabe → leer, allOk false.
+  var bad = RW.buildOberflaeche(null, { RzB: 3, RzW: 3 });
+  ok(bad.steps.length === 0 && bad.allOk === false, 'ungültiges res → leerer Rechenweg');
+})();
+
 /* === Zusammenfassung ====================================================== */
 say('\n  ========================================');
 say('  Assertions gesamt : ' + (pass + fail));

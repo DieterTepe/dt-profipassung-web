@@ -424,6 +424,31 @@
     ['de', 'en', 'pt'].forEach(function (l) { for (var k in s[l]) STR[l][k] = s[l][k]; });
   })();
 
+  /* --- B9 Stufe 3b: Rechenweg-Labels Oberfläche + Schmierspalt ----------- */
+  (function () {
+    var s = {
+      de: {
+        brSurfLubeHeading: 'Oberfläche & Schmierspalt', rwOaSum: 'Summe der Rautiefen',
+        rwOaLimHole: 'Rz-Grenzwert Bohrung', rwOaLimShaft: 'Rz-Grenzwert Welle',
+        rwOaSwirk: 'Wirksames Kleinstspiel', rwOaUwirk: 'Wirksames Kleinstübermaß',
+        rwLubeThr: 'Schmierspalt-Schwelle', rwLubeGap: 'Nutzbarer Schmierspalt', rwLubeRule: 'Reibungszustand'
+      },
+      en: {
+        brSurfLubeHeading: 'Surface & lubrication', rwOaSum: 'Sum of roughness',
+        rwOaLimHole: 'Rz limit hole', rwOaLimShaft: 'Rz limit shaft',
+        rwOaSwirk: 'Effective min clearance', rwOaUwirk: 'Effective min interference',
+        rwLubeThr: 'Lubrication threshold', rwLubeGap: 'Usable lubrication gap', rwLubeRule: 'Friction regime'
+      },
+      pt: {
+        brSurfLubeHeading: 'Superfície & lubrificação', rwOaSum: 'Soma das rugosidades',
+        rwOaLimHole: 'Limite Rz furo', rwOaLimShaft: 'Limite Rz eixo',
+        rwOaSwirk: 'Folga mínima efetiva', rwOaUwirk: 'Interferência mínima efetiva',
+        rwLubeThr: 'Limiar de lubrificação', rwLubeGap: 'Folga de lubrificação utilizável', rwLubeRule: 'Regime de atrito'
+      }
+    };
+    ['de', 'en', 'pt'].forEach(function (l) { for (var k in s[l]) STR[l][k] = s[l][k]; });
+  })();
+
   /* ======================================================================= *
    * 2) Zustand + kleine Helfer
    * ======================================================================= */
@@ -873,6 +898,10 @@
     if (thEnabled && TH && TH.MAT[thHole] && TH.MAT[thShaft]) {
       var thr = TH.compute(res, { alphaHole: TH.MAT[thHole].alpha, alphaShaft: TH.MAT[thShaft].alpha, T: thT });
       if (thr.ok) { groups[0].titleKey = 'modeFit'; groups.push({ titleKey: 'thHeading', data: window.DTPRechenweg.buildThermik(res, thr, rwFmt()) }); }
+    }
+    if (oaEnabled && window.DTPRechenweg.buildOberflaeche) {
+      if (!groups[0].titleKey) groups[0].titleKey = 'modeFit';
+      groups.push({ titleKey: 'brSurfLubeHeading', data: window.DTPRechenweg.buildOberflaeche(res, { RzB: rzHole, RzW: rzShaft }, rwFmt()) });
     }
     renderRechenweg(groups);
     renderViz(res);
