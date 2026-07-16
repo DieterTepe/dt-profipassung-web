@@ -22,6 +22,7 @@ var RW = isNode ? require('./rechenweg.js') : globalThis.DTPRechenweg;
 var FF = isNode ? require('./freiform.js')  : globalThis.DTPFreiform;
 var TH = isNode ? require('./thermik.js')   : globalThis.DTPThermik;
 var SB = isNode ? require('./schaubild.js') : globalThis.DTPSchaubild;
+var BR = isNode ? require('./beratung.js')  : globalThis.DTPBeratung;
 
 /* --- Mini-Assert-Framework (Muster: DT-ProfiSchraube) ---------------------- */
 var pass = 0, fail = 0, fails = [];
@@ -940,6 +941,78 @@ section('15) Thermik-Layout Schaubild');
   var L0 = SB.layout(f0, { dS: 0 });
   ok(Math.abs(L0.ghostHole.yTop - L0.hole.yTop) < EPS && Math.abs(L0.ghostShaft.yTop - L0.shaft.yTop) < EPS,
      'ΔS=0 → Ghosts auf Balkenhöhe (kein Versatz)');
+})();
+
+/* === 16) Beratung: Kostenampel + Messmittel (B9, v1.9.3) ================= *
+ * DOM-frei. Kostenampel: Ampelstufe nach IT-Regel (≤6 rot, 7–8 gelb, ≥9 grün),
+ * Verfahren↔IT-Konsistenz. Messmittel: goldene Regel U≤T/10 (ideal) bzw. ≤T/5
+ * (brauchbar), Plan-Anker H7 25 µm, Monotonie, Formel-Identitäten. */
+section('16) Beratung Kostenampel + Messmittel');
+(function () {
+  if (!BR || !BR.costTraffic) { ok(false, 'beratung.js nicht geladen'); return; }
+  var EPS = 1e-9;
+
+  // --- Kostenampel: Regel über alle IT-Güten 1..16 ---
+  for (var it = 1; it <= 16; it++) {
+    var c = BR.costTraffic(it);
+    var exp = it <= 6 ? 'red' : (it <= 8 ? 'yellow' : 'green');
+    ok(c.tier === exp, 'Kostenampel IT' + it + ' → ' + exp);
+    ok(c.code === (exp === 'red' ? 'COST_RED' : exp === 'yellow' ? 'COST_YELLOW' : 'COST_GREEN'), 'Kosten-Code IT' + it);
+    // jedes gemeldete Verfahren erreicht diese IT wirklich:
+    c.processes.forEach(function (p) {
+      ok(BR.PROC[p] && it >= BR.PROC[p][0] && it <= BR.PROC[p][1], 'Verfahren ' + p + ' erreicht IT' + it);
+    });
+    // Vollständigkeit: kein passendes Verfahren fehlt in der Liste:
+    for (var k in BR.PROC) if (BR.PROC.hasOwnProperty(k)) {
+      var inRange = it >= BR.PROC[k][0] && it <= BR.PROC[k][1];
+      ok(inRange === (c.processes.indexOf(k) >= 0), 'Verfahren-Liste IT' + it + ' vollständig für ' + k);
+    }
+  }
+  // Ampel-Grenzen scharf:
+  ok(BR.costTraffic(6).tier === 'red' && BR.costTraffic(7).tier === 'yellow', 'Grenze IT6→IT7 (rot→gelb)');
+  ok(BR.costTraffic(8).tier === 'yellow' && BR.costTraffic(9).tier === 'green', 'Grenze IT8→IT9 (gelb→grün)');
+  // Ungültig:
+  ok(BR.costTraffic(0).code === 'COST_UNDEFINED', 'Kostenampel IT0 → undefiniert');
+
+  // --- Messmittel: Plan-Anker H7 (25 µm) ---
+  var m25 = BR.measurement(25);
+  ok(Math.abs(m25.uGoldenUm - 2.5) < EPS && Math.abs(m25.uWarnUm - 5) < EPS, 'H7 25 µm: golden 2,5 / warn 5');
+  function inst(m, key) { return m.instruments.filter(function (x) { return x.key === key; })[0]; }
+  ok(inst(m25, 'MESSSCHIEBER').suitable === false, 'H7 25 µm: Messschieber ungeeignet ✗');
+  ok(inst(m25, 'MIKROMETER').suitable === true && inst(m25, 'MIKROMETER').golden === false, 'H7 25 µm: Mikrometer brauchbar ✓ (nicht ideal)');
+  ok(inst(m25, 'GRENZLEHRE').suitable === true && inst(m25, 'GRENZLEHRE').golden === true, 'H7 25 µm: Grenzlehre geeignet ✓');
+  ok(inst(m25, 'KMG').suitable === true, 'H7 25 µm: KMG brauchbar ✓');
+
+  // --- Messmittel: Formel-Identitäten + Eignungslogik über T-Sweep ---
+  var prev = {};
+  for (var T = 4; T <= 200; T += 2) {
+    var m = BR.measurement(T);
+    ok(Math.abs(m.uGoldenUm - T / 10) < EPS, 'uGolden=T/10 bei T=' + T);
+    ok(Math.abs(m.uWarnUm - T / 5) < EPS, 'uWarn=T/5 bei T=' + T);
+    m.instruments.forEach(function (x) {
+      if (x.gauge) { ok(x.suitable && x.golden, 'Grenzlehre stets geeignet (T=' + T + ')'); return; }
+      ok(x.suitable === (x.uMaxUm <= T / 5 + EPS), 'Eignung ✓ konsistent ' + x.key + ' T=' + T);
+      ok(x.golden === (x.uMaxUm <= T / 10 + EPS), 'ideal konsistent ' + x.key + ' T=' + T);
+      // Monotonie: bei größerem T bleibt geeignet geeignet, ideal ideal.
+      if (prev[x.key]) {
+        if (prev[x.key].suitable) ok(x.suitable, 'Eignung monoton ' + x.key + ' bis T=' + T);
+        if (prev[x.key].golden) ok(x.golden, 'ideal monoton ' + x.key + ' bis T=' + T);
+      }
+      prev[x.key] = x;
+    });
+  }
+  ok(BR.measurement(0).code === 'MEAS_UNDEFINED', 'Messmittel T=0 → undefiniert');
+
+  // --- Verzahnung mit echten Passungen: Toleranz→Messmittel, Güte→Ampel ---
+  ['50 H7/g6', '25 H7/k6', '100 H8/f7', '10 H7/h6', '40 H7/p6'].forEach(function (fs) {
+    var f = S.computeFit(fs); if (!f.ok) return;
+    var Th = f.hole.upper - f.hole.lower, Ts = f.shaft.upper - f.shaft.lower;
+    ok(Math.abs(BR.measurement(Th).uGoldenUm - Th / 10) < EPS, fs + ': Bohrung T/10-Identität');
+    ok(Math.abs(BR.measurement(Ts).uGoldenUm - Ts / 10) < EPS, fs + ': Welle T/10-Identität');
+    var gh = Number(f.input.hole.grade), gs = Number(f.input.shaft.grade);
+    ok(BR.costTraffic(gh).tier === (gh <= 6 ? 'red' : gh <= 8 ? 'yellow' : 'green'), fs + ': Ampel Bohrung IT' + gh);
+    ok(BR.costTraffic(gs).tier === (gs <= 6 ? 'red' : gs <= 8 ? 'yellow' : 'green'), fs + ': Ampel Welle IT' + gs);
+  });
 })();
 
 /* === Zusammenfassung ====================================================== */
