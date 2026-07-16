@@ -22,12 +22,11 @@ komplette Wahrheit steht in diesem Plan und in den Projektdateien. So steigst du
    Bauabschnitts-Liste mit „✓ bestätigt" markiert.
 
 4) NÄCHSTE AUFGABE (genau hier weitermachen):
-   **v1.9.2 (Thermik-Visualisierung im Schaubild) ist gebaut & grün und wartet auf Dieters
-   Handy-Bestätigung.** Ist sie bestätigt → **B9 (Beratungs-Module / Passungs-Empfehlungen)**:
-   aus Anwendung/Kontext eine passende ISO-286-Paarung vorschlagen, mit Begründung + selbst-
-   prüfendem Rechenweg (stehende Regel). Danach **B10 Pressverband DIN 7190** (größter Physik-
-   Baustein — dafür Opus-Modell empfohlen). Ist v1.9.2 noch NICHT bestätigt: erst die gelieferten
-   Dateien (schaubild.js, ui.js, style.css) am Handy prüfen lassen — nicht vorgreifen.
+   **B9 — Beratungs-Module / Passungs-Empfehlungen** (F6–F9: Oberfläche, Kostenampel, Messmittel,
+   Schmierspalt). DoD: Regel-Tests, alle Hinweise als Codes dreisprachig (DE/EN/PT). Bewährter
+   Fließband-Ablauf (Abschnitt 0.4). **Danach: B10 Pressverband DIN 7190** (größter Physik-
+   Baustein — für den Physik-Kern das stärkere Modell empfohlen).
+   (v1.9.2 Thermik-Schaubild ist erledigt & am Handy bestätigt — Details im Changelog am Dateiende.)
 
 5) ARBEITSWEISE JE BAUSTEIN (Fließband, minimale Diffs):
    bauen → `node --check` alle JS → i18n-Paritätsprüfung (STR/MSG in DE/EN/PT vollständig)
@@ -50,14 +49,14 @@ komplette Wahrheit steht in diesem Plan und in den Projektdateien. So steigst du
 7) MODULKARTE: daten.js (ISO-286-Zahlenkern) · validate.js (Eingabeprüfung) · solver.js
    (computeFit/parseFit/formatFit, Presets) · freiform.js (ISO 2768) · thermik.js (MAT +
    Thermik) · rechenweg.js (build/buildFreiform/buildThermik) · schaubild.js (Toleranzfeld-
-   SVG: svg + svgGeneral + Thermik-Overlay bei T) · ui.js (Formular, Modus Passung/Freiform, Thermik-Bereich, i18n,
-   Theme, Rechenweg, Grafik) · test_passung.js (Harness, Abschnitte 1–14) · style.css ·
+   SVG: svg + svgGeneral) · ui.js (Formular, Modus Passung/Freiform, Thermik-Bereich, i18n,
+   Theme, Rechenweg, Grafik) · test_passung.js (Harness, Abschnitte 1–15) · style.css ·
    DT-ProfiPassung.html (voll) / _Test.html (Testedition) / _Pruefstand.html (Handy-Test).
 ═══════════════════════════════════════════════════════════════════════════
 
 ═══════════════════════════════════════════════════════════════════════════
-Plan-Version : 1.9.2 · Stand 2026-07-15 · Status: **v1.9.2 (Thermik-Visualisierung im Schaubild) gebaut & grün — Handy-Test offen** · v1.9.1 + B8 bestätigt
-Basislinie   : **138.652 Assertions, 0 Fehler** — prüfbar per `node test_passung.js`
+Plan-Version : 1.9.2 · Stand 2026-07-16 · Status: **Thermik-Visualisierung im Schaubild (Variante C) gebaut, grün & am Handy bestätigt — Projektordner + GitHub aktuell** · B8 bestätigt
+Basislinie   : **146.756 Assertions, 0 Fehler** — prüfbar per `node test_passung.js`
 STEHENDE REGEL (ab v1.9.1): **JEDE Berechnung liefert einen selbstprüfenden Rechenweg**
 (Formel + eingesetzte Werte + ✓), auch künftige Module. Der Rechenweg ist das Nachweis-
 Herzstück des Programms. rechenweg.js hat je Rechenart einen build*-Baustein; ui.js sammelt
@@ -525,7 +524,7 @@ i18n-Gerüst DE/EN/PT, Theme/Sprache. DoD: erster Handy-Test Dieter. — **✓ b
 **B6 — Rechenweg** `rechenweg.js` selbstprüfend für die ISO-Kette. DoD: Selbstprüfung über
 alle bisherigen Presets × 3 Sprachen. — **✓ bestätigt (v1.7.2), inkl. Handy-Test-Fixes.**
 **B7 — Freiform + ISO 2768.** DoD: Anker ISO-2768-Tabelle, Freiform-Presets. — **✓ bestätigt (v1.8.1), Voll- & Testversion.**
-**B8 — Thermik-Check** (F5). DoD: Vorzeichen-/Umschlag-Tests, Preset 80 °C. — **✓ bestätigt (v1.9): 40/50 H7/p6 Stahl-in-Alu 80 °C von Dieter per Bildern geprüft, Werte korrekt.**
+**B8 — Thermik-Check** (F5). DoD: Vorzeichen-/Umschlag-Tests, Preset 80 °C. — **✓ bestätigt (v1.9): 40/50 H7/p6 Stahl-in-Alu 80 °C von Dieter per Bildern geprüft, Werte korrekt.** **Thermik-Schaubild-Visualisierung (Variante C) nachgezogen & am Handy bestätigt (v1.9.2).**
 **B9 — Beratungs-Module** (F6–F9: Oberfläche, Kostenampel, Messmittel, Schmierspalt).
 DoD: Regel-Tests, alle Hinweise als Codes dreisprachig.
 **B10 — Pressverband DIN 7190** (F4, größter Physik-Baustein; ggf. 2 Sessions:
@@ -748,20 +747,28 @@ unverändert. Ab jetzt gilt die stehende Regel oben für ALLE weiteren Rechenmod
 frische Claude-Instanz in einem NEUEN Chat ohne Verlaufs-Ballast exakt hier weiterarbeiten kann
 (Recovery aus /mnt/project, Basislinie-Gegenprobe, nächste Aufgabe, Arbeitsweise, Regeln,
 Modulkarte). Kein Code geändert; Basislinie unverändert.
-**v1.9.2 (2026-07-15):** v1.9.1 (Rechenweg Freiform + Thermik) am Handy bestätigt. Neu:
-**Thermik-Visualisierung im Schaubild.** **schaubild.js**: `layout(res, therm)` und
-`svg(res, labels, therm)` optional erweitert (rückwärtskompatibel) — bei aktiver Thermik wird
-DOM-frei ein Wellen-„Geist" um −ΔS verschoben (Skala weitet sich, nichts schneidet ab), die
-Spiel-/Übermaßzone **bei T** ermittelt (SPIEL/ÜBERMASS gestrichelt; ÜBERGANG ehrlich ohne Zone)
-und ein sprachneutraler „T °C"-Tag gesetzt; die Toleranzfelder bleiben bei 20 °C (DIN EN ISO 1).
-**ui.js**: `renderViz` reicht die Thermik (falls aktiv & gültig) ans SVG durch und ergänzt einen
-dezenten Legenden-Chip (T + ΔS, dreisprachige Erklärung); neue i18n-Keys `vizTherm`/`vizThermHelp`
-(DE/EN/PT). **style.css**: `.tf-ghost-shaft`, `.tf-band-t(-spiel/-uebermass)`, `.tf-tlabel`,
-gestrichelter Chip-Swatch — bewusst ohne Animation (reduced-motion-sicher). **HTML & Harness
-unberührt** (der Prüfstand lädt schaubild.js nicht → Schaubild-Layout bleibt Ad-hoc-Prüfung;
-Basislinie **138.652 unverändert**). Verifikation: node --check · Layout-Mathematik + SVG-Shim +
-i18n-Parität **54/54** · DOM-Smoke (ui.js real, Thermik-Preset) **11/11**. daten/validate/solver/
-freiform/thermik/rechenweg/test_passung unverändert.
+**v1.9.2 (2026-07-16):** Thermik-Visualisierung im Toleranzfeld-Schaubild gebaut, grün & am
+Handy bestätigt (**Variante C — differenzielle Betriebslage**). Bei aktiver Thermik erscheinen
+im Schaubild zusätzlich zwei **gestrichelte „Ghost"-Bänder** in Bauteilfarbe (Bohrung grün
+links, Welle blau rechts), um ±ΔS/2 gegen die Nulllinie versetzt → der **Höhenversatz zwischen
+beiden Ghosts = ΔS** (so viel ändert sich Spiel/Übermaß gegenüber 20 °C). Die Toleranzfelder
+selbst bleiben bei 20 °C (Normbezug DIN EN ISO 1); Stahl/Stahl → ΔS=0 → Ghosts auf Balkenhöhe
+(ehrlich „keine Änderung"). Gezeigt wird nur die fit-relevante **Differenzdehnung** (die
+gemeinsame Dehnung verschiebt die Passung nicht); die realen Einzeldehnungen δ_Bohrung/δ_Welle
+stehen als Zahlen in der Legende. **schaubild.js**: `layout(res, thermal)` + `svg(res, labels,
+thermal)` optional erweitert — bezieht die Ghost-Lagen in die Skala ein (kein Abschneiden),
+Ghost-Breite auf den seitlichen Freistreifen geklemmt (kein Überlappen der Hauptbalken); ohne
+`thermal` byte-gleich wie zuvor. **ui.js**: `renderViz` rechnet bei aktiver Thermik die Lage,
+reicht sie ans SVG durch und ergänzt zwei Thermik-Chips (δ je Bauteil, „bei T °C") + ΔS-Notiz
+mit Umschlag-Hinweis; zwei neue i18n-Keys (DE/EN/PT). **style.css**: nur neue Regeln
+(`.tf-ghost*`, gestrichelte Chip-Swatches, `.viz-therm-note`), `prefers-reduced-motion`
+respektiert. **_Pruefstand.html**: `schaubild.js` vor `test_passung.js` eingebunden (Abschnitt 15
+braucht `DTPSchaubild` auch im Browser). **test_passung.js**: Abschnitt 15 — Thermik-Layout
+(DOM-frei über `layout()`): δ-Identität, Regressionswächter (ohne thermal keine Ghosts, y0
+unverändert), Versatz +ΔS/2 (Bohrung)/−ΔS/2 (Welle), kein Abschneiden, seitliche Lage,
+ΔS=0-Fall → **Basislinie 138.652 → 146.756** (+8.104). Verifikation: node --check · i18n-Parität
+(2 neue Keys ×3) · DOM-Smoke SVG 28/28 · DOM-Smoke ui.js-Boot 8/8. daten/validate/solver/
+freiform/thermik/rechenweg unverändert. Projektordner + GitHub aktuell.
 **Nächster Schritt: B9 (Beratungs-Module / Passungs-Empfehlungen).**
 
 ═══════════════════════════════════════════════════════════════════════════
