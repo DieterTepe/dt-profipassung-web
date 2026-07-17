@@ -114,7 +114,7 @@ global.localStorage = localStorageShim;
 
 /* ------------------------------------------------- Module in Reihenfolge */
 ['daten.js', 'validate.js', 'solver.js', 'freiform.js', 'thermik.js',
- 'rechenweg.js', 'schaubild.js', 'beratung.js', 'ui.js'].forEach(function (f) {
+ 'rechenweg.js', 'schaubild.js', 'beratung.js', 'pressverband.js', 'ui.js'].forEach(function (f) {
   (0, eval)(fs.readFileSync(__dirname + '/' + f, 'utf8') + '\n//# sourceURL=' + f);
 });
 
@@ -132,29 +132,28 @@ ok(byId.resultHost.children.length > 0, 'resultHost gefüllt (50 H7/g6 gerechnet
 function helpBtns() { return formHost.findAll(function (n) { return n.classList.contains('help-btn'); }); }
 function bubbles() { return formHost.findAll(function (n) { return n.classList.contains('field-help'); }); }
 
+var N_FIT = 23; // B10a: 12 · B10c: +11 (Pressverband: Toggle, 2×Werkstoff, 2×eigene Werte, µ, l_F, D_Aa, D_Ii, M_t, F_ax)
 var btns = helpBtns(), bubs = bubbles();
-ok(btns.length === 12, 'Passungs-Modus: 12 ⓘ-Knöpfe (ist: ' + btns.length + ')');
-ok(bubs.length === 12, 'Passungs-Modus: 12 Sprechblasen (ist: ' + bubs.length + ')');
+ok(btns.length === N_FIT, 'Passungs-Modus: ' + N_FIT + ' ⓘ-Knöpfe (ist: ' + btns.length + ')');
+ok(bubs.length === N_FIT, 'Passungs-Modus: ' + N_FIT + ' Sprechblasen (ist: ' + bubs.length + ')');
 ok(bubs.every(function (b) { return b.hidden === true; }), 'Alle Sprechblasen anfangs verborgen');
 ok(bubs.every(function (b) { return b.getAttribute('data-i18n') && b.textContent.length > 40; }), 'Jede Sprechblase mit data-i18n + ausführlichem Text');
 ok(btns.every(function (b) { return b.getAttribute('data-i18n-aria') && b.getAttribute('aria-label'); }), 'Jeder ⓘ-Knopf mit aria-Label (übersetzbar)');
 
 /* Toggle-Verhalten je Knopf: auf → zu, aria-expanded folgt. */
 var toggleOk = true;
-btns.forEach(function (b, i) {
-  var field = b.parentNode.parentNode; // .field-label/.thermik-head-row -> .field/.thermik-box
-  var bub = field.findAll(function (n) { return n.classList.contains('field-help'); })[0];
-  if (!bub) { toggleOk = false; return; }
+btns.forEach(function (b) {
   b.fire('click');
-  if (bub.hidden !== false || b.getAttribute('aria-expanded') !== 'true') toggleOk = false;
+  var open = bubbles().filter(function (x) { return !x.hidden; });
+  if (open.length !== 1 || b.getAttribute('aria-expanded') !== 'true') toggleOk = false;
   b.fire('click');
-  if (bub.hidden !== true || b.getAttribute('aria-expanded') !== 'false') toggleOk = false;
+  if (bubbles().some(function (x) { return !x.hidden; }) || b.getAttribute('aria-expanded') !== 'false') toggleOk = false;
 });
 ok(toggleOk, 'Jeder ⓘ-Knopf öffnet/schließt seine Sprechblase (aria-expanded folgt)');
 
 /* Toggle-ⓘ (Thermik/Oberfläche) darf die Checkbox NICHT umschalten. */
 var boxes = formHost.findAll(function (n) { return n.classList.contains('thermik-box'); });
-ok(boxes.length === 2, 'Zwei optionale Bereiche (Thermik + Oberfläche)');
+ok(boxes.length === 3, 'Drei optionale Bereiche (Thermik + Oberfläche + Pressverband)');
 var cbStable = true;
 boxes.forEach(function (bx) {
   var cb = bx.findAll(function (n) { return n.tagName === 'INPUT' && n.type === undefined ? false : n._attrs && false; });
@@ -179,14 +178,37 @@ langPt.fire('click');
 var txPt = snapshotTexts();
 langDe.fire('click');
 var txDe2 = snapshotTexts();
-ok(txDe.length === 12 && txEn.length === 12 && txPt.length === 12, 'Sprechblasen über Sprachwechsel stabil (12/12/12)');
+ok(txDe.length === N_FIT && txEn.length === N_FIT && txPt.length === N_FIT, 'Sprechblasen über Sprachwechsel stabil (' + N_FIT + '×3)');
 var parity = true;
 for (var i = 0; i < txDe.length; i++) {
   if (!txDe[i] || !txEn[i] || !txPt[i]) parity = false;
   if (txDe[i] === txEn[i] || txDe[i] === txPt[i] || txEn[i] === txPt[i]) parity = false;
 }
-ok(parity, 'i18n-Parität: alle 12 Feldhilfen in DE/EN/PT eigenständig übersetzt');
+ok(parity, 'i18n-Parität: alle ' + N_FIT + ' Feldhilfen in DE/EN/PT eigenständig übersetzt');
 ok(txDe.join('|') === txDe2.join('|'), 'Rückschalten auf DE stellt Originaltexte wieder her');
+
+/* B10c: Pressverband-Bereich — einschalten, Standardfall 25 H7/f7 (Spiel) → Hinweis;
+   dann Welle auf „s“ → Übermaßpassung → Ergebnis-Panel mit Kennzeilen. */
+function pvResults() { return byId.resultHost.findAll(function (n) { return n.classList.contains('pv-result'); }); }
+var pvBox = boxes[2];
+var pvChk = pvBox.findAll(function (n) { return n.tagName === 'INPUT'; }).filter(function (n) { return n.type === 'checkbox'; })[0];
+ok(!!pvChk, 'Pressverband-Schalter vorhanden');
+pvChk.checked = true; pvChk.fire('change');
+var pr = pvResults();
+ok(pr.length === 1, 'Pressverband-Panel erscheint nach Aktivierung');
+var noteN = pr.length ? pr[0].findAll(function (n) { return n.getAttribute('data-i18n') === 'pvNoInter'; }) : [];
+ok(noteN.length === 1, '25 H7/f7 (Spiel) → verständlicher Kein-Übermaß-Hinweis');
+var sels = formHost.findAll(function (n) { return n.tagName === 'SELECT'; });
+var shaftSel = sels[3]; // Reihenfolge: System, Bohr-Buchstabe, Bohr-Grad, Wellen-Buchstabe, ...
+shaftSel.value = 's'; shaftSel.fire('change');
+pr = pvResults();
+var rows = pr.length ? pr[0].findAll(function (n) { return n.classList.contains('pv-row'); }) : [];
+ok(pr.length === 1 && rows.length >= 8, '25 H7/s7 → Panel mit Kennzeilen (ist: ' + rows.length + ')');
+var noHint = pr.length ? pr[0].findAll(function (n) { return n.getAttribute('data-i18n') === 'pvNoInter'; }) : [1];
+ok(noHint.length === 0, 'Übermaßpassung → kein Kein-Übermaß-Hinweis mehr');
+shaftSel.value = 'f'; shaftSel.fire('change');
+pvChk.checked = false; pvChk.fire('change');
+ok(pvResults().length === 0, 'Pressverband deaktiviert → Panel verschwindet');
 
 /* Freiform-Modus: dort 2 ⓘ (Nennmaß + Klasse). */
 var modeBtns = formHost.findAll(function (n) { return n.tagName === 'BUTTON' && n.getAttribute('data-i18n') === 'modeFreiform'; });

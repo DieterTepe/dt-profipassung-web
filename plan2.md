@@ -28,11 +28,11 @@ komplette Wahrheit steht in diesem Plan und in den Projektdateien. So steigst du
      bestehenden Feldern: attachFieldHelp/labeledField(+helpKey) in ui.js, 14 fh_-Hilfetexte
      ×3 Sprachen (Was ist das · Bereich · empfohlene Werte), .field-help/.thermik-head-row
      in style.css. DOM-Smoke 16/16 (dom_smoke_b10a.js), Basislinie unverändert 150.143.
-   • **B10b ✓ gebaut & ausgeliefert (Handy-Bestätigung ausstehend)** — Rechenkern `pressverband.js` (DOM-frei): DIN-7190-Kette (Glättung 0,8·ΣRz,
+   • **B10b ✓ bestätigt (Handy, 2026-07-17; Prüfstand grün)** — Rechenkern `pressverband.js` (DOM-frei): DIN-7190-Kette (Glättung 0,8·ΣRz,
      Q_A/Q_I, Fugendruck p für U_min/U_max, elastische p_zul-Grenzen inkl. GJL-Sonderfall,
      F_ax/M_t, Sicherheiten, Einpresskraft, thermisches Fügen ΔT) + finale MAT-Werte und
      µ-Tabelle in daten.js; Validierungsanker (Literatur) ±2 %; neuer Harness-Abschnitt.
-   • **B10c** — Formulargruppe in ui.js (aktivierbar wie Thermik): Auswahlmenüs mit
+   • **B10c ✓ gebaut & ausgeliefert (Handy-Bestätigung ausstehend)** — Formulargruppe in ui.js (aktivierbar wie Thermik): Auswahlmenüs mit
      „eigener Wert“-Haken (fillFromMaterial-Muster der Schraube), Werkstoff Nabe/Welle →
      E/ν/α/R_e vorbelegt+gesperrt, µ-Auswahl, l_F, D_Aa, d_Ii (0=Vollwelle), Last, Fügeart;
      jedes Feld mit ⓘ; Ergebnis-Panels (p_min/p_max, Sicherheiten, Fügekraft/ΔT).
@@ -68,7 +68,7 @@ komplette Wahrheit steht in diesem Plan und in den Projektdateien. So steigst du
 ═══════════════════════════════════════════════════════════════════════════
 
 ═══════════════════════════════════════════════════════════════════════════
-Plan-Version : 1.9.7 · Stand 2026-07-17 · Status: **B10a am Handy bestätigt · B10b (pressverband.js, DIN-7190-Rechenkern) gebaut, grün & ausgeliefert — Handy-Bestätigung AUSSTEHEND** · nächster Baustein: nach Bestätigung B10c (Formulargruppe)
+Plan-Version : 1.9.8 · Stand 2026-07-17 · Status: **B10a+B10b am Handy bestätigt · B10c (Pressverband-Formulargruppe + Ergebnis-Panel in ui.js) gebaut, grün & ausgeliefert — Handy-Bestätigung AUSSTEHEND** · nächster Baustein: nach Bestätigung B10d (Rechenweg + Presets)
 Basislinie   : **154.565 Assertions, 0 Fehler** — prüfbar per `node test_passung.js`
 STEHENDE REGEL (ab v1.9.1): **JEDE Berechnung liefert einen selbstprüfenden Rechenweg**
 (Formel + eingesetzte Werte + ✓), auch künftige Module. Der Rechenweg ist das Nachweis-
@@ -675,6 +675,26 @@ T0-Verschiebung, Grenzen-Normierung, fromFit-Integration 60 H7/s6) · 14 Fehlerp
 publiziertes Beispiel; Prüfvorschlag an Dieter siehe Chat (Anker-A-Werte gegen Online-Rechner).
 **Nächster Schritt: Handy-Bestätigung B10b → dann B10c (Formulargruppe mit Auswahlmenüs + ⓘ).**
 
-═══════════════════════════════════════════════════════════════════════════
+════**v1.9.8 (2026-07-17) · B10c Pressverband-Formulargruppe + Ergebnis-Panel (gebaut & ausgeliefert;
+Handy-Bestätigung ausstehend):** **ui.js**: neuer Ankreuz-Bereich „Pressverband berechnen
+(DIN 7190)“ — Standard AUS, Persistenz wie Thermik (dtp-pv-*). Alles per Auswahlmenü mit
+„eigener Wert“-Haken (fillFromMaterial-Muster der Schraube): Werkstoff Nabe/Welle aus thermik.js
+MAT mit Richtwert-Zeile (E · ν · Re/Rm · α) und optionalen eigenen Kennwerten (E, ν, Grenze mit
+duktil/spröde-Wahl, α; Felder starten mit den Richtwerten); µ aus 6er-Paarungstabelle
+(Richtwert im Menütext) + eigener µ-Wert; Geometrie l_F/D_Aa (Startwerte 1×/2×Nennmaß),
+D_Ii (0=Vollwelle); geforderte Last M_t/F_ax → Rutschsicherheit. Rz-Kopplung: Glättung nutzt
+die Rz-Werte des Oberflächen-Bereichs (aktiver Hinweis-Text je Zustand). Ergebnis-Panel:
+p_min/p_max/p_zul, S_F/S_H mit Ampelfarben (S_F: grün≥1,2 · S_H: grün≥1,5), F_ax,max, M_t,max,
+F_e, Fügetemperaturen Nabe/Welle, alle PV_WARN/PV_HINT-Codes als Klartext; Spielpassung →
+verständlicher Kein-Übermaß-Hinweis. **11 neue ⓘ** (Toggle + 10 Felder) im etablierten
+B10a-Muster; ~66 neue i18n-Keys ×3 (Labels, µ-Paarungen, Panel, Fehler, Hinweise, fh_-Hilfen).
+**style.css**: .pv-*-Regeln (Panel, Ampelfarben, Eigenwert-Zeilen). **dom_smoke_b10a.js**
+erweitert: 23 ⓘ ×3 Sprachen, 3 Bereiche, robuster Toggle-Test, Pressverband-Integration
+(Spiel→Hinweis · H7/s7→Kennzeilen · Deaktivieren→Panel weg) → **22 OK, 0 Fehler**.
+Kern-/Harness-Dateien unberührt: **Basislinie unverändert 154.565**. Geändert nur ui.js,
+style.css, dom_smoke_b10a.js. Standard beim Laden unverändert: 25 H7/f7, alle Zusatzbereiche AUS.
+**Nächster Schritt: Handy-Bestätigung B10c → dann B10d (buildPressverband-Rechenweg + Presets).**
+
+═══════════════════════════════════════════════════════════════════════
 Ende plan.md · DT-ProfiPassung · Plan v1.0
 ═══════════════════════════════════════════════════════════════════════════

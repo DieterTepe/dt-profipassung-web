@@ -11,6 +11,7 @@
   'use strict';
 
   var D = window.DTPData, V = window.DTPValidate, S = window.DTPSolver, FF = window.DTPFreiform, TH = window.DTPThermik;
+  var PVM = window.DTPPress;
 
   /* ======================================================================= *
    * 1) i18n — Bedien- und Ergebnistexte
@@ -505,6 +506,170 @@
     ['de', 'en', 'pt'].forEach(function (l) { for (var k in s[l]) STR[l][k] = s[l][k]; });
   })();
 
+  /* B10c — Pressverband (DIN 7190): Labels, µ-Paarungen, Ergebnis-Panel,
+     Fehler-/Hinweis-Codes aus pressverband.js und Laien-ⓘ (DE/EN/PT). */
+  (function () {
+    var s = {
+      de: {
+        unit_nmm2: 'N/mm²', unit_nm: 'Nm', unit_n: 'N',
+        pvEnable: 'Pressverband berechnen (DIN 7190)',
+        pvMatA: 'Werkstoff Nabe (Außenteil)', pvMatI: 'Werkstoff Welle (Innenteil)',
+        pvOwnVals: 'eigene Kennwerte eingeben',
+        pvE: 'E-Modul E', pvNu: 'Querkontraktion ν', pvLim: 'Festigkeitsgrenze (Re bzw. Rm)',
+        pvLimMode: 'Grenz-Hypothese', pvLimD: 'duktil (Re, GEH)', pvLimS: 'spröde (Rm, NH)',
+        pvAlpha: 'Ausdehnung α (10⁻⁶/K)',
+        pvMu: 'Haftbeiwert µ (Paarung)', pvMuOwn: 'eigener µ-Wert',
+        pvLF: 'Fugenlänge l_F', pvDAa: 'Nabenaußen-Ø D_Aa', pvDIi: 'Wellenbohrung D_Ii (0 = Vollwelle)',
+        pvMt: 'gefordertes Drehmoment M_t', pvFax: 'geforderte Axialkraft F_ax',
+        pvGuide: 'Richtwerte',
+        pvMu_STST_DRY: 'Stahl–Stahl, trocken (µ ≈ 0,14)', pvMu_STST_OIL: 'Stahl–Stahl, geölt (µ ≈ 0,08)',
+        pvMu_STGJL_DRY: 'Stahl–Grauguss, trocken (µ ≈ 0,10)', pvMu_STGJL_OIL: 'Stahl–Grauguss, geölt (µ ≈ 0,06)',
+        pvMu_STALU: 'Stahl–Aluminium (µ ≈ 0,05)', pvMu_STCU: 'Stahl–Kupferlegierung (µ ≈ 0,06)',
+        pvHeading: 'Pressverband (DIN 7190)',
+        pvNoInter: 'Die aktuelle Passung hat kein Übermaß — ein Pressverband ist damit nicht möglich. Presspassung wählen, z. B. H7/s6 oder H7/u8.',
+        pvPmin: 'Fugendruck p_min (Kleinstübermaß)', pvPmax: 'Fugendruck p_max (Größtübermaß)',
+        pvPzul: 'zulässiger Fugendruck p_zul',
+        pvSF: 'Sicherheit gegen Fließen S_F (bei p_max)', pvSH: 'Rutschsicherheit S_H (gegen Last)',
+        pvFaxMax: 'übertragbare Axialkraft F_ax,max', pvMtMax: 'übertragbares Drehmoment M_t,max',
+        pvFe: 'Einpresskraft F_e (längs, bei p_max)',
+        pvTHub: 'Fügen quer: Nabe erwärmen auf', pvTShaft: 'oder Welle kühlen auf',
+        pvRzOn: 'Glättung aktiv: wirksames Übermaß = Übermaß − 0,8·(Rz Bohrung + Rz Welle) aus dem Bereich „Oberfläche“.',
+        pvRzOff: 'Tipp: Bereich „Oberfläche (Rz)“ aktivieren — dann wird der Übermaßverlust durch Glättung der Rauspitzen mitgerechnet.',
+        pverr_PV_ERR_INPUT: 'Eingaben unvollständig oder ungültig (Zahlen prüfen).',
+        pverr_PV_ERR_GEOM: 'Geometrie unstimmig: D_Aa muss größer als das Nennmaß sein, D_Ii kleiner (0 = Vollwelle).',
+        pverr_PV_ERR_MAT: 'Werkstoffkennwerte unvollständig (E, ν, Re bzw. Rm).',
+        pverr_PV_ERR_MU: 'Haftbeiwert µ muss zwischen 0 und 1 liegen.',
+        pverr_PV_ERR_NO_INTERFERENCE: 'Kein wirksames Übermaß — nach Abzug der Glättung bleibt nichts übrig.',
+        pvh_PV_WARN_UWMIN: '⚠ Beim Kleinstübermaß bleibt nach der Glättung kein Übermaß: Kraftschluss NICHT über die ganze Toleranzlage gesichert (p_min = 0). Festere Passung wählen (z. B. u statt s).',
+        pvh_PV_WARN_YIELD: '⚠ p_max überschreitet die elastische Grenze — Werkstoff beginnt zu fließen (S_F < 1). Größeres D_Aa, kleineres Übermaß oder festerer Werkstoff.',
+        pvh_PV_WARN_SLIP: '⚠ Rutschsicherheit S_H < 1: Die geforderte Last kann durchrutschen. Länger fügen (l_F), festere Passung oder größeres µ.',
+        pvh_PV_WARN_TEMP_SHAFT: '⚠ Nötige Wellen-Unterkühlung unter −196 °C ist nicht erreichbar — Nabe (zusätzlich) erwärmen.',
+        pvh_PV_HINT_BRITTLE: 'Grauguss/spröde: gerechnet mit Normalspannungshypothese gegen Rm. Gefordert: Sicherheit S ≥ 2…3 gegen BRUCH — S_F entsprechend großzügig wählen.',
+        pvh_PV_HINT_CREEP: 'Aluminium/Magnesium/Kunststoff beteiligt: Setzen und Kriechen bauen den Fugendruck mit der Zeit ab — Sicherheit größer wählen, ggf. nachprüfen.',
+        pvh_PV_HINT_THIN_HUB: 'Dünnwandige Nabe (Q_A > 0,8): wenig Fugendruck erreichbar; zulässiger Druck sinkt stark. Wanddicke prüfen.',
+        pvh_PV_HINT_LF_SHORT: 'Kurze Fuge (l_F/D_F < 0,3): Kippgefahr und ungleiche Pressung — wenn möglich länger fügen.',
+        pvh_PV_HINT_LF_LONG: 'Lange Fuge (l_F/D_F > 1,5): Pressung verteilt sich ungleich über die Länge; Modell wird optimistisch — Kantenpressung beachten.',
+        pvh_PV_HINT_TEMP_HUB: 'Nötige Nabentemperatur über 350 °C: Gefügeänderung/Anlassen droht (Stahl) — Übermaß verringern oder Welle zusätzlich kühlen.',
+        pvh_PV_HINT_TEMP_SHAFT_LN2: 'Wellen-Unterkühlung braucht Trockeneis (−78 °C) bzw. Flüssigstickstoff (−196 °C).',
+        fh_pvEnable: 'Rechnet den zylindrischen Pressverband nach DIN 7190: Wie fest sitzt die Nabe auf der Welle? Ergebnis sind Fugendruck, übertragbares Drehmoment/Axialkraft, Sicherheiten und die Füge-Angaben (Einpresskraft bzw. Temperaturen).\nVoraussetzung: eine Übermaßpassung (z. B. H7/s6). Bei Spielpassung erscheint nur ein Hinweis.\nEmpfehlung: zusätzlich „Oberfläche (Rz)“ aktivieren — die Glättung der Rauspitzen kostet real Übermaß.',
+        fh_pvMatA: 'Werkstoff des Außenteils (Nabe, Zahnrad, Riemenscheibe). Er bestimmt Steifigkeit (E, ν), die zulässige Grenze (Re bzw. Rm bei Grauguss) und die Wärmedehnung α fürs Fügen.\nDie Kennwerte darunter sind Richtwerte — mit dem Haken kannst du eigene Datenblattwerte eintragen.\nEmpfehlung: Stahl für hoch belastete Naben; Grauguss nur mit großer Sicherheit (spröde!).',
+        fh_pvMatI: 'Werkstoff der Welle bzw. des Innenteils — Steifigkeit und Wärmedehnung fürs Kühlen.\nBei Hohlwellen zusätzlich D_Ii angeben; das macht den Verband merklich nachgiebiger.\nEmpfehlung: Vergütungsstahl (z. B. C45, 42CrMo4) für kraftübertragende Wellen.',
+        fh_pvOwnVals: 'Haken setzen, um die Tabellen-Richtwerte durch eigene Datenblattwerte zu ersetzen:\n• E-Modul in N/mm² (Stahl ≈ 210000, Grauguss ≈ 110000, Alu ≈ 70000)\n• Querkontraktion ν (Metalle 0,25–0,35)\n• Festigkeitsgrenze in N/mm²: duktil = Streckgrenze Re (GEH), spröde = Zugfestigkeit Rm (NH)\n• α in 10⁻⁶/K fürs thermische Fügen.\nDie Felder starten mit den Richtwerten des gewählten Werkstoffs.',
+        fh_pvMu: 'Der Haftbeiwert µ entscheidet, wie viel Kraft der Sitz per Reibung überträgt — und er streut in der Praxis STARK (Oberfläche, Schmierung, Fügeverfahren).\nDie Auswahl liefert vorsichtige Richtwerte nach DIN 7190/Literatur (Spannen z. B. Stahl–Stahl trocken 0,10–0,20).\nEmpfehlung: mit dem Richtwert rechnen und Rutschsicherheit S_H ≥ 1,5 anstreben; eigener Versuchswert über den Haken.',
+        fh_pvLF: 'Tragende Länge der Pressfuge (gemeinsame Kontaktlänge von Nabe und Welle).\nMehr Länge = mehr übertragbare Kraft (linear) — aber über ~1,5·D_F wird die Pressung ungleich.\nEmpfehlung: l_F ≈ 0,8…1,2 · Fugendurchmesser; Startwert hier = Nennmaß.',
+        fh_pvDAa: 'Außendurchmesser des Nabenkörpers am Sitz. Er bestimmt die Wanddicke: je dicker, desto mehr Fugendruck ist möglich.\nFaustregel: D_Aa ≈ 1,8…2,5 · Fugendurchmesser (Q_A = D_F/D_Aa ≤ 0,5 ist komfortabel).\nBei Q_A > 0,8 (dünnwandig) bricht der zulässige Druck stark ein — es erscheint eine Warnung.',
+        fh_pvDIi: 'Innendurchmesser der Welle, falls hohl (0 = Vollwelle).\nEine Bohrung macht die Welle nachgiebiger: gleiches Übermaß ergibt weniger Fugendruck, und die Grenze der Welle sinkt.\nEmpfehlung: für die erste Auslegung 0 lassen; Hohlwelle nur eintragen, wenn wirklich vorhanden.',
+        fh_pvMt: 'Drehmoment, das der Sitz sicher übertragen MUSS (Betriebsmoment, ggf. mit Stoßfaktor).\n0 lassen, wenn nur die Tragfähigkeit interessiert — dann zeigt die App das maximal übertragbare Moment.\nEmpfehlung: Anwendungsstöße einrechnen (Elektromotor sanft ×1,2 · Kolbenmaschine ×2…3) und S_H ≥ 1,5 anstreben.',
+        fh_pvFax: 'Axialkraft, die der Sitz zusätzlich halten muss (z. B. Zahnschub bei Schrägverzahnung).\n0 lassen, wenn keine — Drehmoment und Axialkraft werden vektoriell kombiniert.\nHinweis: Axialkräfte wirken in derselben Reibfläche und senken die Momentreserve.'
+      },
+      en: {
+        unit_nmm2: 'N/mm²', unit_nm: 'Nm', unit_n: 'N',
+        pvEnable: 'Calculate press fit (DIN 7190)',
+        pvMatA: 'Hub material (outer part)', pvMatI: 'Shaft material (inner part)',
+        pvOwnVals: 'enter custom properties',
+        pvE: 'Elastic modulus E', pvNu: 'Poisson ratio ν', pvLim: 'Strength limit (Re or Rm)',
+        pvLimMode: 'Limit hypothesis', pvLimD: 'ductile (Re, von Mises)', pvLimS: 'brittle (Rm, normal stress)',
+        pvAlpha: 'Expansion α (10⁻⁶/K)',
+        pvMu: 'Friction coefficient µ (pairing)', pvMuOwn: 'custom µ value',
+        pvLF: 'Joint length l_F', pvDAa: 'Hub outer Ø D_Aa', pvDIi: 'Shaft bore D_Ii (0 = solid shaft)',
+        pvMt: 'required torque M_t', pvFax: 'required axial force F_ax',
+        pvGuide: 'guide values',
+        pvMu_STST_DRY: 'Steel–steel, dry (µ ≈ 0.14)', pvMu_STST_OIL: 'Steel–steel, oiled (µ ≈ 0.08)',
+        pvMu_STGJL_DRY: 'Steel–grey cast iron, dry (µ ≈ 0.10)', pvMu_STGJL_OIL: 'Steel–grey cast iron, oiled (µ ≈ 0.06)',
+        pvMu_STALU: 'Steel–aluminium (µ ≈ 0.05)', pvMu_STCU: 'Steel–copper alloy (µ ≈ 0.06)',
+        pvHeading: 'Press fit (DIN 7190)',
+        pvNoInter: 'The current fit has no interference — a press fit is not possible. Choose an interference fit, e.g. H7/s6 or H7/u8.',
+        pvPmin: 'Joint pressure p_min (min. interference)', pvPmax: 'Joint pressure p_max (max. interference)',
+        pvPzul: 'permissible pressure p_zul',
+        pvSF: 'Safety against yielding S_F (at p_max)', pvSH: 'Safety against slipping S_H (vs. load)',
+        pvFaxMax: 'transmittable axial force F_ax,max', pvMtMax: 'transmittable torque M_t,max',
+        pvFe: 'Press-in force F_e (longitudinal, at p_max)',
+        pvTHub: 'Shrink fit: heat hub to', pvTShaft: 'or cool shaft to',
+        pvRzOn: 'Smoothing active: effective interference = interference − 0.8·(Rz hole + Rz shaft) from the “Surface” section.',
+        pvRzOff: 'Tip: enable the “Surface (Rz)” section — the interference loss due to smoothing of roughness peaks will then be included.',
+        pverr_PV_ERR_INPUT: 'Input incomplete or invalid (check the numbers).',
+        pverr_PV_ERR_GEOM: 'Geometry inconsistent: D_Aa must exceed the nominal size, D_Ii must be smaller (0 = solid shaft).',
+        pverr_PV_ERR_MAT: 'Material properties incomplete (E, ν, Re or Rm).',
+        pverr_PV_ERR_MU: 'Friction coefficient µ must be between 0 and 1.',
+        pverr_PV_ERR_NO_INTERFERENCE: 'No effective interference — nothing remains after smoothing.',
+        pvh_PV_WARN_UWMIN: '⚠ At minimum interference nothing remains after smoothing: force transmission NOT ensured over the whole tolerance range (p_min = 0). Choose a tighter fit (e.g. u instead of s).',
+        pvh_PV_WARN_YIELD: '⚠ p_max exceeds the elastic limit — the material starts to yield (S_F < 1). Increase D_Aa, reduce interference or use a stronger material.',
+        pvh_PV_WARN_SLIP: '⚠ Slip safety S_H < 1: the required load can slip. Longer joint (l_F), tighter fit or higher µ.',
+        pvh_PV_WARN_TEMP_SHAFT: '⚠ Required shaft cooling below −196 °C is not achievable — heat the hub (additionally).',
+        pvh_PV_HINT_BRITTLE: 'Grey cast iron/brittle: calculated with max. normal stress against Rm. Required: safety S ≥ 2…3 against FRACTURE — choose S_F generously.',
+        pvh_PV_HINT_CREEP: 'Aluminium/magnesium/plastic involved: settling and creep reduce joint pressure over time — choose larger safety, re-check if needed.',
+        pvh_PV_HINT_THIN_HUB: 'Thin-walled hub (Q_A > 0.8): little joint pressure achievable; permissible pressure drops sharply. Check wall thickness.',
+        pvh_PV_HINT_LF_SHORT: 'Short joint (l_F/D_F < 0.3): risk of tilting and uneven pressure — use a longer joint if possible.',
+        pvh_PV_HINT_LF_LONG: 'Long joint (l_F/D_F > 1.5): pressure spreads unevenly along the length; the model becomes optimistic — mind edge pressure.',
+        pvh_PV_HINT_TEMP_HUB: 'Required hub temperature above 350 °C: risk of tempering/microstructure change (steel) — reduce interference or additionally cool the shaft.',
+        pvh_PV_HINT_TEMP_SHAFT_LN2: 'Shaft cooling requires dry ice (−78 °C) or liquid nitrogen (−196 °C).',
+        fh_pvEnable: 'Calculates the cylindrical press fit per DIN 7190: how firmly does the hub sit on the shaft? Results are joint pressure, transmittable torque/axial force, safeties and joining data (press-in force or temperatures).\nPrerequisite: an interference fit (e.g. H7/s6). With a clearance fit only a note appears.\nRecommendation: also enable “Surface (Rz)” — smoothing of roughness peaks really costs interference.',
+        fh_pvMatA: 'Material of the outer part (hub, gear, pulley). It sets stiffness (E, ν), the permissible limit (Re, or Rm for grey cast iron) and thermal expansion α for joining.\nThe values below are guide values — with the checkbox you can enter your own datasheet values.\nRecommendation: steel for highly loaded hubs; grey cast iron only with large safety (brittle!).',
+        fh_pvMatI: 'Material of the shaft / inner part — stiffness and thermal expansion for cooling.\nFor hollow shafts also enter D_Ii; it makes the joint noticeably more compliant.\nRecommendation: heat-treatable steel (e.g. C45, 42CrMo4) for load-carrying shafts.',
+        fh_pvOwnVals: 'Tick to replace the table guide values with your own datasheet values:\n• Elastic modulus in N/mm² (steel ≈ 210000, grey cast iron ≈ 110000, alu ≈ 70000)\n• Poisson ratio ν (metals 0.25–0.35)\n• Strength limit in N/mm²: ductile = yield strength Re (von Mises), brittle = tensile strength Rm (normal stress)\n• α in 10⁻⁶/K for thermal joining.\nThe fields start with the guide values of the selected material.',
+        fh_pvMu: 'The friction coefficient µ decides how much force the seat transmits by friction — and it scatters WIDELY in practice (surface, lubrication, joining method).\nThe selection provides conservative guide values per DIN 7190/literature (ranges e.g. steel–steel dry 0.10–0.20).\nRecommendation: calculate with the guide value and aim for slip safety S_H ≥ 1.5; enter your own tested value via the checkbox.',
+        fh_pvLF: 'Load-bearing length of the press joint (common contact length of hub and shaft).\nMore length = more transmittable force (linear) — but beyond ~1.5·D_F the pressure becomes uneven.\nRecommendation: l_F ≈ 0.8…1.2 · joint diameter; the initial value here = nominal size.',
+        fh_pvDAa: 'Outer diameter of the hub body at the seat. It sets the wall thickness: the thicker, the more joint pressure is possible.\nRule of thumb: D_Aa ≈ 1.8…2.5 · joint diameter (Q_A = D_F/D_Aa ≤ 0.5 is comfortable).\nAt Q_A > 0.8 (thin-walled) the permissible pressure collapses — a warning appears.',
+        fh_pvDIi: 'Inner diameter of the shaft if hollow (0 = solid shaft).\nA bore makes the shaft more compliant: the same interference yields less joint pressure, and the shaft limit drops.\nRecommendation: keep 0 for a first design; enter a hollow shaft only if it really exists.',
+        fh_pvMt: 'Torque the seat MUST safely transmit (operating torque, incl. shock factor if applicable).\nLeave 0 if you only want the capacity — the app then shows the maximum transmittable torque.\nRecommendation: include application shocks (smooth electric motor ×1.2 · piston machine ×2…3) and aim for S_H ≥ 1.5.',
+        fh_pvFax: 'Axial force the seat must additionally hold (e.g. thrust from helical gearing).\nLeave 0 if none — torque and axial force are combined vectorially.\nNote: axial forces act in the same friction surface and reduce the torque reserve.'
+      },
+      pt: {
+        unit_nmm2: 'N/mm²', unit_nm: 'Nm', unit_n: 'N',
+        pvEnable: 'Calcular ajuste prensado (DIN 7190)',
+        pvMatA: 'Material do cubo (peça externa)', pvMatI: 'Material do eixo (peça interna)',
+        pvOwnVals: 'inserir valores próprios',
+        pvE: 'Módulo E', pvNu: 'Coeficiente de Poisson ν', pvLim: 'Limite de resistência (Re ou Rm)',
+        pvLimMode: 'Hipótese limite', pvLimD: 'dúctil (Re, von Mises)', pvLimS: 'frágil (Rm, tensão normal)',
+        pvAlpha: 'Dilatação α (10⁻⁶/K)',
+        pvMu: 'Coeficiente de atrito µ (par)', pvMuOwn: 'valor de µ próprio',
+        pvLF: 'Comprimento da junta l_F', pvDAa: 'Ø externo do cubo D_Aa', pvDIi: 'Furo do eixo D_Ii (0 = eixo maciço)',
+        pvMt: 'torque exigido M_t', pvFax: 'força axial exigida F_ax',
+        pvGuide: 'valores de referência',
+        pvMu_STST_DRY: 'Aço–aço, seco (µ ≈ 0,14)', pvMu_STST_OIL: 'Aço–aço, lubrificado (µ ≈ 0,08)',
+        pvMu_STGJL_DRY: 'Aço–ferro fundido, seco (µ ≈ 0,10)', pvMu_STGJL_OIL: 'Aço–ferro fundido, lubrificado (µ ≈ 0,06)',
+        pvMu_STALU: 'Aço–alumínio (µ ≈ 0,05)', pvMu_STCU: 'Aço–liga de cobre (µ ≈ 0,06)',
+        pvHeading: 'Ajuste prensado (DIN 7190)',
+        pvNoInter: 'O ajuste atual não tem interferência — um ajuste prensado não é possível. Escolha um ajuste com interferência, p. ex. H7/s6 ou H7/u8.',
+        pvPmin: 'Pressão p_min (interferência mín.)', pvPmax: 'Pressão p_max (interferência máx.)',
+        pvPzul: 'pressão admissível p_zul',
+        pvSF: 'Segurança contra escoamento S_F (em p_max)', pvSH: 'Segurança contra deslizamento S_H (vs. carga)',
+        pvFaxMax: 'força axial transmissível F_ax,max', pvMtMax: 'torque transmissível M_t,max',
+        pvFe: 'Força de prensagem F_e (longitudinal, em p_max)',
+        pvTHub: 'Montagem térmica: aquecer cubo a', pvTShaft: 'ou resfriar eixo a',
+        pvRzOn: 'Alisamento ativo: interferência efetiva = interferência − 0,8·(Rz furo + Rz eixo) da seção “Superfície”.',
+        pvRzOff: 'Dica: ative a seção “Superfície (Rz)” — a perda de interferência pelo alisamento dos picos de rugosidade será então considerada.',
+        pverr_PV_ERR_INPUT: 'Entradas incompletas ou inválidas (verifique os números).',
+        pverr_PV_ERR_GEOM: 'Geometria inconsistente: D_Aa deve ser maior que a dimensão nominal, D_Ii menor (0 = eixo maciço).',
+        pverr_PV_ERR_MAT: 'Propriedades do material incompletas (E, ν, Re ou Rm).',
+        pverr_PV_ERR_MU: 'O coeficiente µ deve estar entre 0 e 1.',
+        pverr_PV_ERR_NO_INTERFERENCE: 'Sem interferência efetiva — nada resta após o alisamento.',
+        pvh_PV_WARN_UWMIN: '⚠ Na interferência mínima nada resta após o alisamento: transmissão de força NÃO garantida em toda a faixa (p_min = 0). Escolha um ajuste mais apertado (p. ex. u em vez de s).',
+        pvh_PV_WARN_YIELD: '⚠ p_max excede o limite elástico — o material começa a escoar (S_F < 1). Aumente D_Aa, reduza a interferência ou use material mais resistente.',
+        pvh_PV_WARN_SLIP: '⚠ Segurança S_H < 1: a carga exigida pode deslizar. Junta mais longa (l_F), ajuste mais apertado ou µ maior.',
+        pvh_PV_WARN_TEMP_SHAFT: '⚠ O resfriamento do eixo abaixo de −196 °C não é alcançável — aqueça o cubo (adicionalmente).',
+        pvh_PV_HINT_BRITTLE: 'Ferro fundido/frágil: calculado com tensão normal máxima contra Rm. Exigido: segurança S ≥ 2…3 contra FRATURA — escolha S_F com folga.',
+        pvh_PV_HINT_CREEP: 'Alumínio/magnésio/plástico envolvido: acomodação e fluência reduzem a pressão com o tempo — escolha segurança maior e reverifique.',
+        pvh_PV_HINT_THIN_HUB: 'Cubo de parede fina (Q_A > 0,8): pouca pressão alcançável; a pressão admissível cai bastante. Verifique a espessura.',
+        pvh_PV_HINT_LF_SHORT: 'Junta curta (l_F/D_F < 0,3): risco de tombamento e pressão irregular — use junta mais longa se possível.',
+        pvh_PV_HINT_LF_LONG: 'Junta longa (l_F/D_F > 1,5): a pressão distribui-se de forma irregular; o modelo fica otimista — atenção à pressão de borda.',
+        pvh_PV_HINT_TEMP_HUB: 'Temperatura do cubo acima de 350 °C: risco de revenimento/alteração da microestrutura (aço) — reduza a interferência ou resfrie o eixo.',
+        pvh_PV_HINT_TEMP_SHAFT_LN2: 'O resfriamento do eixo requer gelo seco (−78 °C) ou nitrogênio líquido (−196 °C).',
+        fh_pvEnable: 'Calcula o ajuste prensado cilíndrico conforme DIN 7190: quão firme o cubo assenta no eixo? Resultados: pressão na junta, torque/força axial transmissíveis, seguranças e dados de montagem (força de prensagem ou temperaturas).\nPré-requisito: ajuste com interferência (p. ex. H7/s6). Com folga aparece apenas um aviso.\nRecomendação: ative também “Superfície (Rz)” — o alisamento dos picos consome interferência real.',
+        fh_pvMatA: 'Material da peça externa (cubo, engrenagem, polia). Define a rigidez (E, ν), o limite admissível (Re, ou Rm no ferro fundido) e a dilatação α para a montagem.\nOs valores abaixo são referências — com a caixa você pode inserir valores do seu datasheet.\nRecomendação: aço para cubos muito carregados; ferro fundido só com grande segurança (frágil!).',
+        fh_pvMatI: 'Material do eixo / peça interna — rigidez e dilatação térmica para o resfriamento.\nPara eixos ocos informe também D_Ii; isso torna a união bem mais flexível.\nRecomendação: aço beneficiável (p. ex. C45, 42CrMo4) para eixos que transmitem carga.',
+        fh_pvOwnVals: 'Marque para substituir os valores de referência por valores do seu datasheet:\n• Módulo E em N/mm² (aço ≈ 210000, ferro fundido ≈ 110000, alumínio ≈ 70000)\n• Coeficiente ν (metais 0,25–0,35)\n• Limite de resistência em N/mm²: dúctil = escoamento Re (von Mises), frágil = ruptura Rm (tensão normal)\n• α em 10⁻⁶/K para montagem térmica.\nOs campos iniciam com os valores de referência do material escolhido.',
+        fh_pvMu: 'O coeficiente de atrito µ decide quanta força a união transmite por atrito — e varia MUITO na prática (superfície, lubrificação, método de montagem).\nA seleção traz valores de referência conservadores conforme DIN 7190/literatura (faixas p. ex. aço–aço seco 0,10–0,20).\nRecomendação: calcule com o valor de referência e busque segurança S_H ≥ 1,5; valor ensaiado próprio pela caixa.',
+        fh_pvLF: 'Comprimento portante da junta prensada (contato comum entre cubo e eixo).\nMais comprimento = mais força transmissível (linear) — mas acima de ~1,5·D_F a pressão fica irregular.\nRecomendação: l_F ≈ 0,8…1,2 · diâmetro da junta; valor inicial aqui = dimensão nominal.',
+        fh_pvDAa: 'Diâmetro externo do corpo do cubo no assento. Define a espessura da parede: quanto mais espessa, mais pressão é possível.\nRegra prática: D_Aa ≈ 1,8…2,5 · diâmetro da junta (Q_A = D_F/D_Aa ≤ 0,5 é confortável).\nCom Q_A > 0,8 (parede fina) a pressão admissível despenca — aparece um aviso.',
+        fh_pvDIi: 'Diâmetro interno do eixo, se oco (0 = eixo maciço).\nUm furo torna o eixo mais flexível: a mesma interferência gera menos pressão, e o limite do eixo cai.\nRecomendação: deixe 0 no primeiro dimensionamento; informe eixo oco apenas se existir de fato.',
+        fh_pvMt: 'Torque que a união DEVE transmitir com segurança (torque de operação, com fator de choque se aplicável).\nDeixe 0 se só interessa a capacidade — o app mostra então o torque máximo transmissível.\nRecomendação: inclua choques da aplicação (motor elétrico suave ×1,2 · máquina a pistão ×2…3) e busque S_H ≥ 1,5.',
+        fh_pvFax: 'Força axial que a união deve suportar adicionalmente (p. ex. empuxo de engrenagem helicoidal).\nDeixe 0 se não houver — torque e força axial são combinados vetorialmente.\nNota: forças axiais atuam na mesma superfície de atrito e reduzem a reserva de torque.'
+      }
+    };
+    ['de', 'en', 'pt'].forEach(function (l) { for (var k in s[l]) STR[l][k] = s[l][k]; });
+  })();
+
   /* ======================================================================= *
    * 2) Zustand + kleine Helfer
    * ======================================================================= */
@@ -517,6 +682,23 @@
   var oaEnabled = localStorage.getItem('dtp-oa-on') === '1';
   var rzHole = parseFloat(localStorage.getItem('dtp-oa-rzh'));  if (isNaN(rzHole)) rzHole = 3.2;
   var rzShaft = parseFloat(localStorage.getItem('dtp-oa-rzs')); if (isNaN(rzShaft)) rzShaft = 1.6;
+
+  /* B10c — Pressverband-Zustand (Standard: AUS, wie alle Zusatzbereiche). */
+  function pvReadCust(k) {
+    try { var o = JSON.parse(localStorage.getItem(k) || 'null'); if (o && o.E > 0) return o; } catch (e) {}
+    return null;
+  }
+  var pvEnabled = localStorage.getItem('dtp-pv-on') === '1';
+  var pvMuKey = localStorage.getItem('dtp-pv-mukey') || 'STST_DRY';
+  var pvMuOwn = localStorage.getItem('dtp-pv-muown') === '1';
+  var pvMuVal = parseFloat(localStorage.getItem('dtp-pv-muval')); if (isNaN(pvMuVal) || pvMuVal <= 0) pvMuVal = 0.14;
+  var pvLF  = parseFloat(localStorage.getItem('dtp-pv-lf'));  if (isNaN(pvLF)  || pvLF  <= 0) pvLF = 0;   // 0 = beim Bau vorbelegen
+  var pvDAa = parseFloat(localStorage.getItem('dtp-pv-daa')); if (isNaN(pvDAa) || pvDAa <= 0) pvDAa = 0;  // 0 = beim Bau vorbelegen
+  var pvDIi = parseFloat(localStorage.getItem('dtp-pv-dii')); if (isNaN(pvDIi) || pvDIi < 0) pvDIi = 0;
+  var pvMt  = parseFloat(localStorage.getItem('dtp-pv-mt'));  if (isNaN(pvMt)  || pvMt  < 0) pvMt = 0;
+  var pvFax = parseFloat(localStorage.getItem('dtp-pv-fax')); if (isNaN(pvFax) || pvFax < 0) pvFax = 0;
+  var pvSideA = { key: localStorage.getItem('dtp-pv-mata') || 'steel', own: localStorage.getItem('dtp-pv-owna') === '1', cust: pvReadCust('dtp-pv-ca') };
+  var pvSideI = { key: localStorage.getItem('dtp-pv-mati') || 'steel', own: localStorage.getItem('dtp-pv-owni') === '1', cust: pvReadCust('dtp-pv-ci') };
   var edition = (window.DT_EDITION === 'test') ? 'test' : 'full';
 
   // Auffindbarkeit der ⓘ-Sprechblasen: einmaliger, begrenzter Puls; endet dauerhaft,
@@ -683,6 +865,7 @@
 
     host.appendChild(buildThermikSection());
     host.appendChild(buildOberflaecheSection());
+    host.appendChild(buildPressSection());
 
     // Verdrahtung: jede Änderung rechnet live UND spiegelt in die Kurzeingabe.
     [elNominal, elHoleL, elHoleG, elShaftL, elShaftG].forEach(function (c) {
@@ -796,6 +979,283 @@
     elRzHole.addEventListener('input', function () { var v = parseFloat(String(elRzHole.value).replace(',', '.')); if (!isNaN(v) && v >= 0) rzHole = v; persistOberflaeche(); recalc(); });
     elRzShaft.addEventListener('input', function () { var v = parseFloat(String(elRzShaft.value).replace(',', '.')); if (!isNaN(v) && v >= 0) rzShaft = v; persistOberflaeche(); recalc(); });
     return box;
+  }
+
+  /* ===================================================================== *
+   * B10c — Pressverband (DIN 7190): Ankreuz-Bereich (Standard AUS) mit
+   * Auswahlmenüs + „eigene Werte“-Haken (Muster DT-ProfiSchraube) und
+   * Ergebnis-Panel im Ergebnisbereich. Rechenkern: pressverband.js.
+   * ===================================================================== */
+  var elPvEnable, elPvBox, elPvRzNote;
+  var pvSyncFns = [];
+
+  function persistPress() {
+    try {
+      localStorage.setItem('dtp-pv-on', pvEnabled ? '1' : '0');
+      localStorage.setItem('dtp-pv-mata', pvSideA.key);
+      localStorage.setItem('dtp-pv-mati', pvSideI.key);
+      localStorage.setItem('dtp-pv-owna', pvSideA.own ? '1' : '0');
+      localStorage.setItem('dtp-pv-owni', pvSideI.own ? '1' : '0');
+      localStorage.setItem('dtp-pv-ca', JSON.stringify(pvSideA.cust));
+      localStorage.setItem('dtp-pv-ci', JSON.stringify(pvSideI.cust));
+      localStorage.setItem('dtp-pv-mukey', pvMuKey);
+      localStorage.setItem('dtp-pv-muown', pvMuOwn ? '1' : '0');
+      localStorage.setItem('dtp-pv-muval', String(pvMuVal));
+      localStorage.setItem('dtp-pv-lf', String(pvLF));
+      localStorage.setItem('dtp-pv-daa', String(pvDAa));
+      localStorage.setItem('dtp-pv-dii', String(pvDIi));
+      localStorage.setItem('dtp-pv-mt', String(pvMt));
+      localStorage.setItem('dtp-pv-fax', String(pvFax));
+    } catch (e) {}
+  }
+
+  function pvNumInput(value, min) {
+    var n = el('input'); n.type = 'number'; n.className = 'num'; n.step = 'any';
+    if (min != null) n.min = String(min);
+    n.value = String(value);
+    return n;
+  }
+  function pvOnNum(inp, fn) {
+    inp.addEventListener('input', function () {
+      var v = parseFloat(String(inp.value).replace(',', '.'));
+      if (!isNaN(v)) fn(v);
+      persistPress(); recalc();
+    });
+  }
+
+  /* Werkstoff-Kennwerte einer Seite fürs Rechnen (Richtwert oder eigene). */
+  function pvMatOf(Sd) {
+    if (!Sd.own) {
+      var m = TH && TH.MAT[Sd.key];
+      if (!m) return null;
+      return { E: m.E, nu: m.nu, Re: m.Re, Rm: m.Rm, brittle: !!m.brittle, alpha: m.alpha };
+    }
+    var c = Sd.cust;
+    if (!c) return null;
+    return { E: c.E, nu: c.nu, Re: c.mode === 's' ? null : c.lim, Rm: c.mode === 's' ? c.lim : null,
+             brittle: c.mode === 's', alpha: c.alpha };
+  }
+
+  /* Werkstoff-Block: Auswahl → Richtwert-Zeile · Haken → eigene Kennwerte
+     (Felder starten mit den Richtwerten des gewählten Werkstoffs). */
+  function buildPvMatBlock(labelKey, helpKey, Sd) {
+    var wrap = el('div');
+    var sel = matSelect(Sd.key);
+    wrap.appendChild(labeledField(labelKey, null, sel, null, helpKey));
+    var info = el('div', 'field-hint pv-matline');
+    wrap.appendChild(info);
+
+    var ownRow = el('div', 'thermik-head-row pv-own-row');
+    var ownLab = el('label', 'thermik-head');
+    var cb = el('input'); cb.type = 'checkbox'; cb.checked = Sd.own;
+    ownLab.appendChild(cb);
+    var sp = el('span'); sp.setAttribute('data-i18n', 'pvOwnVals'); sp.textContent = t('pvOwnVals');
+    ownLab.appendChild(sp);
+    ownRow.appendChild(ownLab);
+    wrap.appendChild(ownRow);
+    attachFieldHelp(ownRow, wrap, 'fh_pvOwnVals', 'pvOwnVals');
+
+    var cust = el('div', 'thermik-fields pv-cust');
+    var inE = pvNumInput(0, 1), inNu = pvNumInput(0, 0.05), inLim = pvNumInput(0, 1), inAl = pvNumInput(0, 0.1);
+    var modeSel = el('select');
+    var od = el('option', null, t('pvLimD')); od.value = 'd'; od.setAttribute('data-i18n', 'pvLimD'); modeSel.appendChild(od);
+    var os = el('option', null, t('pvLimS')); os.value = 's'; os.setAttribute('data-i18n', 'pvLimS'); modeSel.appendChild(os);
+    var g1 = el('div', 'group-fields');
+    g1.appendChild(labeledField('pvE', 'unit_nmm2', inE, null));
+    g1.appendChild(labeledField('pvNu', null, inNu, null));
+    cust.appendChild(g1);
+    var g2 = el('div', 'group-fields');
+    g2.appendChild(labeledField('pvLim', 'unit_nmm2', inLim, null));
+    g2.appendChild(labeledField('pvLimMode', null, modeSel, null));
+    cust.appendChild(g2);
+    var g3 = el('div', 'group-fields');
+    g3.appendChild(labeledField('pvAlpha', null, inAl, null));
+    cust.appendChild(g3);
+    wrap.appendChild(cust);
+
+    function baseMat() { return (TH && TH.MAT[Sd.key]) || { E: 210000, nu: 0.3, Re: 355, alpha: 11.5 }; }
+    function fillCustFromMat() {
+      var m = baseMat();
+      Sd.cust = { E: m.E, nu: m.nu, lim: m.brittle ? (m.Rm || 0) : (m.Re || 0),
+                  mode: m.brittle ? 's' : 'd', alpha: m.alpha };
+    }
+    function syncCustFields() {
+      var c = Sd.cust; if (!c) return;
+      inE.value = String(c.E); inNu.value = String(c.nu);
+      inLim.value = String(c.lim); inAl.value = String(c.alpha);
+      modeSel.value = c.mode;
+    }
+    function syncInfo() {
+      var m = baseMat();
+      var limTxt = m.brittle ? ('Rm ' + m.Rm) : ('Re ' + m.Re);
+      info.textContent = 'E ' + m.E + ' · ν ' + decComma(String(m.nu)) + ' · ' + limTxt +
+        ' N/mm² · α ' + decComma(String(m.alpha)) + ' — ' + t('pvGuide');
+      info.hidden = Sd.own;
+      cust.hidden = !Sd.own;
+    }
+    if (Sd.own && !Sd.cust) fillCustFromMat();
+    syncCustFields(); syncInfo();
+    pvSyncFns.push(syncInfo);
+
+    sel.addEventListener('change', function () { Sd.key = sel.value; syncInfo(); persistPress(); recalc(); });
+    cb.addEventListener('change', function () {
+      Sd.own = cb.checked;
+      if (Sd.own && !Sd.cust) fillCustFromMat();
+      syncCustFields(); syncInfo(); persistPress(); recalc();
+    });
+    pvOnNum(inE, function (v) { if (Sd.cust && v > 0) Sd.cust.E = v; });
+    pvOnNum(inNu, function (v) { if (Sd.cust && v > 0 && v < 0.5) Sd.cust.nu = v; });
+    pvOnNum(inLim, function (v) { if (Sd.cust && v > 0) Sd.cust.lim = v; });
+    pvOnNum(inAl, function (v) { if (Sd.cust && v > 0) Sd.cust.alpha = v; });
+    modeSel.addEventListener('change', function () { if (Sd.cust) Sd.cust.mode = modeSel.value; persistPress(); recalc(); });
+
+    return wrap;
+  }
+
+  function buildPressSection() {
+    pvSyncFns = [];
+    var box = el('div', 'thermik-box');
+    var headRow = el('div', 'thermik-head-row');
+    var head = el('label', 'thermik-head');
+    elPvEnable = el('input'); elPvEnable.type = 'checkbox'; elPvEnable.checked = pvEnabled;
+    head.appendChild(elPvEnable);
+    var ht = el('span'); ht.setAttribute('data-i18n', 'pvEnable'); ht.textContent = t('pvEnable'); head.appendChild(ht);
+    headRow.appendChild(head);
+    box.appendChild(headRow);
+    attachFieldHelp(headRow, box, 'fh_pvEnable', 'pvEnable');
+
+    elPvBox = el('div', 'thermik-fields'); elPvBox.hidden = !pvEnabled;
+
+    elPvBox.appendChild(buildPvMatBlock('pvMatA', 'fh_pvMatA', pvSideA));
+    elPvBox.appendChild(buildPvMatBlock('pvMatI', 'fh_pvMatI', pvSideI));
+
+    // Haftbeiwert: Paarungs-Auswahl (Richtwert) + „eigener Wert“-Haken.
+    var muSel = el('select');
+    (PVM ? PVM.MU_ORDER : []).forEach(function (k) {
+      var o = el('option', null, t('pvMu_' + k)); o.value = k; o.setAttribute('data-i18n', 'pvMu_' + k);
+      muSel.appendChild(o);
+    });
+    muSel.value = pvMuKey;
+    if (!pvMuOwn && PVM) { var row0 = PVM.muByKey(pvMuKey); if (row0) pvMuVal = row0.mu; }
+    elPvBox.appendChild(labeledField('pvMu', null, muSel, null, 'fh_pvMu'));
+    var muRow = el('div', 'thermik-head-row pv-own-row');
+    var muLab = el('label', 'thermik-head');
+    var muCb = el('input'); muCb.type = 'checkbox'; muCb.checked = pvMuOwn;
+    muLab.appendChild(muCb);
+    var muSp = el('span'); muSp.setAttribute('data-i18n', 'pvMuOwn'); muSp.textContent = t('pvMuOwn'); muLab.appendChild(muSp);
+    muRow.appendChild(muLab);
+    var muIn = pvNumInput(pvMuVal, 0.01); muIn.step = '0.01'; muIn.max = '1'; muIn.hidden = !pvMuOwn;
+    muRow.appendChild(muIn);
+    elPvBox.appendChild(muRow);
+
+    // Geometrie (Startwerte aus dem Nennmaß: l_F ≈ 1·D, D_Aa ≈ 2·D).
+    var nominal0 = parseFloat(String((elNominal && elNominal.value) || '25').replace(',', '.')) || 25;
+    if (pvLF <= 0) pvLF = nominal0;
+    if (pvDAa <= 0) pvDAa = 2 * nominal0;
+    var inLF = pvNumInput(pvLF, 0.1), inDAa = pvNumInput(pvDAa, 0.1), inDIi = pvNumInput(pvDIi, 0);
+    var g = el('div', 'group-fields');
+    g.appendChild(labeledField('pvLF', 'unit_mm', inLF, null, 'fh_pvLF'));
+    g.appendChild(labeledField('pvDAa', 'unit_mm', inDAa, null, 'fh_pvDAa'));
+    elPvBox.appendChild(g);
+    var g2 = el('div', 'group-fields');
+    g2.appendChild(labeledField('pvDIi', 'unit_mm', inDIi, null, 'fh_pvDIi'));
+    elPvBox.appendChild(g2);
+
+    // Geforderte Last (optional → Rutschsicherheit S_H).
+    var inMt = pvNumInput(pvMt, 0), inFax = pvNumInput(pvFax, 0);
+    var g3 = el('div', 'group-fields');
+    g3.appendChild(labeledField('pvMt', 'unit_nm', inMt, null, 'fh_pvMt'));
+    g3.appendChild(labeledField('pvFax', 'unit_n', inFax, null, 'fh_pvFax'));
+    elPvBox.appendChild(g3);
+
+    // Rz-Kopplungs-Hinweis (Text folgt dem Oberflächen-Bereich, s. renderPressverband).
+    elPvRzNote = el('div', 'field-hint');
+    elPvBox.appendChild(elPvRzNote);
+
+    box.appendChild(elPvBox);
+
+    elPvEnable.addEventListener('change', function () {
+      pvEnabled = elPvEnable.checked; elPvBox.hidden = !pvEnabled; persistPress(); recalc();
+    });
+    muSel.addEventListener('change', function () {
+      pvMuKey = muSel.value;
+      if (!pvMuOwn && PVM) { var row = PVM.muByKey(pvMuKey); if (row) { pvMuVal = row.mu; muIn.value = String(pvMuVal); } }
+      persistPress(); recalc();
+    });
+    muCb.addEventListener('change', function () {
+      pvMuOwn = muCb.checked; muIn.hidden = !pvMuOwn;
+      if (!pvMuOwn && PVM) { var row = PVM.muByKey(pvMuKey); if (row) pvMuVal = row.mu; muIn.value = String(pvMuVal); }
+      persistPress(); recalc();
+    });
+    pvOnNum(muIn, function (v) { if (v > 0 && v <= 1) pvMuVal = v; });
+    pvOnNum(inLF, function (v) { if (v > 0) pvLF = v; });
+    pvOnNum(inDAa, function (v) { if (v > 0) pvDAa = v; });
+    pvOnNum(inDIi, function (v) { if (v >= 0) pvDIi = v; });
+    pvOnNum(inMt, function (v) { if (v >= 0) pvMt = v; });
+    pvOnNum(inFax, function (v) { if (v >= 0) pvFax = v; });
+
+    return box;
+  }
+
+  /* Pressverband-Ergebnis (B10c): Panel unter den anderen Ergebnissen. */
+  function renderPressverband(res) {
+    if (!pvEnabled) return;
+    // Rz-Kopplungsnotiz im Formular nachziehen (Sprache + Zustand):
+    if (elPvRzNote) {
+      var nk = oaEnabled ? 'pvRzOn' : 'pvRzOff';
+      elPvRzNote.setAttribute('data-i18n', nk); elPvRzNote.textContent = t(nk);
+    }
+    pvSyncFns.forEach(function (f) { f(); });
+
+    var box = el('div', 'thermik-result pv-result');
+    var h = el('div', 'pv-heading'); h.setAttribute('data-i18n', 'pvHeading'); h.textContent = t('pvHeading');
+    box.appendChild(h);
+
+    if (!PVM) { resultHost.appendChild(box); return; }
+    var uu = PVM.fromFit(res);
+    if (!uu || !(uu.U_max_um > 0)) {
+      var n0 = el('div', 'pv-note'); n0.setAttribute('data-i18n', 'pvNoInter'); n0.textContent = t('pvNoInter');
+      box.appendChild(n0); resultHost.appendChild(box); return;
+    }
+    var r = PVM.compute({
+      DF: res.input.nominal, lF: pvLF, DAa: pvDAa, DIi: pvDIi,
+      U_max_um: uu.U_max_um, U_min_um: uu.U_min_um,
+      RzA_um: oaEnabled ? rzHole : 0, RzI_um: oaEnabled ? rzShaft : 0,
+      matA: pvMatOf(pvSideA), matI: pvMatOf(pvSideI),
+      mu: pvMuVal, Mt_Nm: pvMt, Fax_N: pvFax
+    });
+    if (!r.ok) {
+      var e0 = el('div', 'pv-note warn'); e0.setAttribute('data-i18n', 'pverr_' + r.error);
+      e0.textContent = t('pverr_' + r.error);
+      box.appendChild(e0); resultHost.appendChild(box); return;
+    }
+    var v = r.r;
+    function row(labelKey, valTxt, cls) {
+      var d = el('div', 'pv-row');
+      var l = el('span', 'pv-l'); l.setAttribute('data-i18n', labelKey); l.textContent = t(labelKey);
+      d.appendChild(l);
+      d.appendChild(el('span', 'pv-v' + (cls ? ' ' + cls : ''), valTxt));
+      box.appendChild(d);
+    }
+    function n1(x) { return decComma(Number(x).toFixed(1)); }
+    function n2(x) { return decComma(Number(x).toFixed(2)); }
+    function kN(x) { return x >= 10000 ? n1(x / 1000) + ' kN' : decComma(String(Math.round(x))) + ' N'; }
+    row('pvPmin', n1(v.p_min) + ' N/mm²', v.p_min <= 0 ? 'pv-crit' : null);
+    row('pvPmax', n1(v.p_max) + ' N/mm²');
+    row('pvPzul', n1(v.pzul) + ' N/mm²');
+    row('pvSF', n2(v.SF), v.SF >= 1.2 ? 'pv-ok' : v.SF >= 1 ? 'pv-warn' : 'pv-crit');
+    if (v.SH !== null) row('pvSH', n2(v.SH), v.SH >= 1.5 ? 'pv-ok' : v.SH >= 1 ? 'pv-warn' : 'pv-crit');
+    row('pvFaxMax', kN(v.Fax_max_N));
+    row('pvMtMax', n1(v.Mt_max_Nm) + ' Nm');
+    row('pvFe', kN(v.Fe_N));
+    if (v.T_hub_C !== null) row('pvTHub', n1(v.T_hub_C) + ' °C');
+    if (v.T_shaft_C !== null) row('pvTShaft', n1(v.T_shaft_C) + ' °C');
+    r.hints.forEach(function (c) {
+      var line = el('div', 'pv-hint' + (c.indexOf('PV_WARN') === 0 ? ' warn' : ''));
+      line.setAttribute('data-i18n', 'pvh_' + c); line.textContent = t('pvh_' + c);
+      box.appendChild(line);
+    });
+    resultHost.appendChild(box);
   }
 
   /* Kurzeingabe -> diskrete Felder (kein Zurückschreiben, damit das Tippen bleibt). */
@@ -977,6 +1437,7 @@
 
     renderThermik(res);
     renderBeratung(res);
+    renderPressverband(res);
     // Rechenweg als Nachweis: Passung (+ Thermik, falls aktiv).
     var groups = [{ data: window.DTPRechenweg.build(res, rwFmt()) }];
     if (thEnabled && TH && TH.MAT[thHole] && TH.MAT[thShaft]) {
