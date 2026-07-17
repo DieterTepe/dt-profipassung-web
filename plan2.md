@@ -32,12 +32,14 @@ komplette Wahrheit steht in diesem Plan und in den Projektdateien. So steigst du
      Q_A/Q_I, Fugendruck p für U_min/U_max, elastische p_zul-Grenzen inkl. GJL-Sonderfall,
      F_ax/M_t, Sicherheiten, Einpresskraft, thermisches Fügen ΔT) + finale MAT-Werte und
      µ-Tabelle in daten.js; Validierungsanker (Literatur) ±2 %; neuer Harness-Abschnitt.
-   • **B10c ✓ gebaut & ausgeliefert (Handy-Bestätigung ausstehend)** — Formulargruppe in ui.js (aktivierbar wie Thermik): Auswahlmenüs mit
+   • **B10c ✓ bestätigt (Handy, 2026-07-17)** — Formulargruppe in ui.js (aktivierbar wie Thermik): Auswahlmenüs mit
      „eigener Wert“-Haken (fillFromMaterial-Muster der Schraube), Werkstoff Nabe/Welle →
      E/ν/α/R_e vorbelegt+gesperrt, µ-Auswahl, l_F, D_Aa, d_Ii (0=Vollwelle), Last, Fügeart;
      jedes Feld mit ⓘ; Ergebnis-Panels (p_min/p_max, Sicherheiten, Fügekraft/ΔT).
-   • **B10d** — Rechenweg `buildPressverband` (selbstprüfend, ×3 Sprachen) + Presets
-     (60 H7/s6, Hohlwelle, u8-Schrumpfsitz, Alu-Nabe-Kriechfall, dünnwandige Nabe) + Plan.
+   • **B10d ✓ gebaut & ausgeliefert (Handy-Bestätigung ausstehend)** — Rechenweg `buildPressverband`
+     (selbstprüfend, ×3 Sprachen, 15–24 Schritte je Fall mit Formel + eingesetzten Werten) +
+     3 Lade-Beispiele (60 H7/s6 Stahl-Schrumpfsitz · 45 H7/s6 Hohlwelle geölt · 50 H7/s6 GJL-Nabe),
+     die Passung + Oberfläche(Rz) + alle PV-Felder automatisch füllen. **B10 KOMPLETT.**
    Wiedereinstieg nach Token-Pause mit Stichwort „weiter mit B10b/B10c/B10d“.
    (B9 komplett & am Handy bestätigt — Details im Changelog am Dateiende.)
 
@@ -68,8 +70,8 @@ komplette Wahrheit steht in diesem Plan und in den Projektdateien. So steigst du
 ═══════════════════════════════════════════════════════════════════════════
 
 ═══════════════════════════════════════════════════════════════════════════
-Plan-Version : 1.9.8 · Stand 2026-07-17 · Status: **B10a+B10b am Handy bestätigt · B10c (Pressverband-Formulargruppe + Ergebnis-Panel in ui.js) gebaut, grün & ausgeliefert — Handy-Bestätigung AUSSTEHEND** · nächster Baustein: nach Bestätigung B10d (Rechenweg + Presets)
-Basislinie   : **154.565 Assertions, 0 Fehler** — prüfbar per `node test_passung.js`
+Plan-Version : 1.9.9 · Stand 2026-07-17 · Status: **B10a–B10c am Handy bestätigt · B10d (PV-Rechenweg + 3 Presets) gebaut, grün & ausgeliefert — Handy-Bestätigung AUSSTEHEND → damit B10 Pressverband KOMPLETT** · nächster Baustein: nach Bestätigung nach Plan
+Basislinie   : **154.644 Assertions, 0 Fehler** — prüfbar per `node test_passung.js`
 STEHENDE REGEL (ab v1.9.1): **JEDE Berechnung liefert einen selbstprüfenden Rechenweg**
 (Formel + eingesetzte Werte + ✓), auch künftige Module. Der Rechenweg ist das Nachweis-
 Herzstück des Programms. rechenweg.js hat je Rechenart einen build*-Baustein; ui.js sammelt
@@ -694,6 +696,25 @@ erweitert: 23 ⓘ ×3 Sprachen, 3 Bereiche, robuster Toggle-Test, Pressverband-I
 Kern-/Harness-Dateien unberührt: **Basislinie unverändert 154.565**. Geändert nur ui.js,
 style.css, dom_smoke_b10a.js. Standard beim Laden unverändert: 25 H7/f7, alle Zusatzbereiche AUS.
 **Nächster Schritt: Handy-Bestätigung B10c → dann B10d (buildPressverband-Rechenweg + Presets).**
+
+**v1.9.9 (2026-07-17) · B10d Pressverband-Rechenweg + 3 Lade-Beispiele — B10 KOMPLETT (gebaut &
+ausgeliefert; Handy-Bestätigung ausstehend):** **rechenweg.js**: neuer `buildPressverband(pv, v, fmt)`
+— rekonstruiert 15–24 Schritte (Glättung G, U_w,max/min, Q_A/Q_I, K_A/K_I, W, p_max/p_min,
+p_zul,A/I mit GEH-/NH-Kennzeichnung, p_zul, S_F, A_F, F_ax,max, M_t,max, F_res+S_H nur bei Last,
+F_e, S_f, ΔT Nabe/Welle) und PRÜFT jeden gegen das compute()-Ergebnis (✓ je Schritt, relEq 1e-4).
+Jede Formel steht als KLARTEXT mit eingesetzten Werten (z. B. „W = K_A/E_A + K_I/E_I = …“) —
+so nachvollziehbar wie die übrigen Rechenwege. **pressverband.js**: 3 PRESETS exportiert
+(Zahnrad-Schrumpfsitz 60 H7/s6 Stahl/Stahl · Hohlwelle geölt 45 H7/s6 mit D_Ii=25 ·
+Grauguss-Nabe 50 H7/s6). **ui.js**: Rechenweggruppe `pvHeading` an renderRechenweg angehängt
+(Quelle: pvLastCalc, bei jedem recalc zurückgesetzt → kein veralteter Weg bei Spiel/Fehler);
+Presets im Lade-Menü (`PV|idx`) + applyPreset-Zweig, der Passung, Oberfläche(Rz) UND alle
+Pressverband-Felder (Werkstoffe, µ-Paarung, l_F, D_Aa, D_Ii, M_t, F_ax) automatisch füllt;
+23 rwPv-Titel ×3 Sprachen. **Verifikation:** i18n-Parität 91 PV-Keys × exakt 3 (0 Fehler);
+Harness Abschnitt 20 (Netz >200 Kombis Selbstprüfung · Schritt-Präsenz · 7 Negativkontrollen ·
+UWMIN-Randfall · 3 Presets grün+Facetten) → **Basislinie 154.565 → 154.644 (+79)**;
+**dom_smoke_b10a.js 30/30** (Preset anwenden → Panel + Rz + PV-Rechenweg-Klartext).
+Geändert: pressverband.js, rechenweg.js, ui.js, test_passung.js, dom_smoke_b10a.js, plan2.md.
+Standard beim Laden unverändert (25 H7/f7, Zusatzbereiche AUS). **Damit ist B10 abgeschlossen.**
 
 ═══════════════════════════════════════════════════════════════════════
 Ende plan.md · DT-ProfiPassung · Plan v1.0

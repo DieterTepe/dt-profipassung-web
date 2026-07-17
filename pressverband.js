@@ -62,6 +62,23 @@
   }
 
   /* ------------------------------------------------------------------------
+   * B10d — Beispiele fürs Lade-Menü. Jedes Preset füllt Passung + Bereich
+   * „Oberfläche (Rz)“ + alle Pressverband-Felder (Zahlen mit dem Kern
+   * vorgerechnet: alle drei Fälle rechnen „grün“ und zeigen je eine Facette).
+   * ---------------------------------------------------------------------- */
+  var PRESETS = [
+    { label: 'Zahnrad-Schrumpfsitz · 60 H7/s6 · Stahl/Stahl',
+      fit: '60 H7/s6', matA: 'steel', matI: 'steel', muKey: 'STST_DRY',
+      lF: 50, DAa: 120, DIi: 0, Mt: 250, Fax: 0, rz: [4, 1.6] },
+    { label: 'Hohlwelle, geölt eingepresst · 45 H7/s6',
+      fit: '45 H7/s6', matA: 'steel', matI: 'steel', muKey: 'STST_OIL',
+      lF: 40, DAa: 90, DIi: 25, Mt: 120, Fax: 0, rz: [4, 1.6] },
+    { label: 'Grauguss-Nabe auf Stahlwelle · 50 H7/s6',
+      fit: '50 H7/s6', matA: 'cast_iron', matI: 'steel', muKey: 'STGJL_DRY',
+      lF: 45, DAa: 110, DIi: 0, Mt: 80, Fax: 0, rz: [10, 4] }
+  ];
+
+  /* ------------------------------------------------------------------------
    * Kleine Rechenbausteine (einzeln exportiert → im Harness direkt prüfbar)
    * ---------------------------------------------------------------------- */
 
@@ -228,6 +245,7 @@
     MU: MU,
     MU_ORDER: MU_ORDER,
     muByKey: muByKey,
+    PRESETS: PRESETS,
     fromFit: fromFit,
     compliance: compliance,
     pressure: pressure,

@@ -177,5 +177,134 @@
     return { steps: steps, allOk: steps.every(function (s) { return s.ok; }) };
   }
 
-  return { build: build, buildFreiform: buildFreiform, buildThermik: buildThermik, buildOberflaeche: buildOberflaeche };
+  /* ===================================================================== *
+   * B10d — Rechenweg Pressverband (DIN 7190). Rekonstruiert jeden Schritt
+   * aus den Primärgrößen und PRÜFT ihn gegen das compute()-Ergebnis (v).
+   * Anzeige-Werte bleiben die des Kerns; hier wird nur Konsistenz gezeigt.
+   * pv  = { DF, lF, DAa, DIi, Umax, Umin, RzA, RzI, matA, matI, mu, Mt, Fax }
+   * v   = Ergebnisobjekt r aus DTPPress.compute(...).r
+   * ---------------------------------------------------------------------- */
+  function buildPressverband(pv, v, fmt) {
+    if (!pv || !v) return { steps: [], allOk: false };
+    fmt = fmt || {};
+    var umU = fmt.umU || umPlainDefault;
+    var n = fmt.n || function (x) { return String(x); };
+    function p2(x) { return n(round2(x)); }         // N/mm², Nm: 2 Nachkommastellen
+    function p1(x) { return n(round1(x)); }
+    function mm(x) { return n(round2(x)); }
+    var steps = [];
+    function step(key, expr, ok, art) { steps.push({ key: key, expr: expr, ok: ok !== false, art: art || null }); }
+
+    var DF = pv.DF, lF = pv.lF, DAa = pv.DAa, DIi = pv.DIi || 0;
+    var mA = pv.matA, mI = pv.matI, mu = pv.mu;
+
+    // 1) Glättung → wirksame Übermaße.
+    var RzA = pv.RzA || 0, RzI = pv.RzI || 0, G = 0.8 * (RzA + RzI);
+    step('rwPvSmooth', 'G = 0,8·(Rz_A + Rz_I) = 0,8·(' + umU(RzA) + ' + ' + umU(RzI) + ') = ' + umU(round2(G)) + ' µm',
+      eq(round3(G), round3(v.G_um)));
+    step('rwPvUwMax', 'U_w,max = U_max − G = ' + umU(pv.Umax) + ' − ' + umU(round2(G)) + ' = ' + umU(round2(pv.Umax - G)) + ' µm',
+      eq(round3(pv.Umax - G), round3(v.Uw_max_um)));
+    var uwminRaw = pv.Umin - G;
+    step('rwPvUwMin', 'U_w,min = U_min − G = ' + umU(pv.Umin) + ' − ' + umU(round2(G)) + ' = ' + umU(round2(uwminRaw)) + ' µm' + (uwminRaw <= 0 ? ' → 0 (kein Restübermaß)' : ''),
+      eq(round3(Math.max(0, uwminRaw)), round3(v.Uw_min_um)));
+
+    // 2) Geometrieverhältnisse.
+    step('rwPvQA', 'Q_A = D_F / D_Aa = ' + mm(DF) + ' / ' + mm(DAa) + ' = ' + n(round3(DF / DAa)),
+      eq(round3(DF / DAa), round3(v.QA)));
+    step('rwPvQI', 'Q_I = D_Ii / D_F = ' + mm(DIi) + ' / ' + mm(DF) + ' = ' + n(round3(DIi / DF)),
+      eq(round3(DIi / DF), round3(v.QI)));
+
+    // 3) Nachgiebigkeit (Lamé, ebener Spannungszustand).
+    var QA = v.QA, QI = v.QI;
+    var KA = (1 + QA * QA) / (1 - QA * QA) + mA.nu;
+    var KI = (1 + QI * QI) / (1 - QI * QI) - mI.nu;
+    step('rwPvKA', 'K_A = (1+Q_A²)/(1−Q_A²) + ν_A = ' + n(round3(KA)),
+      eq(round3(KA), round3(v.KA)));
+    step('rwPvKI', 'K_I = (1+Q_I²)/(1−Q_I²) − ν_I = ' + n(round3(KI)),
+      eq(round3(KI), round3(v.KI)));
+    var W = KA / mA.E + KI / mI.E;
+    step('rwPvW', 'W = K_A/E_A + K_I/E_I = ' + n(round3(KA)) + '/' + n(mA.E) + ' + ' + n(round3(KI)) + '/' + n(mI.E) + ' = ' + n(sci(W)) + ' mm²/N',
+      relEqRW(W, v.W));
+
+    // 4) Fugendrücke p = (U_w/D_F)/W  (U_w in mm = µm/1000).
+    var pMax = (v.Uw_max_um / 1000) / (DF * W);
+    step('rwPvPmax', 'p_max = (U_w,max/D_F)/W = (' + umU(round2(v.Uw_max_um)) + '/1000 / ' + mm(DF) + ') / W = ' + p2(pMax) + ' N/mm²',
+      relEqRW(pMax, v.p_max));
+    var pMin = (v.Uw_min_um / 1000) / (DF * W);
+    step('rwPvPmin', 'p_min = (U_w,min/D_F)/W = ' + p2(pMin) + ' N/mm²',
+      relEqRW(pMin, v.p_min));
+
+    // 5) Elastische Grenze + Fließsicherheit (bei p_max).
+    var hypA = mA.brittle ? 'NH' : 'GEH';
+    if (mA.brittle) {
+      var pzA = (1 - QA * QA) / (1 + QA * QA) * mA.Rm;
+      step('rwPvPzulA', 'p_zul,A = (1−Q_A²)/(1+Q_A²)·R_m,A = ' + p2(pzA) + ' N/mm² (spröde, NH)',
+        relEqRW(pzA, v.pzulA), 'brittle');
+    } else {
+      var pzA2 = (1 - QA * QA) * mA.Re / Math.sqrt(3);
+      step('rwPvPzulA', 'p_zul,A = (1−Q_A²)·R_e,A/√3 = ' + p2(pzA2) + ' N/mm² (duktil, GEH)',
+        relEqRW(pzA2, v.pzulA));
+    }
+    if (mI.brittle) {
+      var pzI = (1 - QI * QI) / (1 + QI * QI) * mI.Rm;
+      step('rwPvPzulI', 'p_zul,I = (1−Q_I²)/(1+Q_I²)·R_m,I = ' + p2(pzI) + ' N/mm² (spröde, NH)',
+        relEqRW(pzI, v.pzulI), 'brittle');
+    } else {
+      var pzI2 = (1 - QI * QI) * mI.Re / Math.sqrt(3);
+      step('rwPvPzulI', 'p_zul,I = (1−Q_I²)·R_e,I/√3 = ' + p2(pzI2) + ' N/mm² (duktil, GEH)',
+        relEqRW(pzI2, v.pzulI));
+    }
+    step('rwPvPzul', 'p_zul = min(p_zul,A ; p_zul,I) = ' + p2(v.pzul) + ' N/mm²',
+      eq(round3(Math.min(v.pzulA, v.pzulI)), round3(v.pzul)));
+    step('rwPvSF', 'S_F = p_zul / p_max = ' + p2(v.pzul) + ' / ' + p2(v.p_max) + ' = ' + p2(v.pzul / v.p_max),
+      relEqRW(v.pzul / v.p_max, v.SF), v.SF < 1 ? 'crit' : (v.SF < 1.2 ? 'warn' : 'ok'));
+
+    // 6) Übertragbarkeit (bei p_min) + Rutschsicherheit gegen Last.
+    var AF = Math.PI * DF * lF;
+    step('rwPvAF', 'A_F = π·D_F·l_F = π·' + mm(DF) + '·' + mm(lF) + ' = ' + n(round1(AF)) + ' mm²',
+      relEqRW(AF, v.AF_mm2));
+    var FaxMax = mu * v.p_min * AF;
+    step('rwPvFax', 'F_ax,max = µ·p_min·A_F = ' + n(mu) + '·' + p2(v.p_min) + '·' + n(round1(AF)) + ' = ' + n(round0(FaxMax)) + ' N',
+      relEqRW(FaxMax, v.Fax_max_N));
+    var MtMax = FaxMax * DF / 2000;
+    step('rwPvMt', 'M_t,max = F_ax,max·D_F/2 = ' + n(round0(FaxMax)) + '·' + mm(DF) + '/2 = ' + p2(MtMax) + ' Nm',
+      relEqRW(MtMax, v.Mt_max_Nm));
+    if (v.SH !== null && v.SH !== undefined) {
+      var Ft = (pv.Mt > 0) ? 2000 * pv.Mt / DF : 0;
+      var Fres = Math.sqrt((pv.Fax || 0) * (pv.Fax || 0) + Ft * Ft);
+      step('rwPvFres', 'F_res = √(F_ax² + (2·M_t/D_F)²) = ' + n(round0(Fres)) + ' N',
+        relEqRW(Fres, v.Fres_N));
+      step('rwPvSH', 'S_H = µ·p_min·A_F / F_res = ' + n(round0(v.mu * v.p_min * AF)) + ' / ' + n(round0(Fres)) + ' = ' + p2(v.SH),
+        relEqRW((v.mu * v.p_min * AF) / Fres, v.SH), v.SH < 1 ? 'crit' : (v.SH < 1.5 ? 'warn' : 'ok'));
+    }
+
+    // 7) Fügen: Einpresskraft (bei p_max) + thermisches Fügen.
+    var Fe = mu * v.p_max * AF;
+    step('rwPvFe', 'F_e = µ·p_max·A_F = ' + n(mu) + '·' + p2(v.p_max) + '·' + n(round1(AF)) + ' = ' + n(round0(Fe)) + ' N',
+      relEqRW(Fe, v.Fe_N));
+    step('rwPvSf', 'S_f ≈ 1 µm/mm · D_F = ' + umU(round1(v.Sf_um)) + ' µm (Fügespiel)',
+      eq(round3(DF), round3(v.Sf_um)));
+    if (v.T_hub_C !== null && v.T_hub_C !== undefined && mA.alpha > 0) {
+      var dTh = (pv.Umax + v.Sf_um) * 1000 / (mA.alpha * DF);
+      step('rwPvTHub', 'ΔT_A = (U_max + S_f)/(α_A·D_F) = (' + umU(pv.Umax) + '+' + umU(round1(v.Sf_um)) + ')/(' + n(mA.alpha) + '·' + mm(DF) + ') = ' + p1(dTh) + ' K → Nabe auf ' + p1(v.T0_C + dTh) + ' °C',
+        relEqRW(dTh, v.dT_hub_K));
+    }
+    if (v.T_shaft_C !== null && v.T_shaft_C !== undefined && mI.alpha > 0) {
+      var dTs = (pv.Umax + v.Sf_um) * 1000 / (mI.alpha * DF);
+      step('rwPvTShaft', 'ΔT_I = (U_max + S_f)/(α_I·D_F) = ' + p1(dTs) + ' K → Welle auf ' + p1(v.T0_C - dTs) + ' °C',
+        relEqRW(dTs, v.dT_shaft_K));
+    }
+
+    return { steps: steps, allOk: steps.every(function (s) { return s.ok; }) };
+  }
+
+  function round2(x) { return Math.round(x * 100) / 100; }
+  function round0(x) { return Math.round(x); }
+  function sci(x) { return x.toExponential(3); }
+  function relEqRW(a, b) {
+    return isFinite(a) && isFinite(b) &&
+      Math.abs(a - b) <= 1e-4 * Math.max(Math.abs(a), Math.abs(b), 1e-300);
+  }
+
+  return { build: build, buildFreiform: buildFreiform, buildThermik: buildThermik, buildOberflaeche: buildOberflaeche, buildPressverband: buildPressverband };
 });

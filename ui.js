@@ -560,7 +560,17 @@
         fh_pvDAa: 'Außendurchmesser des Nabenkörpers am Sitz. Er bestimmt die Wanddicke: je dicker, desto mehr Fugendruck ist möglich.\nFaustregel: D_Aa ≈ 1,8…2,5 · Fugendurchmesser (Q_A = D_F/D_Aa ≤ 0,5 ist komfortabel).\nBei Q_A > 0,8 (dünnwandig) bricht der zulässige Druck stark ein — es erscheint eine Warnung.',
         fh_pvDIi: 'Innendurchmesser der Welle, falls hohl (0 = Vollwelle).\nEine Bohrung macht die Welle nachgiebiger: gleiches Übermaß ergibt weniger Fugendruck, und die Grenze der Welle sinkt.\nEmpfehlung: für die erste Auslegung 0 lassen; Hohlwelle nur eintragen, wenn wirklich vorhanden.',
         fh_pvMt: 'Drehmoment, das der Sitz sicher übertragen MUSS (Betriebsmoment, ggf. mit Stoßfaktor).\n0 lassen, wenn nur die Tragfähigkeit interessiert — dann zeigt die App das maximal übertragbare Moment.\nEmpfehlung: Anwendungsstöße einrechnen (Elektromotor sanft ×1,2 · Kolbenmaschine ×2…3) und S_H ≥ 1,5 anstreben.',
-        fh_pvFax: 'Axialkraft, die der Sitz zusätzlich halten muss (z. B. Zahnschub bei Schrägverzahnung).\n0 lassen, wenn keine — Drehmoment und Axialkraft werden vektoriell kombiniert.\nHinweis: Axialkräfte wirken in derselben Reibfläche und senken die Momentreserve.'
+        fh_pvFax: 'Axialkraft, die der Sitz zusätzlich halten muss (z. B. Zahnschub bei Schrägverzahnung).\n0 lassen, wenn keine — Drehmoment und Axialkraft werden vektoriell kombiniert.\nHinweis: Axialkräfte wirken in derselben Reibfläche und senken die Momentreserve.',
+        rwPvSmooth: 'Glättung (Übermaßverlust)', rwPvUwMax: 'Wirksames Größtübermaß', rwPvUwMin: 'Wirksames Kleinstübermaß',
+        rwPvQA: 'Durchmesserverhältnis Nabe Q_A', rwPvQI: 'Durchmesserverhältnis Welle Q_I',
+        rwPvKA: 'Hilfsgröße K_A (Nabe)', rwPvKI: 'Hilfsgröße K_I (Welle)', rwPvW: 'Nachgiebigkeit W',
+        rwPvPmax: 'Fugendruck p_max', rwPvPmin: 'Fugendruck p_min',
+        rwPvPzulA: 'Grenzdruck Nabe p_zul,A', rwPvPzulI: 'Grenzdruck Welle p_zul,I', rwPvPzul: 'Maßgeblicher Grenzdruck p_zul',
+        rwPvSF: 'Sicherheit gegen Fließen S_F', rwPvAF: 'Fugenfläche A_F',
+        rwPvFax: 'Übertragbare Axialkraft F_ax,max', rwPvMt: 'Übertragbares Drehmoment M_t,max',
+        rwPvFres: 'Resultierende Lastkraft F_res', rwPvSH: 'Rutschsicherheit S_H',
+        rwPvFe: 'Einpresskraft F_e', rwPvSf: 'Fügespiel S_f',
+        rwPvTHub: 'Fügetemperatur Nabe', rwPvTShaft: 'Kühltemperatur Welle',
       },
       en: {
         unit_nmm2: 'N/mm²', unit_nm: 'Nm', unit_n: 'N',
@@ -612,7 +622,17 @@
         fh_pvDAa: 'Outer diameter of the hub body at the seat. It sets the wall thickness: the thicker, the more joint pressure is possible.\nRule of thumb: D_Aa ≈ 1.8…2.5 · joint diameter (Q_A = D_F/D_Aa ≤ 0.5 is comfortable).\nAt Q_A > 0.8 (thin-walled) the permissible pressure collapses — a warning appears.',
         fh_pvDIi: 'Inner diameter of the shaft if hollow (0 = solid shaft).\nA bore makes the shaft more compliant: the same interference yields less joint pressure, and the shaft limit drops.\nRecommendation: keep 0 for a first design; enter a hollow shaft only if it really exists.',
         fh_pvMt: 'Torque the seat MUST safely transmit (operating torque, incl. shock factor if applicable).\nLeave 0 if you only want the capacity — the app then shows the maximum transmittable torque.\nRecommendation: include application shocks (smooth electric motor ×1.2 · piston machine ×2…3) and aim for S_H ≥ 1.5.',
-        fh_pvFax: 'Axial force the seat must additionally hold (e.g. thrust from helical gearing).\nLeave 0 if none — torque and axial force are combined vectorially.\nNote: axial forces act in the same friction surface and reduce the torque reserve.'
+        fh_pvFax: 'Axial force the seat must additionally hold (e.g. thrust from helical gearing).\nLeave 0 if none — torque and axial force are combined vectorially.\nNote: axial forces act in the same friction surface and reduce the torque reserve.',
+        rwPvSmooth: 'Smoothing (interference loss)', rwPvUwMax: 'Effective max interference', rwPvUwMin: 'Effective min interference',
+        rwPvQA: 'Diameter ratio hub Q_A', rwPvQI: 'Diameter ratio shaft Q_I',
+        rwPvKA: 'Auxiliary K_A (hub)', rwPvKI: 'Auxiliary K_I (shaft)', rwPvW: 'Compliance W',
+        rwPvPmax: 'Joint pressure p_max', rwPvPmin: 'Joint pressure p_min',
+        rwPvPzulA: 'Limit pressure hub p_zul,A', rwPvPzulI: 'Limit pressure shaft p_zul,I', rwPvPzul: 'Governing limit pressure p_zul',
+        rwPvSF: 'Safety against yielding S_F', rwPvAF: 'Joint area A_F',
+        rwPvFax: 'Transmittable axial force F_ax,max', rwPvMt: 'Transmittable torque M_t,max',
+        rwPvFres: 'Resulting load force F_res', rwPvSH: 'Slip safety S_H',
+        rwPvFe: 'Press-in force F_e', rwPvSf: 'Joining allowance S_f',
+        rwPvTHub: 'Joining temperature hub', rwPvTShaft: 'Cooling temperature shaft',
       },
       pt: {
         unit_nmm2: 'N/mm²', unit_nm: 'Nm', unit_n: 'N',
@@ -664,7 +684,17 @@
         fh_pvDAa: 'Diâmetro externo do corpo do cubo no assento. Define a espessura da parede: quanto mais espessa, mais pressão é possível.\nRegra prática: D_Aa ≈ 1,8…2,5 · diâmetro da junta (Q_A = D_F/D_Aa ≤ 0,5 é confortável).\nCom Q_A > 0,8 (parede fina) a pressão admissível despenca — aparece um aviso.',
         fh_pvDIi: 'Diâmetro interno do eixo, se oco (0 = eixo maciço).\nUm furo torna o eixo mais flexível: a mesma interferência gera menos pressão, e o limite do eixo cai.\nRecomendação: deixe 0 no primeiro dimensionamento; informe eixo oco apenas se existir de fato.',
         fh_pvMt: 'Torque que a união DEVE transmitir com segurança (torque de operação, com fator de choque se aplicável).\nDeixe 0 se só interessa a capacidade — o app mostra então o torque máximo transmissível.\nRecomendação: inclua choques da aplicação (motor elétrico suave ×1,2 · máquina a pistão ×2…3) e busque S_H ≥ 1,5.',
-        fh_pvFax: 'Força axial que a união deve suportar adicionalmente (p. ex. empuxo de engrenagem helicoidal).\nDeixe 0 se não houver — torque e força axial são combinados vetorialmente.\nNota: forças axiais atuam na mesma superfície de atrito e reduzem a reserva de torque.'
+        fh_pvFax: 'Força axial que a união deve suportar adicionalmente (p. ex. empuxo de engrenagem helicoidal).\nDeixe 0 se não houver — torque e força axial são combinados vetorialmente.\nNota: forças axiais atuam na mesma superfície de atrito e reduzem a reserva de torque.',
+        rwPvSmooth: 'Alisamento (perda de interferência)', rwPvUwMax: 'Interferência máx. efetiva', rwPvUwMin: 'Interferência mín. efetiva',
+        rwPvQA: 'Relação de diâmetros cubo Q_A', rwPvQI: 'Relação de diâmetros eixo Q_I',
+        rwPvKA: 'Auxiliar K_A (cubo)', rwPvKI: 'Auxiliar K_I (eixo)', rwPvW: 'Flexibilidade W',
+        rwPvPmax: 'Pressão p_max', rwPvPmin: 'Pressão p_min',
+        rwPvPzulA: 'Pressão limite cubo p_zul,A', rwPvPzulI: 'Pressão limite eixo p_zul,I', rwPvPzul: 'Pressão limite decisiva p_zul',
+        rwPvSF: 'Segurança contra escoamento S_F', rwPvAF: 'Área da junta A_F',
+        rwPvFax: 'Força axial transmissível F_ax,max', rwPvMt: 'Torque transmissível M_t,max',
+        rwPvFres: 'Força de carga resultante F_res', rwPvSH: 'Segurança contra deslizamento S_H',
+        rwPvFe: 'Força de prensagem F_e', rwPvSf: 'Folga de montagem S_f',
+        rwPvTHub: 'Temperatura de montagem cubo', rwPvTShaft: 'Temperatura de resfriamento eixo',
       }
     };
     ['de', 'en', 'pt'].forEach(function (l) { for (var k in s[l]) STR[l][k] = s[l][k]; });
@@ -988,6 +1018,7 @@
    * ===================================================================== */
   var elPvEnable, elPvBox, elPvRzNote;
   var pvSyncFns = [];
+  var pvLastCalc = null;  // {pv, v} des letzten erfolgreichen compute — Quelle für den Rechenweg (B10d)
 
   function persistPress() {
     try {
@@ -1199,6 +1230,7 @@
 
   /* Pressverband-Ergebnis (B10c): Panel unter den anderen Ergebnissen. */
   function renderPressverband(res) {
+    pvLastCalc = null;
     if (!pvEnabled) return;
     // Rz-Kopplungsnotiz im Formular nachziehen (Sprache + Zustand):
     if (elPvRzNote) {
@@ -1230,6 +1262,16 @@
       box.appendChild(e0); resultHost.appendChild(box); return;
     }
     var v = r.r;
+    pvLastCalc = {
+      pv: {
+        DF: res.input.nominal, lF: pvLF, DAa: pvDAa, DIi: pvDIi,
+        Umax: uu.U_max_um, Umin: uu.U_min_um,
+        RzA: oaEnabled ? rzHole : 0, RzI: oaEnabled ? rzShaft : 0,
+        matA: pvMatOf(pvSideA), matI: pvMatOf(pvSideI),
+        mu: pvMuVal, Mt: pvMt, Fax: pvFax
+      },
+      v: v
+    };
     function row(labelKey, valTxt, cls) {
       var d = el('div', 'pv-row');
       var l = el('span', 'pv-l'); l.setAttribute('data-i18n', labelKey); l.textContent = t(labelKey);
@@ -1447,6 +1489,10 @@
     if (oaEnabled && window.DTPRechenweg.buildOberflaeche) {
       if (!groups[0].titleKey) groups[0].titleKey = 'modeFit';
       groups.push({ titleKey: 'brSurfLubeHeading', data: window.DTPRechenweg.buildOberflaeche(res, { RzB: rzHole, RzW: rzShaft }, rwFmt()) });
+    }
+    if (pvEnabled && pvLastCalc && window.DTPRechenweg.buildPressverband) {
+      if (!groups[0].titleKey) groups[0].titleKey = 'modeFit';
+      groups.push({ titleKey: 'pvHeading', data: window.DTPRechenweg.buildPressverband(pvLastCalc.pv, pvLastCalc.v, rwFmt()) });
     }
     renderRechenweg(groups);
     renderViz(res);
@@ -1789,6 +1835,9 @@
       (TH && TH.PRESETS || []).forEach(function (P, idx) {
         var o = el('option', null, P.label); o.value = 'TH|' + idx; sel.appendChild(o);
       });
+      (PVM && PVM.PRESETS || []).forEach(function (P, idx) {
+        var o = el('option', null, P.label); o.value = 'PV|' + idx; sel.appendChild(o);
+      });
     }
   }
   function applyPreset(str) {
@@ -1808,6 +1857,28 @@
       elHoleL.value = pt.hole.letter; elHoleG.value = String(pt.hole.grade);
       elShaftL.value = pt.shaft.letter; elShaftG.value = String(pt.shaft.grade);
       elSystem.value = pt.system || 'FREE';
+      recalc(); return;
+    }
+    if (str.indexOf('PV|') === 0) {
+      var PP = PVM && PVM.PRESETS[parseInt(str.split('|')[1], 10)];
+      var ptp = PP && S.parseFit(PP.fit); if (!PP || !ptp || !ptp.ok) return;
+      if (mode !== 'fit') { mode = 'fit'; try { localStorage.setItem('dtp-mode', mode); } catch (e) {} }
+      // Oberfläche (Rz) aktivieren und belegen — die Glättung gehört zum Beispiel.
+      oaEnabled = true; rzHole = PP.rz[0]; rzShaft = PP.rz[1];
+      try { localStorage.setItem('dtp-oa-on', '1'); localStorage.setItem('dtp-oa-rzh', String(rzHole)); localStorage.setItem('dtp-oa-rzs', String(rzShaft)); } catch (e) {}
+      // Pressverband aktivieren und alle Felder aus dem Preset füllen.
+      pvEnabled = true;
+      pvSideA = { key: PP.matA, own: false, cust: null };
+      pvSideI = { key: PP.matI, own: false, cust: null };
+      pvMuKey = PP.muKey; pvMuOwn = false;
+      var muRow = PVM.muByKey(pvMuKey); pvMuVal = muRow ? muRow.mu : pvMuVal;
+      pvLF = PP.lF; pvDAa = PP.DAa; pvDIi = PP.DIi; pvMt = PP.Mt; pvFax = PP.Fax;
+      persistPress();
+      buildForm();
+      elNominal.value = String(ptp.nominal);
+      elHoleL.value = ptp.hole.letter; elHoleG.value = String(ptp.hole.grade);
+      elShaftL.value = ptp.shaft.letter; elShaftG.value = String(ptp.shaft.grade);
+      elSystem.value = ptp.system || 'EB';
       recalc(); return;
     }
     var p = S.parseFit(str);

@@ -1330,6 +1330,144 @@ section('19) Pressverband (DIN 7190)');
   err(withx(base, { Mt_Nm: -5 }), 'PV_ERR_INPUT', 'M_t < 0');
 })();
 
+/* === 20) B10d — Rechenweg Pressverband + Presets ========================== */
+section('20) Rechenweg Pressverband + Presets');
+(function () {
+  if (!RW || !RW.buildPressverband) { ok(false, 'RW.buildPressverband nicht geladen'); return; }
+  if (!PV || !PV.PRESETS) { ok(false, 'PV.PRESETS nicht geladen'); return; }
+
+  var ST  = { E: 210000, nu: 0.30, Re: 355, alpha: 11.5 };
+  var GJL = { E: 110000, nu: 0.28, Re: null, Rm: 250, brittle: true, alpha: 10 };
+  var ALU = { E: 70000,  nu: 0.33, Re: 250, alpha: 23 };
+  var mats = [[ST, ST], [GJL, ST], [ST, ALU], [ST, GJL]];
+
+  function mkPv(DF, lF, DAa, DIi, Umax, Umin, RzA, RzI, pair, mu, Mt, Fax) {
+    return { DF: DF, lF: lF, DAa: DAa, DIi: DIi, Umax: Umax, Umin: Umin,
+             RzA: RzA, RzI: RzI, matA: pair[0], matI: pair[1], mu: mu, Mt: Mt, Fax: Fax };
+  }
+  function computeFrom(pv) {
+    return PV.compute({ DF: pv.DF, lF: pv.lF, DAa: pv.DAa, DIi: pv.DIi,
+      U_max_um: pv.Umax, U_min_um: pv.Umin, RzA_um: pv.RzA, RzI_um: pv.RzI,
+      matA: pv.matA, matI: pv.matI, mu: pv.mu, Mt_Nm: pv.Mt, Fax_N: pv.Fax });
+  }
+
+  /* --- 20.1 Selbstprüfung über breites Kombinationsnetz ------------------- */
+  var DFs = [20, 60, 120, 300], QAs = [0.4, 0.6, 0.8], QIs = [0, 0.5];
+  var Us = [[80, 40], [60, 60], [120, 30]], Rzs = [[0, 0], [4, 1.6], [10, 4]];
+  var loads = [[0, 0], [200, 0], [150, 3000]], mus = [0.08, 0.14];
+  var netCount = 0, netBad = 0, stepMin = 999, stepMax = 0;
+  DFs.forEach(function (DF) {
+    QAs.forEach(function (QA) {
+      QIs.forEach(function (QI) {
+        mats.forEach(function (pair) {
+          Us.forEach(function (U) {
+            Rzs.forEach(function (Rz) {
+              var li = (DF + QA * 10 + QI * 3) | 0;
+              var load = loads[li % loads.length], mu = mus[li % mus.length];
+              var pv = mkPv(DF, 0.8 * DF, DF / QA, DF * QI, U[0], U[1], Rz[0], Rz[1], pair, mu, load[0], load[1]);
+              var c = computeFrom(pv);
+              if (!c.ok) return;  // z. B. Glättung frisst Übermaß → im Randfall-Block separat geprüft
+              netCount++;
+              var rw = RW.buildPressverband(pv, c.r);
+              if (rw.steps.length < stepMin) stepMin = rw.steps.length;
+              if (rw.steps.length > stepMax) stepMax = rw.steps.length;
+              if (rw.allOk !== true) { netBad++; if (netBad <= 3) console.log('  RW-bad:', JSON.stringify(pv)); }
+            });
+          });
+        });
+      });
+    });
+  });
+  ok(netCount > 200, 'PV-Rechenweg: großes Netz durchgerechnet (n=' + netCount + ')');
+  ok(netBad === 0, 'PV-Rechenweg: jede Formel prüft sich grün (' + netBad + ' Fehler)');
+  ok(stepMin >= 15, 'PV-Rechenweg: mind. 15 Schritte je Fall (min=' + stepMin + ')');
+  ok(stepMax <= 24, 'PV-Rechenweg: Schrittzahl plausibel (max=' + stepMax + ')');
+
+  /* --- 20.2 Schritt-Präsenz: enthält die Kern-Formeln als Klartext -------- */
+  var pvA = mkPv(60, 45, 120, 0, 60, 60, 4, 1.6, [ST, ST], 0.14, 250, 0);
+  var cA = computeFrom(pvA); ok(cA.ok, '20.2 Referenzfall rechnet');
+  var rwA = RW.buildPressverband(pvA, cA.r);
+  function hasKey(rw, k) { return rw.steps.some(function (s) { return s.key === k; }); }
+  ['rwPvSmooth','rwPvUwMax','rwPvUwMin','rwPvQA','rwPvQI','rwPvKA','rwPvKI','rwPvW',
+   'rwPvPmax','rwPvPmin','rwPvPzulA','rwPvPzulI','rwPvPzul','rwPvSF','rwPvAF',
+   'rwPvFax','rwPvMt','rwPvFe','rwPvSf'].forEach(function (k) {
+    ok(hasKey(rwA, k), '20.2 Schritt vorhanden: ' + k);
+  });
+  // Formeln erscheinen als Text (Nachvollziehbarkeit für den Nutzer):
+  var joined = rwA.steps.map(function (s) { return s.expr; }).join(' || ');
+  ok(/W = K_A\/E_A \+ K_I\/E_I/.test(joined), '20.2 Formel W im Klartext');
+  ok(/p_max = \(U_w,max\/D_F\)\/W/.test(joined), '20.2 Formel p_max im Klartext');
+  ok(/S_F = p_zul \/ p_max/.test(joined), '20.2 Formel S_F im Klartext');
+  ok(/M_t,max = F_ax,max·D_F\/2/.test(joined), '20.2 Formel M_t,max im Klartext');
+  ok(/√3/.test(joined), '20.2 GEH-√3 sichtbar');
+  // Mt=250 gefordert → S_H-Schritt vorhanden; Fax=0 & Mt=0 → kein S_H:
+  ok(hasKey(rwA, 'rwPvSH') && hasKey(rwA, 'rwPvFres'), '20.2 Lastfall zeigt S_H + F_res');
+  var pvNo = mkPv(60, 45, 120, 0, 60, 60, 0, 0, [ST, ST], 0.14, 0, 0);
+  var rwNo = RW.buildPressverband(pvNo, computeFrom(pvNo).r);
+  ok(!hasKey(rwNo, 'rwPvSH'), '20.2 ohne Last kein S_H-Schritt');
+  // GJL-Nabe → NH-Kennzeichnung im p_zul,A-Schritt:
+  var pvG = mkPv(50, 45, 110, 0, 59, 18, 10, 4, [GJL, ST], 0.10, 80, 0);
+  var rwG = RW.buildPressverband(pvG, computeFrom(pvG).r);
+  var sA = rwG.steps.filter(function (s) { return s.key === 'rwPvPzulA'; })[0];
+  ok(sA && /NH/.test(sA.expr) && sA.art === 'brittle', '20.2 GJL-Nabe: NH-Grenze markiert');
+
+  /* --- 20.3 Negativkontrollen: verfälschtes v muss auffallen -------------- */
+  function tamper(field, delta) {
+    var c = computeFrom(pvA); var v = {}; for (var k in c.r) v[k] = c.r[k];
+    v[field] = v[field] + delta;
+    return RW.buildPressverband(pvA, v).allOk;
+  }
+  ok(tamper('p_max', 0.5) === false, '20.3 verfälschtes p_max erkannt');
+  ok(tamper('W', 1e-8) === false, '20.3 verfälschtes W erkannt');
+  ok(tamper('pzul', 5) === false, '20.3 verfälschtes p_zul erkannt');
+  ok(tamper('SF', 0.2) === false, '20.3 verfälschtes S_F erkannt');
+  ok(tamper('Fax_max_N', 100) === false, '20.3 verfälschtes F_ax,max erkannt');
+  ok(tamper('Mt_max_Nm', 5) === false, '20.3 verfälschtes M_t,max erkannt');
+  ok(tamper('dT_hub_K', 5) === false, '20.3 verfälschtes ΔT_Nabe erkannt');
+  ok(RW.buildPressverband(null, null).allOk === false, '20.3 leere Eingabe → allOk=false');
+
+  /* --- 20.4 UWMIN-Randfall: p_min=0 wird sauber abgebildet ---------------- */
+  var pvW = mkPv(60, 45, 120, 0, 60, 5, 4, 4, [ST, ST], 0.14, 0, 0);
+  var cW = computeFrom(pvW); ok(cW.ok && cW.r.p_min === 0, '20.4 Randfall: p_min=0');
+  var rwW = RW.buildPressverband(pvW, cW.r);
+  ok(rwW.allOk === true, '20.4 Rechenweg bleibt konsistent bei p_min=0');
+  var sUwMin = rwW.steps.filter(function (s) { return s.key === 'rwPvUwMin'; })[0];
+  ok(sUwMin && /→ 0/.test(sUwMin.expr), '20.4 U_w,min-Schritt weist 0 aus');
+
+  /* --- 20.5 Presets: genau 3, füllen grün und zeigen je eine Facette ------ */
+  ok(PV.PRESETS.length === 3, 'Presets: genau 3 Beispiele');
+  var facetSlip = false, facetBrittle = false, facetHollow = false;
+  PV.PRESETS.forEach(function (P, i) {
+    ok(typeof P.label === 'string' && P.label.length > 5, 'Preset ' + i + ': Label vorhanden');
+    var fr = S.computeFit(P.fit);
+    ok(fr.ok === true, 'Preset ' + i + ': Passung „' + P.fit + '\" parst');
+    ok(fr.fit.art === 'UEBERMASS', 'Preset ' + i + ': ist echte Übermaßpassung');
+    ok(!!PV.muByKey(P.muKey), 'Preset ' + i + ': µ-Key gültig (' + P.muKey + ')');
+    ok(!!TH.MAT[P.matA] && !!TH.MAT[P.matI], 'Preset ' + i + ': Werkstoffe existieren');
+    ok(P.DAa > P.fit.split(' ')[0] * 1 && P.lF > 0, 'Preset ' + i + ': Geometrie plausibel');
+    var uu = PV.fromFit(fr);
+    var c = PV.compute({ DF: fr.input.nominal, lF: P.lF, DAa: P.DAa, DIi: P.DIi,
+      U_max_um: uu.U_max_um, U_min_um: uu.U_min_um, RzA_um: P.rz[0], RzI_um: P.rz[1],
+      matA: TH.MAT[P.matA], matI: TH.MAT[P.matI], mu: PV.muByKey(P.muKey).mu,
+      Mt_Nm: P.Mt, Fax_N: P.Fax });
+    ok(c.ok === true, 'Preset ' + i + ': rechnet ohne Fehler');
+    if (!c.ok) return;
+    ok(c.r.p_max > 0 && c.r.p_min >= 0, 'Preset ' + i + ': Drücke ≥ 0');
+    ok(c.r.SF >= 1, 'Preset ' + i + ': elastisch (S_F ≥ 1, ist ' + c.r.SF.toFixed(2) + ')');
+    if (P.Mt > 0) ok(c.r.SH >= 1, 'Preset ' + i + ': hält gefordertes M_t (S_H ≥ 1, ist ' + (c.r.SH||0).toFixed(2) + ')');
+    // Rechenweg des Presets ist grün:
+    var pvp = { DF: fr.input.nominal, lF: P.lF, DAa: P.DAa, DIi: P.DIi, Umax: uu.U_max_um, Umin: uu.U_min_um,
+                RzA: P.rz[0], RzI: P.rz[1], matA: TH.MAT[P.matA], matI: TH.MAT[P.matI],
+                mu: PV.muByKey(P.muKey).mu, Mt: P.Mt, Fax: P.Fax };
+    ok(RW.buildPressverband(pvp, c.r).allOk === true, 'Preset ' + i + ': Rechenweg grün');
+    if (P.DIi > 0) facetHollow = true;
+    if (TH.MAT[P.matA].brittle || TH.MAT[P.matI].brittle) facetBrittle = true;
+    if (c.hints.indexOf('PV_HINT_BRITTLE') >= 0) facetBrittle = true;
+  });
+  ok(facetHollow, 'Presets: ein Beispiel deckt die Hohlwelle ab');
+  ok(facetBrittle, 'Presets: ein Beispiel deckt die spröde Nabe (GJL) ab');
+})();
+
 /* === Zusammenfassung ====================================================== */
 say('\n  ========================================');
 say('  Assertions gesamt : ' + (pass + fail));

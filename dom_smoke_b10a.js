@@ -210,6 +210,37 @@ shaftSel.value = 'f'; shaftSel.fire('change');
 pvChk.checked = false; pvChk.fire('change');
 ok(pvResults().length === 0, 'Pressverband deaktiviert → Panel verschwindet');
 
+/* B10d: Preset aus dem Lade-Menü anwenden → füllt Passung, Oberfläche und
+   Pressverband, zeigt Panel + PV-Rechenwegschritte. */
+var presetSel = byId.presetSel;
+// Menü füllen lassen (fillPresets läuft beim Boot; hier Optionen prüfen):
+var pvOpts = presetSel.findAll(function (n) { return n.tagName === 'OPTION' && String(n.value || '').indexOf('PV|') === 0; });
+ok(pvOpts.length === 3, 'Lade-Menü: 3 Pressverband-Beispiele (ist: ' + pvOpts.length + ')');
+// Erstes PV-Preset anwenden über den change-Handler:
+presetSel.value = pvOpts[0].value;
+presetSel.fire('change');
+var prP = byId.resultHost.findAll(function (n) { return n.classList.contains('pv-result'); });
+ok(prP.length === 1, 'Preset: Pressverband-Panel erscheint');
+var pRows = prP.length ? prP[0].findAll(function (n) { return n.classList.contains('pv-row'); }) : [];
+ok(pRows.length >= 8, 'Preset: Panel mit Kennzeilen (ist: ' + pRows.length + ')');
+// Oberfläche (Rz) wurde durchs Preset aktiviert (Box nach Rebuild frisch holen):
+var freshBoxes = formHost.findAll(function (n) { return n.classList.contains('thermik-box'); });
+var oaChk = freshBoxes[1].findAll(function (n) { return n.tagName === 'INPUT'; }).filter(function (n) { return n.type === 'checkbox'; })[0];
+ok(oaChk && oaChk.checked === true, 'Preset: Oberfläche (Rz) mitaktiviert');
+// PV-Rechenweg sichtbar: die Kern-Formeln erscheinen als rw-expr-Klartext:
+var rwExprs = byId.resultHost.findAll(function (n) { return n.classList.contains('rw-expr'); })
+  .map(function (n) { return n.textContent; });
+var rwJoined = rwExprs.join(' || ');
+ok(/W = K_A\/E_A \+ K_I\/E_I/.test(rwJoined), 'Preset: PV-Rechenweg zeigt W-Formel im Klartext');
+ok(/p_max = \(U_w,max\/D_F\)\/W/.test(rwJoined), 'Preset: PV-Rechenweg zeigt p_max-Formel');
+ok(/S_F = p_zul \/ p_max/.test(rwJoined), 'Preset: PV-Rechenweg zeigt S_F-Formel');
+var pvStepTitles = byId.resultHost.findAll(function (n) { return n.classList.contains('rw-title'); })
+  .map(function (n) { return n.textContent; })
+  .filter(function (tx) { return /Q_A|Q_I|p_max|p_min|S_F|A_F|W|K_A/.test(tx); });
+ok(pvStepTitles.length >= 8, 'Preset: PV-Rechenweg mit vielen Schritten (ist: ' + pvStepTitles.length + ')');
+// Preset zurücksetzen für die folgenden Tests:
+presetSel.value = ''; 
+
 /* Freiform-Modus: dort 2 ⓘ (Nennmaß + Klasse). */
 var modeBtns = formHost.findAll(function (n) { return n.tagName === 'BUTTON' && n.getAttribute('data-i18n') === 'modeFreiform'; });
 ok(modeBtns.length === 1, 'Freiform-Umschalter vorhanden');
