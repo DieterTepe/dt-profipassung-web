@@ -24,6 +24,7 @@ var TH = isNode ? require('./thermik.js')   : globalThis.DTPThermik;
 var SB = isNode ? require('./schaubild.js') : globalThis.DTPSchaubild;
 var BR = isNode ? require('./beratung.js')  : globalThis.DTPBeratung;
 var PV = isNode ? require('./pressverband.js') : globalThis.DTPPress;
+var AS = isNode ? require('./assistent.js') : globalThis.DTPAssistent;
 
 /* --- Mini-Assert-Framework (Muster: DT-ProfiSchraube) ---------------------- */
 var pass = 0, fail = 0, fails = [];
@@ -1466,6 +1467,114 @@ section('20) Rechenweg Pressverband + Presets');
   });
   ok(facetHollow, 'Presets: ein Beispiel deckt die Hohlwelle ab');
   ok(facetBrittle, 'Presets: ein Beispiel deckt die spröde Nabe (GJL) ab');
+})();
+
+/* === 21) B11 — Passungs-Assistent ========================================= */
+section('21) Passungs-Assistent');
+(function () {
+  if (!AS || !AS.recommend) { ok(false, 'DTPAssistent nicht geladen'); return; }
+
+  // 21.1 Dialogfluss: erste Frage, Fragenreihenfolge, kontextabhängige 4. Frage.
+  ok(AS.firstQuestion() === 'purpose', 'erste Frage ist purpose');
+  ok(AS.nextQuestion({}) === 'purpose', 'leer → purpose');
+  ok(AS.nextQuestion({ purpose: 'SLIDE' }) === 'demount', 'nach purpose → demount');
+  ok(AS.nextQuestion({ purpose: 'SLIDE', demount: 'OFTEN' }) === 'precision', 'nach demount → precision');
+  ok(AS.nextQuestion({ purpose: 'FIXED', demount: 'NEVER', precision: 'HIGH' }) === 'hubMat',
+     'FIXED → 4. Frage ist hubMat');
+  ok(AS.nextQuestion({ purpose: 'SLIDE', demount: 'SELDOM', precision: 'HIGH' }) === 'temp',
+     'nicht-FIXED → 4. Frage ist temp');
+  ok(AS.nextQuestion({ purpose: 'HANDFIT', demount: 'OFTEN', precision: 'NORMAL' }) === 'temp',
+     'HANDFIT → 4. Frage ist temp');
+  ok(AS.nextQuestion({ purpose: 'FIXED', demount: 'NEVER', precision: 'HIGH', hubMat: 'STEEL' }) === null,
+     'FIXED vollständig → fertig (null)');
+  ok(AS.nextQuestion({ purpose: 'SLIDE', demount: 'SELDOM', precision: 'HIGH', temp: 'NORMAL' }) === null,
+     'SLIDE vollständig → fertig (null)');
+
+  // 21.2 Optionen je Frage vorhanden; Freimaß NICHT enthalten (bewusst raus).
+  ok(AS.optionsFor('purpose').length === 3, 'purpose hat 3 Optionen');
+  ok(AS.optionsFor('purpose').indexOf('FREEFORM') < 0 && AS.optionsFor('purpose').indexOf('LOOSE') < 0,
+     'purpose enthält kein Freimaß');
+  ['purpose', 'demount', 'precision', 'hubMat', 'temp'].forEach(function (q) {
+    ok(AS.optionsFor(q).length >= 2, 'Frage ' + q + ' hat ≥2 Optionen');
+  });
+  ok(AS.isValidAnswer('purpose', 'FIXED') && !AS.isValidAnswer('purpose', 'XXX'), 'isValidAnswer prüft korrekt');
+
+  // 21.3 Unvollständig → Fehler; vollständig → 1..3 Vorschläge, jeder wohlgeformt.
+  ok(AS.recommend({}).ok === false, 'ohne purpose → Fehler');
+  ok(AS.recommend({}).error === 'AS_ERR_INCOMPLETE', 'Fehlercode AS_ERR_INCOMPLETE');
+
+  var purposes = ['SLIDE', 'HANDFIT', 'FIXED'];
+  var demounts = ['OFTEN', 'SELDOM', 'NEVER'];
+  var precs    = ['NORMAL', 'HIGH', 'LOW'];
+  var hubs     = ['STEEL', 'CAST', 'LIGHT'];
+  var temps    = ['NORMAL', 'HOT'];
+  var fitRe = /^H\d\/[a-z]+\d$|^H\d[A-Z]?\/[a-z]+\d$|^[A-Z]+\d\/[a-z]+\d$/; // grob: X#/y#
+  var combos = 0, reasonCodes = {}, allFitsParse = true, badShape = 0;
+  purposes.forEach(function (p) {
+    demounts.forEach(function (d) {
+      precs.forEach(function (pr) {
+        var fourths = (p === 'FIXED') ? hubs : temps;
+        fourths.forEach(function (f) {
+          var a = { purpose: p, demount: d, precision: pr };
+          a[(p === 'FIXED') ? 'hubMat' : 'temp'] = f;
+          var r = AS.recommend(a);
+          combos++;
+          if (!r.ok) { badShape++; return; }
+          if (r.suggestions.length < 1 || r.suggestions.length > 3) badShape++;
+          r.suggestions.forEach(function (s) {
+            if (!s.fit || typeof s.reasonCode !== 'string' || s.reasonCode.indexOf('AS_R_') !== 0) badShape++;
+            reasonCodes[s.reasonCode] = true;
+            // Jeder Vorschlag muss vom echten Solver parsebar sein (mit Nennmaß):
+            var pf = S.parseFit('50 ' + s.fit);
+            if (!pf || !pf.ok) { allFitsParse = false; if (badShape < 3) console.log('  UNPARSEBAR:', s.fit); }
+          });
+          // answers werden unverändert zurückgegeben (für UI-Zustand):
+          if (r.answers.purpose !== p) badShape++;
+        });
+      });
+    });
+  });
+  ok(combos === (3 * 3 * 3) + (2 * 3 * 3 * 2), 'alle Antwort-Kombinationen durchgespielt (n=' + combos + ')'); // FIXED:27 + nicht-FIXED:36
+  ok(badShape === 0, 'jeder Vorschlag wohlgeformt (fit + AS_R_-reasonCode, 1..3 Stück)');
+  ok(allFitsParse === true, 'jeder vorgeschlagene fit ist vom Solver parsebar');
+
+  // 21.4 Fachliche Kernaussagen (Stichproben gegen die Empfehlungsmatrix).
+  function fits(a) { return AS.recommend(a).suggestions.map(function (s) { return s.fit; }); }
+  function hints(a) { return AS.recommend(a).suggestions.map(function (s) { return s.hintCode; }); }
+  ok(fits({ purpose: 'SLIDE', demount: 'SELDOM', precision: 'HIGH', temp: 'NORMAL' })[0] === 'H7/g6',
+     'Gleiten + hochpräzise → H7/g6 zuerst');
+  ok(fits({ purpose: 'SLIDE', demount: 'SELDOM', precision: 'LOW', temp: 'NORMAL' })[0] === 'H8/e8',
+     'Gleiten + unkritisch → H8/e8 (großzügiger Ölspalt)');
+  ok(fits({ purpose: 'HANDFIT', demount: 'SELDOM', precision: 'NORMAL', temp: 'NORMAL' })[0] === 'H7/h6',
+     'Fügen/lösen normal → H7/h6 (Schiebesitz) zuerst');
+  ok(fits({ purpose: 'FIXED', demount: 'NEVER', precision: 'NORMAL', hubMat: 'STEEL' }).indexOf('H7/s6') >= 0,
+     'Fest + nie demontiert → Presssitz H7/s6 dabei');
+  // Presssitz-Vorschläge verweisen auf den Pressverband-Rechner:
+  var fixedNever = AS.recommend({ purpose: 'FIXED', demount: 'NEVER', precision: 'NORMAL', hubMat: 'STEEL' });
+  ok(fixedNever.suggestions.some(function (s) { return s.hintCode === 'AS_HINT_PRESS' || s.hintCode === 'AS_HINT_SHRINK'; }),
+     'Presssitz verweist auf Pressverband/Schrumpf');
+  // Leichtmetall-Nabe → p_zul-Warnung auf ALLEN Vorschlägen:
+  ok(hints({ purpose: 'FIXED', demount: 'NEVER', precision: 'NORMAL', hubMat: 'LIGHT' })
+       .every(function (h) { return h === 'AS_HINT_LIGHT_HUB'; }),
+     'Leichtmetall-Nabe → p_zul-Warnung überall');
+  // Guss-Nabe → Guss-Hinweis (spröde):
+  ok(hints({ purpose: 'FIXED', demount: 'SELDOM', precision: 'NORMAL', hubMat: 'CAST' })
+       .some(function (h) { return h === 'AS_HINT_CAST_HUB'; }),
+     'Guss-Nabe → Sprödbruch-Hinweis');
+  // Heißbetrieb (nicht-FIXED) → Thermik-Hinweis:
+  ok(hints({ purpose: 'SLIDE', demount: 'SELDOM', precision: 'NORMAL', temp: 'HOT' })
+       .some(function (h) { return h === 'AS_HINT_TEMP'; }),
+     'Heißbetrieb → Thermik-Hinweis');
+
+  // 21.5 h-Basis-Alternative wird bei mindestens einem Standardfall angeboten.
+  var slideNorm = AS.recommend({ purpose: 'SLIDE', demount: 'SELDOM', precision: 'NORMAL', temp: 'NORMAL' });
+  ok(slideNorm.suggestions.some(function (s) { return !!s.hBasisAlt; }), 'h-Basis-Alternative wird angeboten');
+
+  // 21.6 Reinheit: recommend mutiert die Eingabe nicht.
+  var inp = { purpose: 'FIXED', demount: 'NEVER', precision: 'HIGH', hubMat: 'CAST' };
+  var snap = JSON.stringify(inp);
+  AS.recommend(inp);
+  ok(JSON.stringify(inp) === snap, 'recommend mutiert die Antworten nicht');
 })();
 
 /* === Zusammenfassung ====================================================== */

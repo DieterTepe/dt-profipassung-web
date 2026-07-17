@@ -26,8 +26,10 @@ komplette Wahrheit steht in diesem Plan und in den Projektdateien. So steigst du
    nach jeder Änderung ausliefern; nach Pause zuerst prüfen, was in /mnt/project schon
    angekommen ist, und Verlorenes identisch wieder einspielen.
 
-4) NÄCHSTE AUFGABE: **B11 — Passungs-Assistent** (siehe Abschnitt 5). Danach B14 → B15 → B13
-   → B16 (V1). Toleranzkette (B12) ist bewusst ins **V1.1-Update** verschoben.
+4) NÄCHSTE AUFGABE: **B11-UI — Dialog-Overlay in ui.js.** Der DOM-freie Kern (assistent.js,
+   DTPAssistent) ist fertig, grün und eingebunden; jetzt fehlt nur noch das Overlay (Button
+   oben → 4-Fragen-Dialog → bis zu 3 Vorschlagskarten → „Übernehmen" setzt Felder + rechnet).
+   Danach B14 → B15 → B13 → B16 (V1). Toleranzkette (B12) bewusst ins **V1.1-Update** verschoben.
 
 5) ARBEITSWEISE JE BAUSTEIN (Fließband, minimale Diffs):
    bauen → `node --check` alle JS → i18n-Paritätsprüfung (alle Keys in DE/EN/PT vollständig)
@@ -54,10 +56,10 @@ komplette Wahrheit steht in diesem Plan und in den Projektdateien. So steigst du
 ═══════════════════════════════════════════════════════════════════════════
 
 ═══════════════════════════════════════════════════════════════════════════
-Plan-Version : 3.0 · Stand 2026-07-17 · Status: **B1–B10 komplett & am Handy bestätigt
-               (Pressverband DIN 7190 inkl. Rechenweg + Presets fertig).** Nächster Baustein:
-               **B11 Passungs-Assistent.**
-Basislinie   : **154.644 Assertions, 0 Fehler** — prüfbar per `node test_passung.js`,
+Plan-Version : 3.1 · Stand 2026-07-17 · Status: **B1–B10 bestätigt · B11 Passungs-Assistent
+               KERN (assistent.js + Harness) gebaut, grün & ausgeliefert — es fehlt noch das
+               UI-Overlay in ui.js (B11-UI) + Handy-Bestätigung.**
+Basislinie   : **154.676 Assertions, 0 Fehler** — prüfbar per `node test_passung.js`,
                am Handy über **DT-ProfiPassung_Pruefstand.html** (grünes Banner = weiterbauen).
 Produktname  : **DT-ProfiPassung** (Arbeitstitel — vor Markteintritt Marke/Domain prüfen).
                Produktversion startet bei v0.1.0.
@@ -334,6 +336,26 @@ B11 Assistent → B14 Ausgaben → B15 Edition → B13 ANSI B4.1 → B16 Feinsch
 Bausteine auf Kurzzeilen eingedampft (Abschnitt 3), Modulkarte auf realen Ist-Stand gebracht
 (pressverband.js ergänzt, korrekte Ladereihenfolge, report.js als „noch zu portieren"
 markiert). **Nächste Aufgabe: B11 Passungs-Assistent.**
+**v3.1 (2026-07-17) · B11 Passungs-Assistent — KERN (gebaut & ausgeliefert; UI + Handy-
+Bestätigung offen):** Neues DOM-freies Modul **assistent.js** (`DTPAssistent`, UMD, Node-
+testbar, sprachneutrale Codes). Mit Dieter abgestimmter Dialog: **4 Fragen, Freimaß bewusst
+raus** (selbsterklärend). Q1 purpose (SLIDE/HANDFIT/FIXED) · Q2 demount (OFTEN/SELDOM/NEVER) ·
+Q3 precision (NORMAL/HIGH/LOW) · Q4 KONTEXTABHÄNGIG: bei FIXED → hubMat (STEEL/CAST/LIGHT),
+sonst → temp (NORMAL/HOT). API: firstQuestion · optionsFor · nextQuestion(answers) (steuert
+die kontextabhängige 4. Frage) · isValidAnswer · recommend(answers) → bis zu 3 Vorschläge
+{fit, reasonCode 'AS_R_*', hBasisAlt?, hintCode?}. Hinweis-Codes verknüpfen mit bestehenden
+Modulen: AS_HINT_PRESS/SHRINK (→ Pressverband B10), AS_HINT_LIGHT_HUB/CAST_HUB (p_zul/Spröd-
+bruch), AS_HINT_TEMP (→ Thermik). Jeder vorgeschlagene fit ist vom echten Solver parsebar.
+Einbindung in alle drei HTMLs (nach pressverband.js, vor ui.js). **test_passung.js Abschnitt 21**:
+Dialogfluss (Reihenfolge + kontextabhängige 4. Frage), alle **63 Antwort-Kombinationen**
+wohlgeformt, jeder fit parsebar, fachliche Stichproben gegen die Matrix, h-Basis-Alternative,
+Reinheit (recommend mutiert nicht) → **Basislinie 154.644 → 154.676 (+32)**. NUR neues Modul +
+Harness + HTML-Einbindung; kein bestehendes Modul geändert. **OFFEN (nächste Session, frische
+Tokens): B11-UI in ui.js** — Button-Overlay-Dialog, i18n-Texte (Fragen/Antworten/Begründungen
+AS_R_*/AS_HINT_* ×3 Sprachen), Vorschlagskarten mit „Übernehmen" → setzt Nennmaß+Passung und
+ruft recalc. Muster: bestehende Overlays + labeledField/attachFieldHelp. **Wiedereinstieg mit
+„weiter mit B11-UI".**
+
 ═══════════════════════════════════════════════════════════════════════════
 Ende plan3.md · DT-ProfiPassung
 ═══════════════════════════════════════════════════════════════════════════
