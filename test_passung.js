@@ -23,6 +23,7 @@ var FF = isNode ? require('./freiform.js')  : globalThis.DTPFreiform;
 var TH = isNode ? require('./thermik.js')   : globalThis.DTPThermik;
 var SB = isNode ? require('./schaubild.js') : globalThis.DTPSchaubild;
 var BR = isNode ? require('./beratung.js')  : globalThis.DTPBeratung;
+var PV = isNode ? require('./pressverband.js') : globalThis.DTPPress;
 
 /* --- Mini-Assert-Framework (Muster: DT-ProfiSchraube) ---------------------- */
 var pass = 0, fail = 0, fails = [];
@@ -1121,6 +1122,212 @@ section('18) Rechenweg Oberfläche + Schmierspalt');
   // Robustheit: ungültige Eingabe → leer, allOk false.
   var bad = RW.buildOberflaeche(null, { RzB: 3, RzW: 3 });
   ok(bad.steps.length === 0 && bad.allOk === false, 'ungültiges res → leerer Rechenweg');
+})();
+
+/* === 19) B10b — Pressverband (DIN 7190-1, rein elastisch) ================= */
+section('19) Pressverband (DIN 7190)');
+(function () {
+  var ST  = { E: 210000, nu: 0.30, Re: 355, alpha: 11.5 };
+  var GJL = { E: 110000, nu: 0.28, Re: null, Rm: 250, brittle: true, alpha: 10 };
+  var ALU = { E: 70000,  nu: 0.33, Re: 250, alpha: 23 };
+
+  function relEq(a, b, tol, msg) {
+    ok(isFinite(a) && isFinite(b) &&
+       Math.abs(a - b) <= tol * Math.max(Math.abs(a), Math.abs(b), 1e-300),
+       msg + ' (' + a + ' vs ' + b + ')');
+  }
+  function withx(base, extra) {
+    var o = {}, k;
+    for (k in base) o[k] = base[k];
+    for (k in extra) o[k] = extra[k];
+    return o;
+  }
+
+  /* UNABHÄNGIGER Rechenpfad: Lamé-Konstanten A/B + Radialverschiebung u(r)
+     (bewusst andere Formulierung als die K-Summenform des Moduls). */
+  function lameU(pi, po, ri, ro, E, nu, r) {
+    var A = (pi * ri * ri - po * ro * ro) / (ro * ro - ri * ri);
+    var B = (pi - po) * ri * ri * ro * ro / (ro * ro - ri * ri);
+    return ((1 - nu) / E) * A * r + ((1 + nu) / E) * B / r;
+  }
+  function pLame(Uw_um, DF, DAa, DIi, mA, mI) {
+    var rF = DF / 2, rA = DAa / 2, rI = DIi / 2;
+    var uHub = lameU(1, 0, rF, rA, mA.E, mA.nu, rF);   // je 1 N/mm² Fugendruck
+    var uShaft = lameU(0, 1, rI, rF, mI.E, mI.nu, rF);
+    return (Uw_um / 1000) / (2 * (uHub - uShaft));
+  }
+
+  /* --- 19.1 µ-Richtwerttabelle: Struktur, Spannen, Zugriff ---------------- */
+  ok(PV.MU.length === 6 && PV.MU_ORDER.length === 6, 'µ-Tabelle: 6 Richtwert-Zeilen');
+  PV.MU.forEach(function (m, i) {
+    ok(typeof m.key === 'string' && m.key.length > 0, 'µ[' + i + ']: key vorhanden');
+    ok(m.mu > 0 && m.mu < 1, 'µ[' + i + ']: 0 < mu < 1');
+    ok(m.range[0] <= m.mu && m.mu <= m.range[1], 'µ[' + i + ']: mu innerhalb der Spanne');
+    ok(PV.muByKey(m.key) === m, 'µ[' + i + ']: muByKey-Roundtrip');
+    ok(PV.MU_ORDER[i] === m.key, 'µ[' + i + ']: Reihenfolge konsistent');
+  });
+  ok(PV.muByKey('GIBTS_NICHT') === null, 'muByKey: unbekannt → null');
+
+  /* --- 19.2 Hand-Anker (exakt vorgerechnet; ±2 %-Band + Implementierungs-
+   *     Gleichheit). A) St/St Vollwelle · B) Hohlwelle · C) GJL-Nabe (NH). -- */
+  // A) Q_A=0,5, Q_I=0, U_w=60 µm: W=[(1,25/0,75)+0,3+0,7]/210000 → p=78,75 exakt.
+  var a = PV.compute({ DF: 60, lF: 45, DAa: 120, DIi: 0, U_max_um: 60, U_min_um: 60,
+                       RzA_um: 0, RzI_um: 0, matA: ST, matI: ST, mu: 0.14 });
+  ok(a.ok === true, 'Anker A rechnet');
+  relEq(a.r.p_max, 78.75, 0.02, 'Anker A: p im ±2 %-Band');
+  relEq(a.r.p_max, 78.75, 1e-9, 'Anker A: p exakt (Implementierung)');
+  relEq(a.r.p_min, a.r.p_max, 1e-12, 'Anker A: U_min=U_max → p_min=p_max');
+  relEq(a.r.pzulA, 266.25 / Math.sqrt(3), 1e-12, 'Anker A: p_zul,A = (1−Q²)·Re/√3');
+  relEq(a.r.pzulI, 355 / Math.sqrt(3), 1e-12, 'Anker A: p_zul,I (Vollwelle, Q_I=0)');
+  relEq(a.r.SF, (266.25 / Math.sqrt(3)) / 78.75, 1e-9, 'Anker A: S_F = p_zul/p_max');
+  relEq(a.r.Fax_max_N, 0.14 * 78.75 * Math.PI * 60 * 45, 1e-9, 'Anker A: F_ax,max = µ·p·π·D_F·l_F');
+  relEq(a.r.Mt_max_Nm, 0.14 * 78.75 * Math.PI * 60 * 45 * 0.03, 1e-9, 'Anker A: M_t,max = F_ax,max·D_F/2');
+  relEq(a.r.Fe_N, a.r.Fax_max_N, 1e-12, 'Anker A: F_e = F_ax,max (p_min=p_max)');
+  relEq(a.r.Sf_um, 60, 1e-12, 'Anker A: Fügespiel 1 µm/mm');
+  relEq(a.r.dT_hub_K, 120000 / 690, 1e-9, 'Anker A: ΔT Nabe = (U+S_f)/(α·D_F)');
+  relEq(a.r.T_hub_C, 20 + 120000 / 690, 1e-9, 'Anker A: Fügetemperatur Nabe');
+  relEq(a.r.T_shaft_C, 20 - 120000 / 690, 1e-9, 'Anker A: Wellen-Kühltemperatur');
+  ok(a.hints.indexOf('PV_HINT_TEMP_SHAFT_LN2') >= 0, 'Anker A: Unterkühlen braucht LN2/Trockeneis-Hinweis');
+  ok(a.hints.indexOf('PV_WARN_YIELD') < 0, 'Anker A: vollelastisch (kein Fließ-Warnhinweis)');
+  ok(a.hints.indexOf('PV_HINT_LF_SHORT') < 0 && a.hints.indexOf('PV_HINT_LF_LONG') < 0,
+     'Anker A: l_F/D_F=0,75 ohne Längen-Hinweis');
+
+  // B) Hohlwelle Q_I=0,5: W=(1,966667+1,366667)/210000 → p=63,00 exakt.
+  var b = PV.compute({ DF: 60, lF: 45, DAa: 120, DIi: 30, U_max_um: 60, U_min_um: 60,
+                       matA: ST, matI: ST, mu: 0.14 });
+  ok(b.ok === true, 'Anker B rechnet');
+  relEq(b.r.p_max, 63.0, 0.02, 'Anker B: p (Hohlwelle) im ±2 %-Band');
+  relEq(b.r.p_max, 63.0, 1e-9, 'Anker B: p exakt');
+  ok(b.r.p_max < a.r.p_max, 'Anker B: Hohlwelle nachgiebiger → kleinerer Druck');
+  relEq(b.r.pzulI, 0.75 * 355 / Math.sqrt(3), 1e-12, 'Anker B: p_zul,I Hohlwelle');
+
+  // C) GJL-Nabe (spröde → NH) auf Stahl-Vollwelle: p_zul,A = 250·0,75/1,25 = 150.
+  var c0 = PV.compute({ DF: 60, lF: 45, DAa: 120, DIi: 0, U_max_um: 60, U_min_um: 60,
+                        matA: GJL, matI: ST, mu: 0.10 });
+  ok(c0.ok === true, 'Anker C rechnet');
+  var Wc = ((1 + 0.25) / (1 - 0.25) + 0.28) / 110000 + (1 - 0.30) / 210000;
+  relEq(c0.r.p_max, 0.001 / Wc, 1e-9, 'Anker C: p (GJL-Nabe) unabhängig nachgerechnet');
+  relEq(c0.r.p_max, 47.55, 0.02, 'Anker C: p im ±2 %-Band um Handwert 47,55');
+  relEq(c0.r.pzulA, 150, 1e-12, 'Anker C: p_zul,A = (1−Q²)/(1+Q²)·Rm (NH, spröde)');
+  ok(c0.r.hypA === 'NH' && c0.r.hypI === 'GEH', 'Anker C: Hypothesen je Seite korrekt');
+  ok(c0.hints.indexOf('PV_HINT_BRITTLE') >= 0, 'Anker C: Sprödbruch-Hinweis (S ≥ 2…3)');
+
+  /* --- 19.3 Quervergleichs-Netz: Modul gegen unabhängigen Lamé-Pfad ------- */
+  var DFs = [20, 60, 120, 300], QAs = [0.3, 0.5, 0.7, 0.85], QIs = [0, 0.4, 0.7];
+  var mats = [[ST, ST], [GJL, ST], [ST, ALU]], Uws = [10, 60, 150];
+  DFs.forEach(function (DF) {
+    QAs.forEach(function (QA) {
+      QIs.forEach(function (QI) {
+        mats.forEach(function (pair, mi) {
+          Uws.forEach(function (Uw) {
+            var DAa = DF / QA, DIi = DF * QI;
+            var inp = { DF: DF, lF: 0.8 * DF, DAa: DAa, DIi: DIi,
+                        U_max_um: Uw, U_min_um: Uw / 2,
+                        matA: pair[0], matI: pair[1], mu: 0.12 };
+            var tag = 'Netz DF=' + DF + ' QA=' + QA + ' QI=' + QI + ' m' + mi + ' Uw=' + Uw;
+            var r1 = PV.compute(inp);
+            ok(r1.ok === true, tag + ': rechnet');
+            if (!r1.ok) return;
+            relEq(r1.r.p_max, pLame(Uw, DF, DAa, DIi, pair[0], pair[1]), 1e-9, tag + ': p == Lamé-Pfad');
+            relEq(r1.r.p_max, 2 * r1.r.p_min, 1e-9, tag + ': p linear im Übermaß');
+            var pzA = pair[0].brittle ? (1 - QA * QA) / (1 + QA * QA) * pair[0].Rm
+                                      : (1 - QA * QA) * pair[0].Re / Math.sqrt(3);
+            var pzI = pair[1].brittle ? (1 - QI * QI) / (1 + QI * QI) * pair[1].Rm
+                                      : (1 - QI * QI) * pair[1].Re / Math.sqrt(3);
+            relEq(r1.r.pzulA, pzA, 1e-12, tag + ': p_zul,A unabhängig');
+            relEq(r1.r.pzulI, pzI, 1e-12, tag + ': p_zul,I unabhängig');
+            relEq(r1.r.Mt_max_Nm, r1.r.Fax_max_N * DF / 2000, 1e-12, tag + ': M_t = F_ax·D_F/2');
+            relEq(r1.r.Fe_N, 0.12 * r1.r.p_max * Math.PI * DF * inp.lF, 1e-12, tag + ': F_e-Umkehr');
+            relEq(pair[0].alpha * DF * r1.r.dT_hub_K / 1000, Uw + DF, 1e-9, tag + ': ΔT-Umkehr Nabe');
+            var r2 = PV.compute(withx(inp, { Mt_Nm: r1.r.Mt_max_Nm / 2 }));
+            ok(r2.ok && Math.abs(r2.r.SH - 2) < 1e-9, tag + ': S_H=2 bei halbem M_t,max');
+            var r3 = PV.compute(withx(inp, { mu: 0.24 }));
+            relEq(r3.r.Fax_max_N, 2 * r1.r.Fax_max_N, 1e-12, tag + ': F_ax,max ~ µ');
+          });
+        });
+      });
+    });
+  });
+
+  /* --- 19.4 Eigenschaften & Randfälle ------------------------------------ */
+  // Kontinuität Vollwelle ↔ winzige Bohrung:
+  var s0 = PV.compute({ DF: 60, lF: 45, DAa: 120, DIi: 0, U_max_um: 60, U_min_um: 30, matA: ST, matI: ST, mu: 0.12 });
+  var s1 = PV.compute({ DF: 60, lF: 45, DAa: 120, DIi: 1e-6, U_max_um: 60, U_min_um: 30, matA: ST, matI: ST, mu: 0.12 });
+  relEq(s0.r.p_max, s1.r.p_max, 1e-6, 'Kontinuität: Vollwelle ≈ D_Ii→0');
+  // Monotonie: dünnere Nabe (größeres Q_A) → kleinerer Druck:
+  var prev = null;
+  [0.3, 0.5, 0.7, 0.85, 0.92].forEach(function (QA) {
+    var r = PV.compute({ DF: 60, lF: 45, DAa: 60 / QA, DIi: 0, U_max_um: 60, U_min_um: 30, matA: ST, matI: ST, mu: 0.12 });
+    ok(r.ok === true, 'Monotonie QA=' + QA + ': rechnet');
+    if (prev !== null) ok(r.r.p_max < prev, 'Monotonie QA=' + QA + ': p fällt mit dünnerer Nabe');
+    prev = r.r.p_max;
+  });
+  // Dünnwand-Hinweis:
+  var thin = PV.compute({ DF: 60, lF: 45, DAa: 65, DIi: 0, U_max_um: 60, U_min_um: 30, matA: ST, matI: ST, mu: 0.12 });
+  ok(thin.hints.indexOf('PV_HINT_THIN_HUB') >= 0, 'Q_A>0,8 → Dünnwand-Hinweis');
+  // Glättung 0,8·ΣRz (gleiche Konvention wie beratung.js/F6):
+  var g = PV.compute({ DF: 60, lF: 45, DAa: 120, DIi: 0, U_max_um: 60, U_min_um: 40,
+                       RzA_um: 4, RzI_um: 6, matA: ST, matI: ST, mu: 0.14 });
+  relEq(g.r.G_um, 8, 1e-12, 'Glättung G = 0,8·(4+6) = 8 µm');
+  relEq(g.r.Uw_max_um, 52, 1e-12, 'U_w,max = 60 − 8');
+  relEq(g.r.Uw_min_um, 32, 1e-12, 'U_w,min = 40 − 8');
+  // U_w,min ≤ 0 → p_min=0, Warnung, keine Übertragbarkeit garantierbar:
+  var w = PV.compute({ DF: 60, lF: 45, DAa: 120, DIi: 0, U_max_um: 60, U_min_um: 5,
+                       RzA_um: 4, RzI_um: 4, matA: ST, matI: ST, mu: 0.14 });
+  ok(w.ok && w.hints.indexOf('PV_WARN_UWMIN') >= 0, 'U_w,min≤0 → Warnung');
+  ok(w.r.p_min === 0 && w.r.Fax_max_N === 0 && w.r.Mt_max_Nm === 0, 'U_w,min≤0 → p_min=F_ax=M_t=0');
+  // Fließwarnung bei überzogenem Übermaß:
+  var y = PV.compute({ DF: 60, lF: 45, DAa: 120, DIi: 0, U_max_um: 500, U_min_um: 400, matA: ST, matI: ST, mu: 0.14 });
+  ok(y.hints.indexOf('PV_WARN_YIELD') >= 0 && y.r.SF < 1, 'p_max>p_zul → Fließwarnung, S_F<1');
+  // Längen-Hinweise:
+  var ls = PV.compute({ DF: 60, lF: 10, DAa: 120, DIi: 0, U_max_um: 60, U_min_um: 30, matA: ST, matI: ST, mu: 0.12 });
+  ok(ls.hints.indexOf('PV_HINT_LF_SHORT') >= 0, 'l_F/D_F<0,3 → Kurz-Hinweis');
+  var ll = PV.compute({ DF: 60, lF: 100, DAa: 120, DIi: 0, U_max_um: 60, U_min_um: 30, matA: ST, matI: ST, mu: 0.12 });
+  ok(ll.hints.indexOf('PV_HINT_LF_LONG') >= 0, 'l_F/D_F>1,5 → Lang-Hinweis');
+  // Kriech-Hinweis (Alu-Seite):
+  var cr = PV.compute({ DF: 60, lF: 45, DAa: 120, DIi: 0, U_max_um: 60, U_min_um: 30, matA: ST, matI: ALU, mu: 0.05 });
+  ok(cr.hints.indexOf('PV_HINT_CREEP') >= 0, 'Alu beteiligt → Kriech-/Setz-Hinweis');
+  // Spröde Welle (Sonderfall) rechnet mit NH:
+  var bi = PV.compute({ DF: 60, lF: 45, DAa: 120, DIi: 20, U_max_um: 60, U_min_um: 30, matA: ST, matI: GJL, mu: 0.10 });
+  ok(bi.ok === true && bi.r.hypI === 'NH', 'spröde Welle → NH-Grenze innen');
+  // T0-Verschiebung wirkt 1:1 auf Fügetemperaturen:
+  var t0 = PV.compute({ DF: 60, lF: 45, DAa: 120, DIi: 0, U_max_um: 60, U_min_um: 60, matA: ST, matI: ST, mu: 0.14, T0_C: 30 });
+  relEq(t0.r.T_hub_C - a.r.T_hub_C, 10, 1e-9, 'T0 +10 °C → Nabentemperatur +10 °C');
+  // Vertauschte Übermaß-Grenzen werden normiert:
+  var swp = PV.compute({ DF: 60, lF: 45, DAa: 120, DIi: 0, U_max_um: 30, U_min_um: 60, matA: ST, matI: ST, mu: 0.12 });
+  ok(swp.ok && Math.abs(swp.r.U_max_um - 60) < 1e-12 && Math.abs(swp.r.U_min_um - 30) < 1e-12,
+     'U_min>U_max → stillschweigend sortiert');
+  // fromFit: Integration mit echtem Solver-Ergebnis (Ø60 H7/s6 = Presspassung):
+  var fr = S.computeFit('60 H7/s6');
+  var uu = PV.fromFit(fr);
+  ok(fr.ok === true && uu !== null, 'fromFit: 60 H7/s6 rechnet');
+  ok(uu.U_max_um === fr.fit.interferenceMax && uu.U_min_um === fr.fit.interferenceMin, 'fromFit: Felder 1:1');
+  ok(uu.U_max_um > 0 && uu.U_min_um > 0, 'fromFit: H7/s6 ist echte Presspassung');
+  var fc = PV.compute({ DF: 60, lF: 45, DAa: 120, DIi: 0, U_max_um: uu.U_max_um, U_min_um: uu.U_min_um,
+                        matA: ST, matI: ST, mu: 0.14 });
+  ok(fc.ok === true && fc.r.p_max > fc.r.p_min && fc.r.p_min > 0, 'fromFit → compute: plausible Drücke');
+  ok(PV.fromFit(null) === null && PV.fromFit({ ok: false }) === null, 'fromFit: ungültig → null');
+
+  /* --- 19.5 Fehlerpfade --------------------------------------------------- */
+  function err(inp, code, msg) {
+    var r = PV.compute(inp);
+    ok(r.ok === false && r.error === code, msg + ' → ' + code + ' (ist: ' + (r.ok ? 'ok' : r.error) + ')');
+  }
+  var base = { DF: 60, lF: 45, DAa: 120, DIi: 0, U_max_um: 60, U_min_um: 30, matA: ST, matI: ST, mu: 0.12 };
+  err(null, 'PV_ERR_INPUT', 'null-Eingabe');
+  err(withx(base, { DF: null }), 'PV_ERR_INPUT', 'D_F fehlt');
+  err(withx(base, { lF: 0 }), 'PV_ERR_INPUT', 'l_F = 0');
+  err(withx(base, { DAa: 60 }), 'PV_ERR_GEOM', 'D_Aa = D_F');
+  err(withx(base, { DIi: 60 }), 'PV_ERR_GEOM', 'D_Ii = D_F');
+  err(withx(base, { DIi: -1 }), 'PV_ERR_GEOM', 'D_Ii < 0');
+  err(withx(base, { matA: { E: 210000 } }), 'PV_ERR_MAT', 'ν fehlt');
+  err(withx(base, { matA: { E: 110000, nu: 0.28, brittle: true } }), 'PV_ERR_MAT', 'spröde ohne R_m');
+  err(withx(base, { mu: 0 }), 'PV_ERR_MU', 'µ = 0');
+  err(withx(base, { mu: 1.2 }), 'PV_ERR_MU', 'µ > 1');
+  err(withx(base, { U_max_um: 0, U_min_um: 0 }), 'PV_ERR_NO_INTERFERENCE', 'kein Übermaß');
+  err(withx(base, { U_max_um: 10, U_min_um: 5, RzA_um: 10, RzI_um: 10 }), 'PV_ERR_NO_INTERFERENCE', 'Glättung frisst Übermaß');
+  err(withx(base, { RzA_um: -1 }), 'PV_ERR_INPUT', 'Rz < 0');
+  err(withx(base, { Mt_Nm: -5 }), 'PV_ERR_INPUT', 'M_t < 0');
 })();
 
 /* === Zusammenfassung ====================================================== */

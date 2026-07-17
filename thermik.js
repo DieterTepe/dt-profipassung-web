@@ -21,7 +21,7 @@
   var MAT = {
     steel:      { label: { de: 'Stahl', en: 'Steel', pt: 'Aço' }, alpha: 11.5, E: 210000, nu: 0.30, Re: 355 },
     stainless:  { label: { de: 'Nichtrost. Stahl (A2)', en: 'Stainless steel (A2)', pt: 'Aço inox (A2)' }, alpha: 16, E: 200000, nu: 0.30, Re: 210 },
-    cast_iron:  { label: { de: 'Grauguss (GJL)', en: 'Grey cast iron', pt: 'Ferro fundido (GJL)' }, alpha: 10, E: 110000, nu: 0.28, Re: null, brittle: true },
+    cast_iron:  { label: { de: 'Grauguss (GJL)', en: 'Grey cast iron', pt: 'Ferro fundido (GJL)' }, alpha: 10, E: 110000, nu: 0.28, Re: null, Rm: 250, brittle: true },
     alu:        { label: { de: 'Aluminium', en: 'Aluminium', pt: 'Alumínio' }, alpha: 23, E: 70000, nu: 0.33, Re: 250 },
     brass:      { label: { de: 'Messing', en: 'Brass', pt: 'Latão' }, alpha: 18.5, E: 100000, nu: 0.35, Re: 200 },
     bronze:     { label: { de: 'Bronze', en: 'Bronze', pt: 'Bronze' }, alpha: 18, E: 110000, nu: 0.34, Re: 150 },

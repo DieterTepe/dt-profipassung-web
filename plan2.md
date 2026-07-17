@@ -24,11 +24,11 @@ komplette Wahrheit steht in diesem Plan und in den Projektdateien. So steigst du
 4) NÄCHSTE AUFGABE (genau hier weitermachen):
    **B10 — Pressverband (DIN 7190)**, mit Dieter abgestimmt in VIER Teilschritte zerlegt
    (jeder = eigener Wiederaufsetzpunkt mit vollem Fließband + Handy-Bestätigung):
-   • **B10a ✓ gebaut & ausgeliefert (Handy-Bestätigung ausstehend)** — Laien-ⓘ an ALLEN
+   • **B10a ✓ bestätigt (Handy, 2026-07-17)** — Laien-ⓘ an ALLEN
      bestehenden Feldern: attachFieldHelp/labeledField(+helpKey) in ui.js, 14 fh_-Hilfetexte
      ×3 Sprachen (Was ist das · Bereich · empfohlene Werte), .field-help/.thermik-head-row
      in style.css. DOM-Smoke 16/16 (dom_smoke_b10a.js), Basislinie unverändert 150.143.
-   • **B10b** — Rechenkern `pressverband.js` (DOM-frei): DIN-7190-Kette (Glättung 0,8·ΣRz,
+   • **B10b ✓ gebaut & ausgeliefert (Handy-Bestätigung ausstehend)** — Rechenkern `pressverband.js` (DOM-frei): DIN-7190-Kette (Glättung 0,8·ΣRz,
      Q_A/Q_I, Fugendruck p für U_min/U_max, elastische p_zul-Grenzen inkl. GJL-Sonderfall,
      F_ax/M_t, Sicherheiten, Einpresskraft, thermisches Fügen ΔT) + finale MAT-Werte und
      µ-Tabelle in daten.js; Validierungsanker (Literatur) ±2 %; neuer Harness-Abschnitt.
@@ -68,8 +68,8 @@ komplette Wahrheit steht in diesem Plan und in den Projektdateien. So steigst du
 ═══════════════════════════════════════════════════════════════════════════
 
 ═══════════════════════════════════════════════════════════════════════════
-Plan-Version : 1.9.6 · Stand 2026-07-17 · Status: **B10a (Laien-ⓘ an allen Feldern) gebaut, grün & ausgeliefert — Handy-Bestätigung AUSSTEHEND; Projektordner/GitHub noch auf Stand v1.9.5** · nächster Baustein: nach Bestätigung B10b (pressverband.js)
-Basislinie   : **150.143 Assertions, 0 Fehler** — prüfbar per `node test_passung.js`
+Plan-Version : 1.9.7 · Stand 2026-07-17 · Status: **B10a am Handy bestätigt · B10b (pressverband.js, DIN-7190-Rechenkern) gebaut, grün & ausgeliefert — Handy-Bestätigung AUSSTEHEND** · nächster Baustein: nach Bestätigung B10c (Formulargruppe)
+Basislinie   : **154.565 Assertions, 0 Fehler** — prüfbar per `node test_passung.js`
 STEHENDE REGEL (ab v1.9.1): **JEDE Berechnung liefert einen selbstprüfenden Rechenweg**
 (Formel + eingesetzte Werte + ✓), auch künftige Module. Der Rechenweg ist das Nachweis-
 Herzstück des Programms. rechenweg.js hat je Rechenart einen build*-Baustein; ui.js sammelt
@@ -649,6 +649,31 @@ daten/validate/solver/freiform/thermik/rechenweg/schaubild/beratung/HTMLs unver�
 nur ui.js + style.css. Hinweis Session-Bruch: Erstauslieferung ging durch Container-Reset
 verloren; alle Edits aus der Chat-Historie identisch wieder eingespielt und erneut verifiziert.
 **Nächster Schritt: Handy-Bestätigung B10a → dann B10b (pressverband.js, DIN-7190-Kern).**
+
+**v1.9.7 (2026-07-17) · B10b Pressverband-Rechenkern (gebaut & ausgeliefert; Handy-Bestätigung
+ausstehend):** Neues Modul **pressverband.js** (`DTPPress`, UMD, DOM-frei, sprachneutrale Codes;
+Texte folgen in B10c/d). Rein elastische Auslegung n. DIN 7190-1: Glättung G=0,8·ΣRz (Konvention
+wie F6) → wirksame Übermaße; Fugendruck p=(U_w/D_F)/W mit W=K_A/E_A+K_I/E_I (Lamé, ebener
+Spannungszustand); vollelastische Grenzdrücke p_zul duktil (1−Q²)·R_e/√3 (Vollwelle Q_I=0),
+spröde Nabe NH (1−Q²)/(1+Q²)·R_m; S_F=p_zul/p_max; Übertragbarkeit bei p_min (F_ax,max, M_t,max,
+Rutschsicherheit S_H gegen geforderte Last √(F_ax²+(2M_t/D_F)²)); Einpresskraft F_e=µ·p_max·A_F;
+Fügen quer: S_f≈1 µm/mm, ΔT Nabe/Welle aus U_max+S_f (Hinweise ab 350 °C bzw. LN2-Grenzen).
+Hinweis-/Fehler-Codes: PV_ERR_INPUT/GEOM/MAT/MU/NO_INTERFERENCE · PV_WARN_UWMIN/YIELD/SLIP/
+TEMP_SHAFT · PV_HINT_BRITTLE/CREEP/THIN_HUB/LF_SHORT/LF_LONG/TEMP_HUB/TEMP_SHAFT_LN2.
+µ-RICHTWERT-Tabelle (6 Paarungen, je mu + ehrliche Spanne) im Modul; Werkstoffe kommen aus
+thermik.js MAT (dort seit B8 dafür angelegt) — **thermik.js**: GJL um R_m=250 ergänzt (1 Zeile).
+**daten.js bewusst unberührt** (bleibt reiner ISO-286-Kern; kleine Abweichung vom Planwortlaut).
+`fromFit(res)` mappt Solver-Ergebnis (res.fit.interferenceMax/Min) → U_max/U_min. Einbindung
+in alle drei HTMLs (nach beratung.js). **test_passung.js Abschnitt 19**: µ-Tabellen-Checks ·
+3 Hand-Anker (exakt vorgerechnet, ±2 %-Band + Implementierungsgleichheit: St/St-Vollwelle
+p=78,75 · Hohlwelle p=63,00 · GJL-Nabe NH p_zul=150) · **Quervergleichs-Netz 432 Kombis gegen
+UNABHÄNGIGEN Lamé-Konstanten-Pfad (A/B, u(r))** · Eigenschaften (Linearität, Monotonie,
+Kontinuität Vollwelle↔Bohrung→0, Glättung, UWMIN→p_min=0, S_H=2-Identität, µ-Skalierung,
+T0-Verschiebung, Grenzen-Normierung, fromFit-Integration 60 H7/s6) · 14 Fehlerpfade.
+**Basislinie 150.143 → 154.565 (+4.422).** OFFENER PUNKT (ehrlich): externer LITERATUR-Anker
+±2 % noch unbelegt — Kern ist zweipfadig verifiziert (Modul vs. Lamé), aber noch nicht gegen
+publiziertes Beispiel; Prüfvorschlag an Dieter siehe Chat (Anker-A-Werte gegen Online-Rechner).
+**Nächster Schritt: Handy-Bestätigung B10b → dann B10c (Formulargruppe mit Auswahlmenüs + ⓘ).**
 
 ═══════════════════════════════════════════════════════════════════════════
 Ende plan.md · DT-ProfiPassung · Plan v1.0
