@@ -839,3 +839,15 @@ input.locked { background: var(--line-soft); color: var(--muted); cursor: defaul
 
 @media print { .output-bar { display: none !important; } }
 @media (prefers-reduced-motion: reduce) { .locked-modal, .toast { animation: none !important; transition: none !important; } }
+
+/* --------------------------------------------------------------------------
+   B14 (überarbeitet) — Speichern/Öffnen oben in der Subbar, neben Berechnen/
+   Leeren, mit Bezeichnungsfeld (wie DT-ProfiSchraube). Die frühere untere
+   Ausgabe-Leiste entfällt. */
+.dt-actions { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.dt-actions #dtLabel {
+  padding: 8px 11px; border-radius: 8px; border: 1px solid var(--line);
+  background: var(--bg); color: var(--fg); font-size: 13px; min-width: 150px; max-width: 220px;
+}
+.dt-actions #dtLabel:focus { outline: none; border-color: var(--accent); }
+.dt-actions .btn { padding: 8px 12px; font-size: 13px; }

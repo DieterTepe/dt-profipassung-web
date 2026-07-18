@@ -45,6 +45,12 @@
   </div>
   <button type="button" class="btn btn-primary" id="calcBtn" data-i18n="calc">Berechnen</button>
   <button type="button" class="btn btn-ghost" id="resetBtn" data-i18n="reset">Leeren</button>
+  <div class="dt-actions">
+    <input type="text" id="dtLabel" maxlength="40" placeholder="Bezeichnung (optional)" data-i18n-ph="outDesign">
+    <button type="button" class="btn btn-ghost" id="saveBtn" data-i18n="outSave">Speichern (.dtp)</button>
+    <button type="button" class="btn btn-ghost" id="loadBtn" data-i18n="outLoad">Öffnen (.dtp)</button>
+    <input type="file" id="dtFile" accept=".dtp,.json,application/json" hidden>
+  </div>
 </div>
 
 <main class="app-main">

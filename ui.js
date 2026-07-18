@@ -1721,7 +1721,6 @@
     }
     renderRechenweg(groups);
     renderViz(res);
-    renderOutputBar();
   }
 
   /* Thermik-Ergebnis (B8): Passung bei Betriebstemperatur + Umschlag-Warnung. */
@@ -2507,85 +2506,14 @@
 
   /* Ergebnis als Klartext (Copy). Baut auf DTPReport.buildModel, ergänzt hier
      um die konkreten Zeilen aus dem aktuellen Ergebnis. */
-  function currentModelCtx() {
-    var res = lastResult; if (!res) return null;
-    var head = (mode === 'freiform')
-      ? ('ISO 2768-' + (elFfClass ? elFfClass.value : 'm'))
-      : ('Ø' + fmtNum(res.input.nominal) + ' ' + res.input.hole.letter + res.input.hole.grade + '/' + res.input.shaft.letter + res.input.shaft.grade);
-    var resultLines = [], inputLines = [];
-    if (mode === 'fit') {
-      var f = res.fit;
-      inputLines.push({ label: t('fNominal'), value: fmtNum(res.input.nominal), unit: 'mm' });
-      if (f.art === 'SPIEL') {
-        resultLines.push({ label: t('rClearMin'), value: sgn(f.PSmin), unit: 'µm' });
-        resultLines.push({ label: t('rClearMax'), value: sgn(f.PSmax), unit: 'µm' });
-      } else if (f.art === 'UEBERMASS') {
-        resultLines.push({ label: t('rInterMin'), value: fmtUm(f.interferenceMin), unit: 'µm' });
-        resultLines.push({ label: t('rInterMax'), value: fmtUm(f.interferenceMax), unit: 'µm' });
-      } else {
-        resultLines.push({ label: t('rPlayMax'), value: sgn(f.PSmax), unit: 'µm' });
-        resultLines.push({ label: t('rInterMax'), value: fmtUm(f.interferenceMax), unit: 'µm' });
-      }
-      resultLines.push({ label: t('rFitTol'), value: fmtUm(f.PT), unit: 'µm' });
-    }
-    return { lang: lang, designation: designation, headline: head,
-             licensee: localStorage.getItem('dtp-licensee') || '',
-             resultLines: resultLines, inputLines: inputLines };
-  }
-
-  function buildCopyText() {
-    var ctx = currentModelCtx(); if (!ctx || !RPM) return '';
-    var m = RPM.buildModel(ctx);
-    var L = [];
-    L.push(m.title + (m.headline ? ' — ' + m.headline : ''));
-    if (m.designation) L.push(m.caps.designation + ': ' + m.designation);
-    L.push('');
-    L.push(m.caps.secResult + ':');
-    m.result.forEach(function (r) { L.push('  ' + r.label + ': ' + r.value + (r.unit ? ' ' + r.unit : '')); });
-    L.push('');
-    L.push(m.disclaimer);
-    return L.join('\n');
-  }
-
-  function buildCadNote() {
-    var res = lastResult; if (!res || mode !== 'fit') return '';
-    var i = res.input;
-    return 'Ø' + fmtNum(i.nominal) + ' ' + i.hole.letter + i.hole.grade + '/' + i.shaft.letter + i.shaft.grade;
-  }
-
-  function flashToast(msgKey) {
-    var tst = el('div', 'toast', t(msgKey));
-    document.body.appendChild(tst);
-    void tst.offsetWidth; tst.classList.add('show');
-    setTimeout(function () { tst.classList.remove('show'); setTimeout(function () { if (tst.parentNode) tst.parentNode.removeChild(tst); }, 300); }, 2000);
-  }
-
-  function doCopyText() {
-    var txt = buildCopyText(); if (!txt) return;
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(txt).then(function () { flashToast('outCopied'); }, function () { fallbackCopy(txt); });
-    } else fallbackCopy(txt);
-  }
-  function doCopyCad() {
-    var txt = buildCadNote(); if (!txt) return;
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(txt).then(function () { flashToast('outCopied'); }, function () { fallbackCopy(txt); });
-    } else fallbackCopy(txt);
-  }
-  function fallbackCopy(txt) {
-    try {
-      var ta = document.createElement('textarea'); ta.value = txt;
-      document.body.appendChild(ta); ta.select();
-      var okc = document.execCommand && document.execCommand('copy');
-      document.body.removeChild(ta);
-      flashToast(okc ? 'outCopied' : 'outCopyFail');
-    } catch (e) { flashToast('outCopyFail'); }
-  }
+  /* Copy-Text/CAD-Notiz entfernt (nicht benötigt). Speichern/Öffnen sitzen oben
+     in der Aktionsleiste neben Berechnen/Leeren. */
 
   function doSaveDtp() {
     if (!RPM) return;
-    var text = RPM.toDtp({ state: collectState(), designation: designation });
-    var fname = RPM.dtpFilename(designation);
+    var nowIso = new Date().toISOString();
+    var text = RPM.toDtp({ state: collectState(), designation: designation, now: nowIso });
+    var fname = RPM.dtpFilename(designation, nowIso);
     try {
       var blob = new Blob([text], { type: 'application/json' });
       var url = URL.createObjectURL(blob);
@@ -2632,49 +2560,21 @@
   function doPrint() { try { window.print(); } catch (e) {} }
 
   /* Die sichtbare Leiste. */
-  function renderOutputBar() {
-    if (!RPM) {
-      // Diagnose statt stummen Aussteigens: report.js fehlt/lädt nicht.
-      var warn = el('div', 'output-bar');
-      var wh = el('div', 'output-head'); wh.textContent = 'report.js'; warn.appendChild(wh);
-      var wt = el('div', 'field-hint');
-      wt.textContent = (lang === 'en')
-        ? 'Output module (report.js) not loaded — please ensure report.js is included before ui.js.'
-        : (lang === 'pt')
-          ? 'Módulo de saída (report.js) não carregado — inclua report.js antes de ui.js.'
-          : 'Ausgabe-Modul (report.js) nicht geladen — bitte report.js vor ui.js einbinden.';
-      warn.appendChild(wt);
-      resultHost.appendChild(warn);
-      return;
+  /* Speichern/Öffnen sind oben in der Aktionsleiste (saveBtn/loadBtn), verdrahtet
+     in init(). Bezeichnungsfeld (#dtLabel) ist an `designation` gekoppelt. */
+  function wireOutputButtons() {
+    var lab = document.getElementById('dtLabel');
+    if (lab) {
+      lab.value = designation;
+      lab.addEventListener('input', function () {
+        designation = lab.value; try { localStorage.setItem('dtp-desig', designation); } catch (e) {}
+      });
     }
-    var bar = el('div', 'output-bar');
-    var head = el('div', 'output-head'); head.setAttribute('data-i18n', 'outHeading'); head.textContent = t('outHeading');
-    bar.appendChild(head);
-
-    var dwrap = el('div', 'output-design');
-    var dlab = el('label'); dlab.setAttribute('data-i18n', 'outDesign'); dlab.textContent = t('outDesign');
-    var din = el('input'); din.type = 'text'; din.className = 'design-input'; din.value = designation; din.maxLength = 80;
-    din.addEventListener('input', function () { designation = din.value; try { localStorage.setItem('dtp-desig', designation); } catch (e) {} });
-    dwrap.appendChild(dlab); dwrap.appendChild(din);
-    bar.appendChild(dwrap);
-
-    var row = el('div', 'output-btns');
-    function btn(labelKey, feature, action, cls) {
-      var b = el('button', 'out-btn' + (cls ? ' ' + cls : '')); b.type = 'button';
-      b.setAttribute('data-i18n', labelKey); b.textContent = t(labelKey);
-      if (edition === 'test' && RPM.GATED_FEATURES.indexOf(feature) >= 0) b.classList.add('locked');
-      b.addEventListener('click', function () { guard(feature, action); });
-      row.appendChild(b);
-    }
-    btn('outCopy', 'copy', doCopyText);
-    if (mode === 'fit') btn('outCad', 'cad', doCopyCad);
-    btn('outSave', 'save', doSaveDtp);
-    btn('outLoad', 'load', doLoadDtp);
-    btn('outPrint', 'print', doPrint, 'primary');
-    bar.appendChild(row);
-
-    resultHost.appendChild(bar);
+    on('saveBtn', 'click', function () { guard('save', doSaveDtp); });
+    on('loadBtn', 'click', function () { guard('load', doLoadDtp); });
   }
+
+
 
   function on(id, ev, fn) { var e = document.getElementById(id); if (e) e.addEventListener(ev, fn); }
 
@@ -2697,6 +2597,7 @@
       applyTheme(document.documentElement.getAttribute('data-theme') === 'light' ? 'dark' : 'light');
     });
     on('calcBtn', 'click', recalc);
+    wireOutputButtons();
     on('resetBtn', 'click', function () {
       if (mode === 'freiform') {
         if (elFfNominal) elFfNominal.value = '';

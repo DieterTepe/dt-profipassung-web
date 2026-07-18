@@ -46,6 +46,8 @@ var docRoot = new Elem('html'); var body = new Elem('body'); docRoot.appendChild
 var byId = {};
 function mk(tag, id, cls) { var e = new Elem(tag); if (id) { e.id = id; byId[id] = e; } if (cls) e.className = cls; body.appendChild(e); return e; }
 mk('div', 'formHost'); mk('div', 'resultHost'); mk('div', 'vizHost'); mk('select', 'presetSel'); mk('div', 'editionBar');
+mk('button', 'calcBtn'); mk('button', 'resetBtn');
+mk('input', 'dtLabel'); mk('button', 'saveBtn'); mk('button', 'loadBtn'); mk('input', 'dtFile');
 ['de', 'en', 'pt'].forEach(function (l) { var b = mk('button', null, 'lang-btn'); b.setAttribute('data-lang', l); });
 
 var documentShim = {
@@ -84,36 +86,30 @@ var formHost = byId.formHost;
 ok(formHost.children.length > 0, 'Testversion bootet (Formular gebaut)');
 ok(byId.resultHost.children.length > 0, 'Testversion rechnet (Ergebnis da)');
 
-var bar = byId.resultHost.findAll(function (n) { return n.classList.contains('output-bar'); })[0];
-ok(!!bar, 'Ausgabe-Leiste auch in der Testversion sichtbar');
-var outBtns = bar ? bar.findAll(function (n) { return n.classList.contains('out-btn'); }) : [];
-ok(outBtns.length >= 4, 'Ausgabe-Buttons vorhanden');
-ok(outBtns.every(function (b) { return b.classList.contains('locked'); }), 'Testversion: ALLE Ausgabe-Buttons als gesperrt markiert');
+var oldBar = byId.resultHost.findAll(function (n) { return n.classList.contains('output-bar'); });
+ok(oldBar.length === 0, 'keine untere Ausgabe-Leiste (Buttons sind oben)');
+ok(!!byId.saveBtn && !!byId.loadBtn, 'Speichern/Öffnen-Buttons oben vorhanden');
 
 function lockedOverlays() { return body.findAll(function (n) { return n.classList.contains('locked-overlay'); }); }
 
-// Copy anklicken → KEIN Clipboard, stattdessen Locked-Overlay.
-global.__clip = null;
-var copyBtn = outBtns.filter(function (b) { return b.getAttribute('data-i18n') === 'outCopy'; })[0];
-copyBtn.fire('click');
-ok(global.__clip === null, 'Testversion: Copy füllt die Zwischenablage NICHT');
-ok(lockedOverlays().length === 1, 'Testversion: Copy öffnet das „Nur in der Vollversion"-Overlay');
-// Overlay schließen und Speichern prüfen.
+// Speichern anklicken → KEIN Download, stattdessen Sperr-Overlay.
+global.__clip = null; global.__printed = false;
+byId.saveBtn.fire('click');
+ok(lockedOverlays().length === 1, 'Testversion: Speichern öffnet das „Nur in der Vollversion"-Overlay');
 var ov = lockedOverlays()[0];
-var okBtn = ov.findAll(function (n) { return n.classList.contains('locked-ok'); })[0];
-okBtn.fire('click');
+ov.findAll(function (n) { return n.classList.contains('locked-ok'); })[0].fire('click');
 ok(lockedOverlays().length === 0, 'Overlay lässt sich schließen');
 
-global.__printed = false;
-var saveBtn = outBtns.filter(function (b) { return b.getAttribute('data-i18n') === 'outSave'; })[0];
-saveBtn.fire('click');
-ok(lockedOverlays().length === 1, 'Testversion: Speichern öffnet das Sperr-Overlay');
+// Öffnen anklicken → ebenfalls gesperrt (Datei-Import bleibt dicht).
+byId.loadBtn.fire('click');
+ok(lockedOverlays().length === 1, 'Testversion: Öffnen öffnet das Sperr-Overlay (Import blockiert)');
 lockedOverlays()[0].findAll(function (n) { return n.classList.contains('locked-ok'); })[0].fire('click');
+ok(lockedOverlays().length === 0, 'zweites Overlay geschlossen');
 
-var printBtn = outBtns.filter(function (b) { return b.getAttribute('data-i18n') === 'outPrint'; })[0];
-printBtn.fire('click');
-ok(global.__printed === false, 'Testversion: Drucken wird geblockt (window.print NICHT gerufen)');
-ok(lockedOverlays().length === 1, 'Testversion: Drucken öffnet das Sperr-Overlay');
+// Direkte Gating-Kontrolle: report.js sperrt in der Testversion jede Ausgabe.
+var RP = global.DTPReport;
+ok(['save', 'load', 'print', 'rtf', 'csv'].every(function (f) { return RP.isFeatureAllowed(f, 'test') === false; }),
+   'Testversion: report.js sperrt save/load/print/rtf/csv');
 
 global.setTimeout = _st;
 console.log('\nDOM-Smoke B14-Test: ' + okCount + ' OK, ' + failCount + ' Fehler');

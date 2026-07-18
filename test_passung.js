@@ -1633,6 +1633,8 @@ section('22) Ausgaben (report.js)');
   ok(RP.dtpFilename('a/b:c*?') === 'abc.dtp', 'Sonderzeichen entfernt');
   ok(RP.dtpFilename('Ø50 H7/g6').indexOf('.dtp') > 0, 'Umlaute/Sonderzeichen tolerant, Endung .dtp');
   ok(/\.dtp$/.test(RP.dtpFilename('Test Name')), 'Leerzeichen → Unterstrich, Endung .dtp');
+  ok(RP.dtpFilename('Lagersitz', '2026-07-18T09:00:00Z') === 'Lagersitz_2026-07-18.dtp', 'Dateiname mit Datum');
+  ok(RP.dtpFilename('', '2026-07-18T09:00:00Z') === 'Passung_2026-07-18.dtp', 'leere Bezeichnung + Datum');
 
   // 22.5 Lizenznehmer / Editionszeile (Muster der Schraube).
   ok(RP.licenseeName('  Max   Muster ') === 'Max Muster', 'licenseeName normalisiert Whitespace');

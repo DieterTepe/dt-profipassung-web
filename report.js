@@ -122,10 +122,12 @@
     };
   }
 
-  function dtpFilename(designation) {
+  function dtpFilename(designation, dateStr) {
     var base = licenseeName(designation) || 'Passung';
     base = base.replace(/[^\w\u00e4\u00f6\u00fc\u00c4\u00d6\u00dc\u00df .\-]/g, '').replace(/\s+/g, '_').slice(0, 60) || 'Passung';
-    return base + '.dtp';
+    var d = '';
+    if (dateStr) { d = '_' + String(dateStr).slice(0, 10); }
+    return base + d + '.dtp';
   }
 
   function buildModel(ctx) {
