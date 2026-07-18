@@ -2633,7 +2633,20 @@
 
   /* Die sichtbare Leiste. */
   function renderOutputBar() {
-    if (!RPM) return;
+    if (!RPM) {
+      // Diagnose statt stummen Aussteigens: report.js fehlt/lädt nicht.
+      var warn = el('div', 'output-bar');
+      var wh = el('div', 'output-head'); wh.textContent = 'report.js'; warn.appendChild(wh);
+      var wt = el('div', 'field-hint');
+      wt.textContent = (lang === 'en')
+        ? 'Output module (report.js) not loaded — please ensure report.js is included before ui.js.'
+        : (lang === 'pt')
+          ? 'Módulo de saída (report.js) não carregado — inclua report.js antes de ui.js.'
+          : 'Ausgabe-Modul (report.js) nicht geladen — bitte report.js vor ui.js einbinden.';
+      warn.appendChild(wt);
+      resultHost.appendChild(warn);
+      return;
+    }
     var bar = el('div', 'output-bar');
     var head = el('div', 'output-head'); head.setAttribute('data-i18n', 'outHeading'); head.textContent = t('outHeading');
     bar.appendChild(head);
