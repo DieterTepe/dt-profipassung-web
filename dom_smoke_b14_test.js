@@ -48,6 +48,7 @@ function mk(tag, id, cls) { var e = new Elem(tag); if (id) { e.id = id; byId[id]
 mk('div', 'formHost'); mk('div', 'resultHost'); mk('div', 'vizHost'); mk('select', 'presetSel'); mk('div', 'editionBar');
 mk('button', 'calcBtn'); mk('button', 'resetBtn');
 mk('input', 'dtLabel'); mk('button', 'saveBtn'); mk('button', 'loadBtn'); mk('input', 'dtFile');
+mk('button', 'printBtn'); mk('button', 'rtfBtn');
 ['de', 'en', 'pt'].forEach(function (l) { var b = mk('button', null, 'lang-btn'); b.setAttribute('data-lang', l); });
 
 var documentShim = {
@@ -105,6 +106,17 @@ byId.loadBtn.fire('click');
 ok(lockedOverlays().length === 1, 'Testversion: Öffnen öffnet das Sperr-Overlay (Import blockiert)');
 lockedOverlays()[0].findAll(function (n) { return n.classList.contains('locked-ok'); })[0].fire('click');
 ok(lockedOverlays().length === 0, 'zweites Overlay geschlossen');
+
+// Drucken anklicken → gesperrt, window.print NICHT gerufen.
+byId.printBtn.fire('click');
+ok(global.__printed === false, 'Testversion: Drucken wird geblockt (window.print NICHT gerufen)');
+ok(lockedOverlays().length === 1, 'Testversion: Drucken öffnet das Sperr-Overlay');
+lockedOverlays()[0].findAll(function (n) { return n.classList.contains('locked-ok'); })[0].fire('click');
+
+// RTF anklicken → gesperrt.
+byId.rtfBtn.fire('click');
+ok(lockedOverlays().length === 1, 'Testversion: RTF-Export öffnet das Sperr-Overlay');
+lockedOverlays()[0].findAll(function (n) { return n.classList.contains('locked-ok'); })[0].fire('click');
 
 // Direkte Gating-Kontrolle: report.js sperrt in der Testversion jede Ausgabe.
 var RP = global.DTPReport;

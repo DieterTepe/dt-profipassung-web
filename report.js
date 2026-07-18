@@ -171,11 +171,101 @@
     };
   }
 
+  /* =======================================================================
+   * RTF (Word) — kompletter Bericht als Text mit Tabellen (kein Bild; die
+   * Grafik gibt es in der PDF). Reine String-Erzeugung, offline.
+   * ===================================================================== */
+  function rtfEsc(s) {
+    s = (s == null) ? '' : String(s);
+    var out = '';
+    for (var i = 0; i < s.length; i++) {
+      var ch = s[i], c = s.charCodeAt(i);
+      if (ch === '\\' || ch === '{' || ch === '}') out += '\\' + ch;
+      else if (ch === '\n') out += '\\par ';
+      else if (c > 127) out += '\\u' + c + '?';
+      else out += ch;
+    }
+    return out;
+  }
+  function rtfPar(s, extra) { return '\\pard' + (extra || '') + '\\sa60 ' + rtfEsc(s) + '\\par\n'; }
+  function rtfHeading(s) { return '\\pard\\sb180\\sa80\\b\\fs28 ' + rtfEsc(s) + '\\b0\\fs22\\par\n'; }
+  function rtfTable(rows, widths, headerFirst) {
+    var out = '';
+    for (var r = 0; r < rows.length; r++) {
+      out += '\\trowd\\trgaph80';
+      var acc = 0;
+      for (var c = 0; c < widths.length; c++) { acc += widths[c]; out += '\\cellx' + acc; }
+      var bold = (headerFirst && r === 0);
+      for (var c2 = 0; c2 < rows[r].length; c2++) {
+        out += '\\pard\\intbl' + (bold ? '\\b ' : ' ') + rtfEsc(rows[r][c2]) + (bold ? '\\b0' : '') + '\\cell';
+      }
+      out += '\\row\n';
+    }
+    return out + '\\pard\\sa60\n';
+  }
+
+  function buildRTF(ctx) {
+    var m = buildModel(ctx);
+    var out = '{\\rtf1\\ansi\\ansicpg1252\\deff0{\\fonttbl{\\f0 Segoe UI;}{\\f1 Consolas;}}\n';
+    out += '\\viewkind4\\uc1\\f0\\fs22\n';
+
+    // Kopf
+    out += '\\pard\\sa40\\b\\fs36 ' + rtfEsc(m.title) + '\\b0\\fs22\\par\n';
+    out += rtfPar(m.subtitle);
+    if (m.headline) out += '\\pard\\sa60\\b\\fs28 ' + rtfEsc(m.headline) + '\\b0\\fs22\\par\n';
+    if (m.designation) out += rtfPar(m.caps.designation + ': ' + m.designation);
+    if (m.licensee) out += rtfPar(m.licensee.label + ': ' + m.licensee.value);
+    out += rtfPar(m.caps.date + ': ' + m.date + (m.dataVersion ? '    ' + m.caps.engine + ': ' + m.dataVersion : ''));
+
+    // Ergebnis
+    if (m.result.length) {
+      out += rtfHeading(m.caps.secResult);
+      var rRows = [[m.caps.colQty, m.caps.colValue, m.caps.colUnit]];
+      m.result.forEach(function (r) { rRows.push([r.label, r.value, r.unit]); });
+      out += rtfTable(rRows, [5200, 2200, 1400], true);
+    }
+
+    // Eingaben
+    if (m.inputs.length) {
+      out += rtfHeading(m.caps.secInput);
+      var iRows = [[m.caps.colQty, m.caps.colValue, m.caps.colUnit]];
+      m.inputs.forEach(function (it) { iRows.push([it.label, it.value, it.unit]); });
+      out += rtfTable(iRows, [5200, 2200, 1400], true);
+    }
+
+    // Zusatzbereiche (Thermik/Oberfläche/Pressverband)
+    m.extras.forEach(function (sec) {
+      if (!sec.rows.length) return;
+      out += rtfHeading(m.caps.secExtra + ' — ' + sec.title);
+      var eRows = [[m.caps.colQty, m.caps.colValue, m.caps.colUnit]];
+      sec.rows.forEach(function (r) { eRows.push([r.label, r.value, r.unit]); });
+      out += rtfTable(eRows, [5200, 2200, 1400], true);
+    });
+
+    // Rechenweg
+    if (m.steps.length) {
+      out += rtfHeading(m.caps.secWeg);
+      m.steps.forEach(function (st) {
+        if (st.title) out += '\\pard\\sb80\\sa20\\b ' + rtfEsc(st.title) + '\\b0\\par\n';
+        if (st.expr) out += '\\pard\\li360\\sa20\\f1 ' + rtfEsc(st.expr) + '\\f0\\par\n';
+      });
+    }
+
+    // Haftungsausschluss
+    out += '\\pard\\sb200\\brdrt\\brdrs\\brdrw10\\brsp80\\fs18 ' + rtfEsc(m.disclaimer) + '\\fs22\\par\n';
+    out += '}';
+    return out;
+  }
+
+  function rtfFilename(designation, dateStr) {
+    return dtpFilename(designation, dateStr).replace(/\.dtp$/, '.rtf');
+  }
+
   return {
     VERSION: VERSION,
     DTP_MAGIC: DTP_MAGIC, DTP_SCHEMA: DTP_SCHEMA,
     toDtp: toDtp, fromDtp: fromDtp, dtpFilename: dtpFilename,
-    buildModel: buildModel,
+    buildModel: buildModel, buildRTF: buildRTF, rtfFilename: rtfFilename,
     isFeatureAllowed: isFeatureAllowed, GATED_FEATURES: GATED_FEATURES,
     watermarkText: watermarkText, shouldWatermark: shouldWatermark,
     licenseeName: licenseeName, licenseePhrase: licenseePhrase,

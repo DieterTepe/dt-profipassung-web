@@ -1665,6 +1665,30 @@ section('22) Ausgaben (report.js)');
   // 22.7 num/sgnUm Formatierung locale-korrekt.
   ok(RP.num(1234.5, 'de', 1) === '1234,5' && RP.num(1234.5, 'en', 1) === '1234.5', 'num: Dezimaltrenner je Sprache');
   ok(RP.sgnUm(9, 'de') === '+9' && RP.sgnUm(-25, 'de') === '-25', 'sgnUm: Vorzeichen');
+
+  // 22.8 RTF-Export (Word): wohlgeformt, enthält Kopf/Ergebnis/Zusatz/Rechenweg.
+  var rtf = RP.buildRTF({
+    lang: 'de', designation: 'Lagersitz', headline: '\u00d850 H7/g6', dataVersion: 'ISO 286-2:2020',
+    resultLines: [{ label: 'Kleinstspiel', value: '+9', unit: '\u00b5m' }],
+    inputLines: [{ label: 'Nennma\u00df', value: '50', unit: 'mm' }],
+    extraSections: [{ title: 'Thermik', rows: [{ label: 'Temperatur', value: '80', unit: '\u00b0C' }] }],
+    steps: [{ title: 'Kleinstspiel', expr: 'EI \u2212 es = +9 \u00b5m', ok: true }]
+  });
+  ok(rtf.indexOf('{\\rtf1') === 0, 'RTF beginnt mit {\\rtf1');
+  ok(rtf.slice(-1) === '}', 'RTF endet mit }');
+  ok(rtf.indexOf('Lagersitz') >= 0, 'RTF enthält Bezeichnung');
+  ok(rtf.indexOf('Thermik') >= 0, 'RTF enthält Zusatzbereich');
+  ok(rtf.indexOf('ISO 286') >= 0, 'RTF enthält Disclaimer/Norm');
+  // Umlaute/Sonderzeichen als \uNNNN? escaped:
+  ok(/\\u\d+\?/.test(rtf), 'RTF escapt Unicode-Zeichen');
+  // RTF-Sonderzeichen im Text werden escaped (kein rohes { } \ aus Nutzertext):
+  var rtf2 = RP.buildRTF({ lang: 'de', designation: 'a{b}c\\d', resultLines: [], steps: [] });
+  ok(rtf2.indexOf('a\\{b\\}c\\\\d') >= 0, 'RTF escapt { } \\ aus Nutzertext');
+  ok(RP.rtfFilename('Teil', '2026-07-18T09:00:00Z') === 'Teil_2026-07-18.rtf', 'rtfFilename mit Datum');
+  ['de', 'en', 'pt'].forEach(function (l) {
+    var rr = RP.buildRTF({ lang: l, resultLines: [{ label: 'x', value: '1', unit: 'µm' }], steps: [] });
+    ok(rr.indexOf('{\\rtf1') === 0 && rr.slice(-1) === '}', 'RTF wohlgeformt (' + l + ')');
+  });
 })();
 
 /* === Zusammenfassung ====================================================== */

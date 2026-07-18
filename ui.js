@@ -878,7 +878,10 @@
         outLoadErr_RP_ERR_FORMAT: 'Keine DT-ProfiPassung-Datei.',
         outLoadErr_RP_ERR_SCHEMA: 'Die Datei stammt aus einer neueren Version — bitte App aktualisieren.',
         outCadNote: 'Passung', outCadHole: 'Bohrung', outCadShaft: 'Welle',
-        outClip: 'Ergebnis', outOk: 'Schließen'
+        outClip: 'Ergebnis', outOk: 'Schließen',
+        outPrintTitle: 'Bericht drucken oder als PDF speichern',
+        outRtf: 'Word (.rtf)', outRtfTitle: 'Bericht als Word-Dokument (.rtf) speichern',
+        outRtfSaved: 'Word-Bericht (.rtf) gespeichert.', outNoCalc: 'Bitte zuerst rechnen.'
       },
       en: {
         outHeading: 'Export & save', outDesign: 'Designation (optional)',
@@ -893,7 +896,10 @@
         outLoadErr_RP_ERR_FORMAT: 'Not a DT-ProfiPassung file.',
         outLoadErr_RP_ERR_SCHEMA: 'The file was made with a newer version — please update the app.',
         outCadNote: 'Fit', outCadHole: 'Hole', outCadShaft: 'Shaft',
-        outClip: 'Result', outOk: 'Close'
+        outClip: 'Result', outOk: 'Close',
+        outPrintTitle: 'Print the report or save as PDF',
+        outRtf: 'Word (.rtf)', outRtfTitle: 'Save the report as a Word document (.rtf)',
+        outRtfSaved: 'Word report (.rtf) saved.', outNoCalc: 'Please calculate first.'
       },
       pt: {
         outHeading: 'Exportar & salvar', outDesign: 'Designação (opcional)',
@@ -908,7 +914,10 @@
         outLoadErr_RP_ERR_FORMAT: 'Não é um arquivo DT-ProfiPassung.',
         outLoadErr_RP_ERR_SCHEMA: 'O arquivo é de uma versão mais nova — atualize o aplicativo.',
         outCadNote: 'Ajuste', outCadHole: 'Furo', outCadShaft: 'Eixo',
-        outClip: 'Resultado', outOk: 'Fechar'
+        outClip: 'Resultado', outOk: 'Fechar',
+        outPrintTitle: 'Imprimir o relatório ou salvar como PDF',
+        outRtf: 'Word (.rtf)', outRtfTitle: 'Salvar o relatório como documento Word (.rtf)',
+        outRtfSaved: 'Relatório Word (.rtf) salvo.', outNoCalc: 'Calcule primeiro.'
       }
     };
     ['de', 'en', 'pt'].forEach(function (l) { for (var k in s[l]) STR[l][k] = s[l][k]; });
@@ -2559,6 +2568,103 @@
 
   function doPrint() { try { window.print(); } catch (e) {} }
 
+  /* Vollständigen Report-Kontext einsammeln: Ergebnis + Eingaben + aktive
+     Zusatzbereiche + Rechenweg. Grundlage für RTF (und später PDF-Kopf). */
+  function collectReportCtx() {
+    var res = lastResult; if (!res) return null;
+    var ctx = currentReportBase(res);
+    // Rechenweg-Schritte als Text (nutzt dieselben build*-Funktionen wie die Anzeige).
+    var steps = [];
+    function pushSteps(data) {
+      if (!data || !data.steps) return;
+      data.steps.forEach(function (s) {
+        steps.push({ title: s.key ? t(s.key) : (s.title || ''), expr: s.expr || '', ok: s.ok !== false });
+      });
+    }
+    if (mode === 'fit' && window.DTPRechenweg) {
+      pushSteps(window.DTPRechenweg.build(res, rwFmt()));
+      var extras = [];
+      if (thEnabled && TH && TH.MAT[thHole] && TH.MAT[thShaft]) {
+        var thr = TH.compute(res, { alphaHole: TH.MAT[thHole].alpha, alphaShaft: TH.MAT[thShaft].alpha, T: thT });
+        if (thr.ok) {
+          pushSteps(window.DTPRechenweg.buildThermik(res, thr, rwFmt()));
+          extras.push({ title: t('thHeading'), rows: [
+            { label: t('thTemp'), value: fmtNum(thT), unit: '°C' },
+            { label: t('thMatHole'), value: matLabel(thHole), unit: '' },
+            { label: t('thMatShaft'), value: matLabel(thShaft), unit: '' }
+          ] });
+        }
+      }
+      if (oaEnabled && window.DTPRechenweg.buildOberflaeche) {
+        pushSteps(window.DTPRechenweg.buildOberflaeche(res, { RzB: rzHole, RzW: rzShaft }, rwFmt()));
+        extras.push({ title: t('oaEnable'), rows: [
+          { label: t('oaRzHole'), value: fmtNum(rzHole), unit: 'µm' },
+          { label: t('oaRzShaft'), value: fmtNum(rzShaft), unit: 'µm' }
+        ] });
+      }
+      if (pvEnabled && pvLastCalc && window.DTPRechenweg.buildPressverband) {
+        pushSteps(window.DTPRechenweg.buildPressverband(pvLastCalc.pv, pvLastCalc.v, rwFmt()));
+        var v = pvLastCalc.v;
+        extras.push({ title: t('pvHeading'), rows: [
+          { label: t('pvPmin'), value: fmtNum(Math.round(v.p_min * 10) / 10), unit: 'N/mm²' },
+          { label: t('pvPmax'), value: fmtNum(Math.round(v.p_max * 10) / 10), unit: 'N/mm²' },
+          { label: t('pvSF'), value: fmtNum(Math.round(v.SF * 100) / 100), unit: '' }
+        ] });
+      }
+      ctx.extraSections = extras;
+    }
+    ctx.steps = steps;
+    return ctx;
+  }
+  function matLabel(key) {
+    var m = TH && TH.MAT[key];
+    return (m && m.label && (m.label[lang] || m.label.de)) || key;
+  }
+
+  /* Basis-ctx (Kopf + Ergebnis-/Eingabezeilen) wie für Copy, aber wiederverwendbar. */
+  function currentReportBase(res) {
+    var head = (mode === 'freiform')
+      ? ('ISO 2768-' + (elFfClass ? elFfClass.value : 'm'))
+      : ('Ø' + fmtNum(res.input.nominal) + ' ' + res.input.hole.letter + res.input.hole.grade + '/' + res.input.shaft.letter + res.input.shaft.grade);
+    var resultLines = [], inputLines = [];
+    if (mode === 'fit') {
+      var f = res.fit;
+      inputLines.push({ label: t('fNominal'), value: fmtNum(res.input.nominal), unit: 'mm' });
+      inputLines.push({ label: t('fSystem'), value: res.system, unit: '' });
+      if (f.art === 'SPIEL') {
+        resultLines.push({ label: t('rClearMin'), value: sgn(f.PSmin), unit: 'µm' });
+        resultLines.push({ label: t('rClearMax'), value: sgn(f.PSmax), unit: 'µm' });
+      } else if (f.art === 'UEBERMASS') {
+        resultLines.push({ label: t('rInterMin'), value: fmtUm(f.interferenceMin), unit: 'µm' });
+        resultLines.push({ label: t('rInterMax'), value: fmtUm(f.interferenceMax), unit: 'µm' });
+      } else {
+        resultLines.push({ label: t('rPlayMax'), value: sgn(f.PSmax), unit: 'µm' });
+        resultLines.push({ label: t('rInterMax'), value: fmtUm(f.interferenceMax), unit: 'µm' });
+      }
+      resultLines.push({ label: t('rFitTol'), value: fmtUm(f.PT), unit: 'µm' });
+    }
+    return { lang: lang, designation: designation, headline: head,
+             now: new Date().toISOString(), dataVersion: 'ISO 286-2:2020',
+             licensee: localStorage.getItem('dtp-licensee') || '',
+             resultLines: resultLines, inputLines: inputLines };
+  }
+
+  function doSaveRtf() {
+    if (!RPM || !lastResult) { flashToast('outNoCalc'); return; }
+    var ctx = collectReportCtx(); if (!ctx) { flashToast('outNoCalc'); return; }
+    var nowIso = ctx.now;
+    var text = RPM.buildRTF(ctx);
+    var fname = RPM.rtfFilename(designation, nowIso);
+    try {
+      var blob = new Blob([text], { type: 'application/rtf' });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a'); a.href = url; a.download = fname;
+      document.body.appendChild(a); a.click();
+      setTimeout(function () { if (a.parentNode) a.parentNode.removeChild(a); URL.revokeObjectURL(url); }, 100);
+      flashToast('outRtfSaved');
+    } catch (e) { /* still */ }
+  }
+
   /* Die sichtbare Leiste. */
   /* Speichern/Öffnen sind oben in der Aktionsleiste (saveBtn/loadBtn), verdrahtet
      in init(). Bezeichnungsfeld (#dtLabel) ist an `designation` gekoppelt. */
@@ -2572,6 +2678,8 @@
     }
     on('saveBtn', 'click', function () { guard('save', doSaveDtp); });
     on('loadBtn', 'click', function () { guard('load', doLoadDtp); });
+    on('printBtn', 'click', function () { guard('print', doPrint); });
+    on('rtfBtn', 'click', function () { guard('rtf', doSaveRtf); });
   }
 
 

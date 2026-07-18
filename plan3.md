@@ -26,11 +26,10 @@ komplette Wahrheit steht in diesem Plan und in den Projektdateien. So steigst du
    nach jeder Änderung ausliefern; nach Pause zuerst prüfen, was in /mnt/project schon
    angekommen ist, und Verlorenes identisch wieder einspielen.
 
-4) NÄCHSTE AUFGABE: **B14 Ausgaben — Etappe 3+4.** Etappen 1–2 fertig (report.js-Kern +
-   Ausgabe-Leiste: Copy-Text, CAD-Notiz, .dtp Speichern/Öffnen, Drucken; Testversion sperrt
-   alles via guard). Offen: (3) Druck→PDF-Layout (druckfreundliche Ansicht/@media print) und
-   (4) RTF (Word) + CSV (Trenner/Dezimal sprachgekoppelt, BOM) als Datei-Download durch guard.
-   Danach B15 → B13 → B16 (V1). Toleranzkette (B12) im **V1.1-Update**.
+4) NÄCHSTE AUFGABE: **B15 — Edition/Registrierung/Impressum.** B14 Ausgaben ist komplett
+   (Speichern/Öffnen .dtp + Drucken/PDF + Word .rtf oben in der Aktionsleiste; CSV & Copy/CAD
+   bewusst weggelassen; Testversion sperrt alles via guard). Danach B13 → B16 (V1).
+   Toleranzkette (B12) im **V1.1-Update**.
 
 5) ARBEITSWEISE JE BAUSTEIN (Fließband, minimale Diffs):
    bauen → `node --check` alle JS → i18n-Paritätsprüfung (alle Keys in DE/EN/PT vollständig)
@@ -57,11 +56,11 @@ komplette Wahrheit steht in diesem Plan und in den Projektdateien. So steigst du
 ═══════════════════════════════════════════════════════════════════════════
 
 ═══════════════════════════════════════════════════════════════════════════
-Plan-Version : 3.4 · Stand 2026-07-18 · Status: **B1–B11 bestätigt · B14 Ausgaben ETAPPEN 1–2
-               (report.js-Kern + Ausgabe-Leiste: Copy-Text, CAD-Notiz, .dtp Speichern/Öffnen,
-               Drucken; Testversion sperrt alles) gebaut, grün & ausgeliefert.** Nächste Etappe:
-               B14 (3) Druck-Layout-Feinschliff + (4) RTF/CSV.
-Basislinie   : **154.752 Assertions, 0 Fehler** — prüfbar per `node test_passung.js`,
+Plan-Version : 3.5 · Stand 2026-07-18 · Status: **B1–B11 bestätigt · B14 Ausgaben KOMPLETT
+               (obere Aktionsleiste: Speichern/Öffnen .dtp + Drucken/PDF + Word .rtf; Testversion
+               sperrt alles) gebaut, grün & ausgeliefert.** Nächster Baustein: **B15 Edition/
+               Registrierung/Impressum.**
+Basislinie   : **154.765 Assertions, 0 Fehler** — prüfbar per `node test_passung.js`,
                am Handy über **DT-ProfiPassung_Pruefstand.html** (grünes Banner = weiterbauen).
 Produktname  : **DT-ProfiPassung** (Arbeitstitel — vor Markteintritt Marke/Domain prüfen).
                Produktversion startet bei v0.1.0.
@@ -85,8 +84,9 @@ Zielgruppe   : Konstrukteure, Fertigung/QS, Ausbildung — Laie bis Profi. Preis
 1. **B11 Passungs-Assistent** ✓ KOMPLETT (Handy-Bestätigung ausstehend) — Frage-Dialog → bis
    zu 3 begründete Passungsvorschläge, Übernahme per Tipp. Größter Mehrwert (Laienführung =
    Alleinstellungsmerkmal), nutzt die vorhandene Empfehlungsmatrix.
-2. **B14 Ausgaben** — Copy-Text, CAD-Notiz-Snippet, `.dtp` speichern/laden, Druck→PDF, RTF,
-   CSV. Schließt die größte spürbare Lücke (Nutzer kann Ergebnisse mitnehmen). Port `report.js`.
+2. **B14 Ausgaben** ✓ KOMPLETT — `.dtp` speichern/öffnen, Druck→PDF, Word (.rtf); oben in der
+   Aktionsleiste. CSV & Copy/CAD bewusst weggelassen (PDF trägt die Grafik). Testversion sperrt
+   alle Ausgaben via guard.
 3. **B15 Edition/Registrierung/Impressum** — Test/Voll-Trennung + Sperren der Ausgaben in der
    Testversion (gehört unmittelbar zu B14), Registrierung als Personalisierung, Impressum-ⓘ.
 4. **B13 ANSI B4.1** — zöllige Passungsklassen (RC/LC/LT/LN/FN), gleiche Pipeline wie ISO.
@@ -417,6 +417,25 @@ Print öffnen Sperr-Overlay, Clipboard leer, print nicht gerufen). Harness unver
 **154.752** (report.js-Kern schon in v3.3 getestet). Geändert: ui.js, style.css,
 dom_smoke_b10a.js; NEU: dom_smoke_b14_test.js. **Nächste Etappe: B14 (3) Druck-Layout + (4)
 RTF/CSV. Wiedereinstieg „weiter mit B14 RTF/CSV".**
+
+**v3.5 (2026-07-18) · B14 Ausgaben KOMPLETT — Aktionsleiste umgebaut + RTF/Drucken (bestätigt-
+reif):** Auf Dieters Wunsch nach dem Schwesterprojekt-Vorbild umgebaut: **alle Datei-/Bericht-
+Aktionen sitzen oben** in der Subbar neben Berechnen/Leeren (nicht mehr unten). Reihenfolge:
+Bezeichnungsfeld · Speichern (.dtp) · Öffnen (.dtp) · Drucken/PDF · Word (.rtf). **Copy-Text,
+CAD-Notiz und CSV entfernt** (nicht benötigt; PDF trägt die Toleranzfeld-Grafik). Dateiname
+trägt jetzt **Bezeichnung + Datum** (z. B. Lagersitz_2026-07-18.dtp/.rtf). **report.js**:
+buildRTF (Word-Bericht mit Kopf, Ergebnis-/Eingabe-/Zusatzbereich-Tabellen, Rechenweg, Disclaimer;
+Unicode- und {}\\-Escaping) + rtfFilename. **ui.js**: collectReportCtx sammelt das komplette
+Bild (Ergebnis + aktive Zusatzbereiche Thermik/Oberfläche/Pressverband + Rechenweg-Schritte je
+build*-Funktion); doSaveRtf/doPrint durch guard; obere Buttons in wireOutputButtons verdrahtet;
+frühere untere renderOutputBar samt Copy/CAD entfernt. **HTMLs**: printBtn/rtfBtn/dtMsg in die
+dt-actions-Gruppe. **style.css**: .dt-actions-Layout. 27 out*-i18n-Keys ×3 (Parität 0).
+**Prüfung:** dom_smoke_b10a.js **62 OK** (obere Buttons verdrahtet, Drucken ruft print, RTF
+wohlgeformt, .dtp-Round-Trip, Dateiname mit Datum) · dom_smoke_b14_test.js **12 OK** (Testversion:
+Speichern/Öffnen/Drucken/RTF alle gesperrt, print nicht gerufen) · Harness **154.752 → 154.765
+(+11)** (RTF-Wohlgeformtheit/Escaping/Dateiname ×3 Sprachen). Geändert: ui.js, report.js,
+style.css, test_passung.js, dom_smoke_b10a.js, dom_smoke_b14_test.js, beide Produktiv-HTMLs.
+**B14 abgeschlossen. Nächster Baustein: B15 Edition/Registrierung/Impressum.**
 
 ═══════════════════════════════════════════════════════════════════════════
 Ende plan3.md · DT-ProfiPassung

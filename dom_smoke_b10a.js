@@ -95,6 +95,7 @@ mk('div', 'formHost'); mk('div', 'resultHost'); mk('div', 'vizHost');
 mk('select', 'presetSel'); mk('div', 'editionBar');
 mk('button', 'calcBtn'); mk('button', 'resetBtn');
 mk('input', 'dtLabel'); mk('button', 'saveBtn'); mk('button', 'loadBtn'); mk('input', 'dtFile');
+mk('button', 'printBtn'); mk('button', 'rtfBtn');
 var langDe = mk('button', null, 'lang-btn'); langDe.setAttribute('data-lang', 'de');
 var langEn = mk('button', null, 'lang-btn'); langEn.setAttribute('data-lang', 'en');
 var langPt = mk('button', null, 'lang-btn'); langPt.setAttribute('data-lang', 'pt');
@@ -361,17 +362,28 @@ presetSel.value = '';
 
   // Obere Buttons vorhanden und verdrahtet.
   ok(!!byId.saveBtn && !!byId.loadBtn, 'Speichern/Öffnen-Buttons oben vorhanden');
+  ok(!!byId.printBtn && !!byId.rtfBtn, 'Drucken/PDF + Word(.rtf)-Buttons oben vorhanden');
   ok(!!byId.dtLabel, 'Bezeichnungsfeld #dtLabel vorhanden');
   ok((byId.saveBtn._events.click || []).length > 0, 'Speichern-Button ist verdrahtet');
   ok((byId.loadBtn._events.click || []).length > 0, 'Öffnen-Button ist verdrahtet');
+  ok((byId.printBtn._events.click || []).length > 0, 'Drucken-Button ist verdrahtet');
+  ok((byId.rtfBtn._events.click || []).length > 0, 'RTF-Button ist verdrahtet');
 
-  // Speichern in der Vollversion: kein Locked-Overlay, Datei-Anker wird geklickt.
-  byId.saveBtn.fire('click');
-  var lockedNow = body.findAll(function (n) { return n.classList.contains('locked-overlay'); });
-  ok(lockedNow.length === 0, 'Vollversion: Speichern öffnet KEIN Sperr-Overlay');
+  // Drucken in der Vollversion ruft window.print (kein Sperr-Overlay).
+  global.__printed = false;
+  byId.printBtn.fire('click');
+  ok(global.__printed === true, 'Vollversion: Drucken ruft window.print');
+  ok(body.findAll(function (n) { return n.classList.contains('locked-overlay'); }).length === 0, 'Vollversion: Drucken ohne Sperr-Overlay');
+
+  // RTF-Export in der Vollversion (Datei-Anker wird geklickt, kein Overlay).
+  byId.rtfBtn.fire('click');
+  ok(body.findAll(function (n) { return n.classList.contains('locked-overlay'); }).length === 0, 'Vollversion: RTF ohne Sperr-Overlay');
+  // RTF-Inhalt direkt über die Report-API prüfen:
+  var RPmod = global.DTPReport;
+  var rtfTxt = RPmod.buildRTF({ lang: 'de', headline: 'Ø50 H7/g6', resultLines: [{ label: 'x', value: '1', unit: 'µm' }], steps: [{ title: 'S', expr: 'a=b' }] });
+  ok(rtfTxt.indexOf('{\\rtf1') === 0 && rtfTxt.slice(-1) === '}', 'RTF wohlgeformt ({\\rtf1…})');
 
   // .dtp-Round-Trip über die Report-API mit realistischem UI-State.
-  var RPmod = global.DTPReport;
   var uiState = { mode: 'fit', fit: { nominal: 60, system: 'EB', hole: { letter: 'H', grade: 7 }, shaft: { letter: 's', grade: 6 } },
                   press: { on: true, matA: 'steel', matI: 'steel', muKey: 'STST_DRY', lF: 50, DAa: 120, DIi: 0, Mt: 250, Fax: 0 } };
   var dtpText = RPmod.toDtp({ state: uiState, designation: 'Smoke-Test', now: '2026-07-18T09:00:00Z' });
