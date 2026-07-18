@@ -786,3 +786,56 @@ input.locked { background: var(--line-soft); color: var(--muted); cursor: defaul
 @media (prefers-reduced-motion: reduce) {
   .assist-spark, .assist-step, .assist-results, .assist-opt, .assist-card, .assist-modal { animation: none !important; transition: none !important; }
 }
+
+/* ==========================================================================
+   B14-UI — Ausgabe-Leiste, Locked-Overlay, Toast. Passt zu den Tokens. */
+.output-bar {
+  margin-top: 18px; padding: 14px; border-radius: 14px;
+  border: 1px solid var(--line); background: var(--surface);
+}
+.output-head { font-weight: 700; font-size: 13px; color: var(--fg); margin-bottom: 10px; }
+.output-design { display: flex; flex-direction: column; gap: 5px; margin-bottom: 12px; }
+.output-design label { font-size: 12px; color: var(--muted); }
+.design-input {
+  width: 100%; padding: 9px 11px; border-radius: 9px; border: 1px solid var(--line);
+  background: var(--bg); color: var(--fg); font-size: 14px; box-sizing: border-box;
+}
+.design-input:focus { outline: none; border-color: var(--accent); }
+.output-btns { display: flex; flex-wrap: wrap; gap: 8px; }
+.out-btn {
+  flex: 1 1 auto; min-width: 44%; padding: 11px 12px; border-radius: 10px; cursor: pointer;
+  border: 1px solid var(--line); background: var(--bg); color: var(--fg);
+  font-size: 13px; font-weight: 600;
+  transition: border-color .15s, transform .12s, box-shadow .15s, background .15s;
+}
+.out-btn:hover { border-color: var(--accent); transform: translateY(-1px); box-shadow: 0 5px 14px -7px var(--accent); }
+.out-btn:active { transform: translateY(0); }
+.out-btn.primary {
+  color: #06222a; border: 0;
+  background: linear-gradient(135deg, var(--accent), #6fe0ec); box-shadow: 0 3px 12px -5px var(--accent);
+}
+.out-btn.locked { opacity: .55; }
+.out-btn.locked::after { content: ' 🔒'; font-size: 11px; }
+
+/* Locked-/Fehler-Overlay (nutzt modal-overlay-Basis). */
+.locked-overlay { opacity: 1; }
+.locked-modal { max-width: 380px; animation: assist-card-in .28s cubic-bezier(.2,.8,.25,1) both; }
+.locked-text { font-size: 13.5px; line-height: 1.55; color: var(--fg); margin: 4px 0 14px; }
+.locked-text.warn { color: #e5484d; }
+.locked-ok {
+  width: 100%; padding: 11px; border-radius: 10px; border: 0; cursor: pointer;
+  font-weight: 700; font-size: 14px; color: #06222a;
+  background: linear-gradient(135deg, var(--accent), #6fe0ec);
+}
+
+/* Toast (kurze Bestätigung, unten mittig). */
+.toast {
+  position: fixed; left: 50%; bottom: 26px; transform: translateX(-50%) translateY(12px);
+  background: var(--fg); color: var(--bg); padding: 11px 18px; border-radius: 999px;
+  font-size: 13px; font-weight: 600; opacity: 0; pointer-events: none; z-index: 9999;
+  transition: opacity .3s ease, transform .3s cubic-bezier(.2,.8,.25,1); box-shadow: 0 8px 24px -8px rgba(0,0,0,.5);
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+@media print { .output-bar { display: none !important; } }
+@media (prefers-reduced-motion: reduce) { .locked-modal, .toast { animation: none !important; transition: none !important; } }

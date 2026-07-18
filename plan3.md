@@ -26,11 +26,10 @@ komplette Wahrheit steht in diesem Plan und in den Projektdateien. So steigst du
    nach jeder Änderung ausliefern; nach Pause zuerst prüfen, was in /mnt/project schon
    angekommen ist, und Verlorenes identisch wieder einspielen.
 
-4) NÄCHSTE AUFGABE: **B14 Ausgaben — weiter mit UI-Verdrahtung + Copy.** Etappe 1 (report.js:
-   Datenmodell buildModel, .dtp toDtp/fromDtp, Gating) ist gebaut, grün & eingebunden. Offene
-   Etappen: (2) UI — Ausgabe-Leiste + echter .dtp-Download/-Upload + Copy-Text + CAD-Snippet;
-   (3) Druck→PDF; (4) RTF + CSV. ALLES läuft durch guard() — Testversion sperrt jede Ausgabe
-   (Dieters Vorgabe: nichts verlässt das Programm; auch der Datei-Import wird blockiert).
+4) NÄCHSTE AUFGABE: **B14 Ausgaben — Etappe 3+4.** Etappen 1–2 fertig (report.js-Kern +
+   Ausgabe-Leiste: Copy-Text, CAD-Notiz, .dtp Speichern/Öffnen, Drucken; Testversion sperrt
+   alles via guard). Offen: (3) Druck→PDF-Layout (druckfreundliche Ansicht/@media print) und
+   (4) RTF (Word) + CSV (Trenner/Dezimal sprachgekoppelt, BOM) als Datei-Download durch guard.
    Danach B15 → B13 → B16 (V1). Toleranzkette (B12) im **V1.1-Update**.
 
 5) ARBEITSWEISE JE BAUSTEIN (Fließband, minimale Diffs):
@@ -58,9 +57,10 @@ komplette Wahrheit steht in diesem Plan und in den Projektdateien. So steigst du
 ═══════════════════════════════════════════════════════════════════════════
 
 ═══════════════════════════════════════════════════════════════════════════
-Plan-Version : 3.3 · Stand 2026-07-18 · Status: **B1–B11 bestätigt · B14 Ausgaben ETAPPE 1
-               (report.js: Datenmodell + .dtp Save/Load + Gating) gebaut, grün & ausgeliefert —
-               UI-Verdrahtung folgt.** Nächste Etappe: B14-Copy (Copy-Text + CAD-Snippet + UI).
+Plan-Version : 3.4 · Stand 2026-07-18 · Status: **B1–B11 bestätigt · B14 Ausgaben ETAPPEN 1–2
+               (report.js-Kern + Ausgabe-Leiste: Copy-Text, CAD-Notiz, .dtp Speichern/Öffnen,
+               Drucken; Testversion sperrt alles) gebaut, grün & ausgeliefert.** Nächste Etappe:
+               B14 (3) Druck-Layout-Feinschliff + (4) RTF/CSV.
 Basislinie   : **154.752 Assertions, 0 Fehler** — prüfbar per `node test_passung.js`,
                am Handy über **DT-ProfiPassung_Pruefstand.html** (grünes Banner = weiterbauen).
 Produktname  : **DT-ProfiPassung** (Arbeitstitel — vor Markteintritt Marke/Domain prüfen).
@@ -130,7 +130,10 @@ DT-ProfiPassung/
 │                                   (Thermik/Oberfläche/Pressverband), i18n, Theme, Rechenweg,
 │                                   Grafik, Lade-Menü/Presets, Laien-ⓘ
 ├── test_passung.js (DEV-ONLY)   → Node-Harness (21 Abschnitte, ok()-Zähler) — nie ausgeliefert
-└── dom_smoke_b10a.js (DEV-ONLY) → Mini-DOM-Shim, führt ui.js real aus (ⓘ/Presets/Panels)
+└── dom_smoke_b10a.js (DEV-ONLY) → Mini-DOM-Shim, führt ui.js real aus (ⓘ/Presets/Panels/
+                                    Assistent-Flow/Ausgabe-Leiste) — „b10a" nur historisch
+    dom_smoke_b14_test.js (DEV-ONLY)→ zweiter Shim mit DT_EDITION='test': weist nach, dass die
+                                    Testversion jede Ausgabe sperrt (Buttons + Sperr-Overlay)
 ```
 **Ladereihenfolge (in allen HTMLs):**
 `daten → validate → solver → rechenweg → freiform → thermik → schaubild → beratung →
@@ -394,6 +397,26 @@ je Feature × Edition, .dtp Round-Trip bit-identisch + Idempotenz, 9 Fehlerpfade
 Lizenznehmer, buildModel ×3 Sprachen, Formatierung) → **Basislinie 154.676 → 154.752 (+76)**.
 NUR neues Modul + Harness + HTML-Einbindung. **Nächste Etappe: B14-UI (Ausgabe-Leiste, echter
 .dtp-Download/-Upload durch guard(), Copy-Text, CAD-Snippet). Wiedereinstieg „weiter mit B14-UI".**
+
+**v3.4 (2026-07-18) · B14 Ausgaben — ETAPPE 2: Ausgabe-Leiste + Copy/CAD/.dtp/Druck (gebaut &
+ausgeliefert):** **ui.js** — neue **Ausgabe-Leiste** unter dem Ergebnis (renderOutputBar):
+Bezeichnungsfeld (persistiert) + Buttons Text kopieren · CAD-Notiz (nur Passungsmodus) ·
+Speichern (.dtp) · Öffnen (.dtp) · Drucken/PDF. **collectState/applyState** erfassen bzw. setzen
+den KOMPLETTEN Eingabezustand (Passung/Freiform + Thermik + Oberfläche + Pressverband inkl.
+eigener Kennwerte) — .dtp speichert nur Eingaben, beim Laden wird neu gerechnet. Copy-Text baut
+auf DTPReport.buildModel (Ergebniszeilen je Passungsart + Disclaimer), Clipboard mit
+execCommand-Fallback; CAD-Notiz = „Ø.. H7/g6". `.dtp`-Download via Blob, Upload via verstecktes
+File-Input → fromDtp mit Klartext-Fehlermeldungen. **guard()**: in der Testversion öffnet jeder
+Ausgabe-Button ein „Nur in der Vollversion"-Overlay statt der Aktion; Buttons tragen 🔒, der
+Datei-Import ist ebenfalls blockiert (nichts verlässt das Programm). Toast-Bestätigungen.
+**22 out*-i18n-Keys ×3** (Parität 0 Fehler). **style.css**: .output-bar/.out-btn/.locked-
+overlay/.toast, Print blendet die Leiste aus, respektiert reduced-motion. **Prüfung:**
+dom_smoke_b10a.js **57 OK** (Leiste, Copy füllt Clipboard, Round-Trip, kein Sperr-Overlay in
+Voll) + neuer **dom_smoke_b14_test.js 11 OK** (Testversion: alle Buttons gesperrt, Copy/Save/
+Print öffnen Sperr-Overlay, Clipboard leer, print nicht gerufen). Harness unverändert
+**154.752** (report.js-Kern schon in v3.3 getestet). Geändert: ui.js, style.css,
+dom_smoke_b10a.js; NEU: dom_smoke_b14_test.js. **Nächste Etappe: B14 (3) Druck-Layout + (4)
+RTF/CSV. Wiedereinstieg „weiter mit B14 RTF/CSV".**
 
 ═══════════════════════════════════════════════════════════════════════════
 Ende plan3.md · DT-ProfiPassung

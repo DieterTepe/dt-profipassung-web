@@ -12,6 +12,9 @@
 
   var D = window.DTPData, V = window.DTPValidate, S = window.DTPSolver, FF = window.DTPFreiform, TH = window.DTPThermik;
   var PVM = window.DTPPress;
+  var RPM = window.DTPReport;
+  var lastResult = null;         // letztes gerechnetes Passungs-Ergebnis (für Exporte)
+  var designation = localStorage.getItem('dtp-desig') || '';
 
   /* ======================================================================= *
    * 1) i18n — Bedien- und Ergebnistexte
@@ -859,6 +862,58 @@
     ['de', 'en', 'pt'].forEach(function (l) { for (var k in s[l]) STR[l][k] = s[l][k]; });
   })();
 
+  /* B14-UI — Ausgabe-Leiste: Buttons, Meldungen, Copy-/CAD-Texte (DE/EN/PT). */
+  (function () {
+    var s = {
+      de: {
+        outHeading: 'Ausgeben & Speichern', outDesign: 'Bezeichnung (optional)',
+        outCopy: 'Text kopieren', outCad: 'CAD-Notiz', outSave: 'Speichern (.dtp)',
+        outLoad: 'Öffnen (.dtp)', outPrint: 'Drucken / PDF',
+        outCopied: 'In die Zwischenablage kopiert.', outCopyFail: 'Kopieren nicht möglich — bitte Text manuell markieren.',
+        outSaved: 'Datei gespeichert.', outLoaded: 'Passung geladen.',
+        outLockedTitle: 'Nur in der Vollversion', 
+        outLocked: 'In der Testversion sind Speichern, Öffnen, Drucken und Kopieren gesperrt. Die Vollversion schaltet alle Ausgaben frei.',
+        outLoadErr_RP_ERR_EMPTY: 'Die Datei ist leer.',
+        outLoadErr_RP_ERR_JSON: 'Die Datei ist beschädigt (kein gültiges Format).',
+        outLoadErr_RP_ERR_FORMAT: 'Keine DT-ProfiPassung-Datei.',
+        outLoadErr_RP_ERR_SCHEMA: 'Die Datei stammt aus einer neueren Version — bitte App aktualisieren.',
+        outCadNote: 'Passung', outCadHole: 'Bohrung', outCadShaft: 'Welle',
+        outClip: 'Ergebnis', outOk: 'Schließen'
+      },
+      en: {
+        outHeading: 'Export & save', outDesign: 'Designation (optional)',
+        outCopy: 'Copy text', outCad: 'CAD note', outSave: 'Save (.dtp)',
+        outLoad: 'Open (.dtp)', outPrint: 'Print / PDF',
+        outCopied: 'Copied to clipboard.', outCopyFail: 'Copy not possible — please select the text manually.',
+        outSaved: 'File saved.', outLoaded: 'Fit loaded.',
+        outLockedTitle: 'Full version only',
+        outLocked: 'In the test version, saving, opening, printing and copying are disabled. The full version unlocks all outputs.',
+        outLoadErr_RP_ERR_EMPTY: 'The file is empty.',
+        outLoadErr_RP_ERR_JSON: 'The file is damaged (not a valid format).',
+        outLoadErr_RP_ERR_FORMAT: 'Not a DT-ProfiPassung file.',
+        outLoadErr_RP_ERR_SCHEMA: 'The file was made with a newer version — please update the app.',
+        outCadNote: 'Fit', outCadHole: 'Hole', outCadShaft: 'Shaft',
+        outClip: 'Result', outOk: 'Close'
+      },
+      pt: {
+        outHeading: 'Exportar & salvar', outDesign: 'Designação (opcional)',
+        outCopy: 'Copiar texto', outCad: 'Nota CAD', outSave: 'Salvar (.dtp)',
+        outLoad: 'Abrir (.dtp)', outPrint: 'Imprimir / PDF',
+        outCopied: 'Copiado para a área de transferência.', outCopyFail: 'Não foi possível copiar — selecione o texto manualmente.',
+        outSaved: 'Arquivo salvo.', outLoaded: 'Ajuste carregado.',
+        outLockedTitle: 'Somente na versão completa',
+        outLocked: 'Na versão de teste, salvar, abrir, imprimir e copiar estão bloqueados. A versão completa libera todas as saídas.',
+        outLoadErr_RP_ERR_EMPTY: 'O arquivo está vazio.',
+        outLoadErr_RP_ERR_JSON: 'O arquivo está danificado (formato inválido).',
+        outLoadErr_RP_ERR_FORMAT: 'Não é um arquivo DT-ProfiPassung.',
+        outLoadErr_RP_ERR_SCHEMA: 'O arquivo é de uma versão mais nova — atualize o aplicativo.',
+        outCadNote: 'Ajuste', outCadHole: 'Furo', outCadShaft: 'Eixo',
+        outClip: 'Resultado', outOk: 'Fechar'
+      }
+    };
+    ['de', 'en', 'pt'].forEach(function (l) { for (var k in s[l]) STR[l][k] = s[l][k]; });
+  })();
+
   /* ======================================================================= *
    * 2) Zustand + kleine Helfer
    * ======================================================================= */
@@ -1588,6 +1643,7 @@
 
   function renderResult(res) {
     resultHost.textContent = '';
+    lastResult = res;
     var f = res.fit, i = res.input;
 
     // Kurzform „Ø50 H7/g6" + System
@@ -1665,6 +1721,7 @@
     }
     renderRechenweg(groups);
     renderViz(res);
+    renderOutputBar();
   }
 
   /* Thermik-Ergebnis (B8): Passung bei Betriebstemperatur + Umschlag-Warnung. */
@@ -2340,6 +2397,270 @@
   }
   function optSubKey(qid, val) {
     return optMainKey(qid, val) + '_sub';
+  }
+
+  /* ===================================================================== *
+   * B14-UI — Ausgaben: Leiste unter dem Ergebnis. Alle Aktionen laufen durch
+   * guard(); in der Testversion erscheint statt der Aktion ein Hinweis-Overlay
+   * (nichts verlässt das Programm — auch der Datei-Import wird geblockt).
+   * Datenmodell/Serialisierung: DTPReport (report.js).
+   * ===================================================================== */
+
+  /* Kompletten Eingabe-Zustand einsammeln (für .dtp). Nur Eingaben — die
+     Ergebnisse werden beim Laden neu gerechnet. */
+  function collectState() {
+    var st = { mode: mode, lang: lang };
+    if (mode === 'freiform') {
+      st.freiform = {
+        nominal: (elFfNominal ? parseFloat(String(elFfNominal.value).replace(',', '.')) : null),
+        cls: (elFfClass ? elFfClass.value : 'm')
+      };
+    } else {
+      st.fit = {
+        nominal: (elNominal ? parseFloat(String(elNominal.value).replace(',', '.')) : null),
+        system: (elSystem ? elSystem.value : 'EB'),
+        hole: { letter: elHoleL ? elHoleL.value : 'H', grade: elHoleG ? parseInt(elHoleG.value, 10) : 7 },
+        shaft: { letter: elShaftL ? elShaftL.value : 'g', grade: elShaftG ? parseInt(elShaftG.value, 10) : 6 }
+      };
+    }
+    st.thermik = { on: thEnabled, T: thT, matHole: thHole, matShaft: thShaft };
+    st.oberflaeche = { on: oaEnabled, rzHole: rzHole, rzShaft: rzShaft };
+    st.press = {
+      on: pvEnabled, matA: pvSideA.key, matI: pvSideI.key,
+      ownA: pvSideA.own, ownI: pvSideI.own, custA: pvSideA.cust, custI: pvSideI.cust,
+      muKey: pvMuKey, muOwn: pvMuOwn, muVal: pvMuVal,
+      lF: pvLF, DAa: pvDAa, DIi: pvDIi, Mt: pvMt, Fax: pvFax
+    };
+    return st;
+  }
+
+  /* Zustand aus einer geladenen .dtp anwenden (spiegelbildlich zu collectState). */
+  function applyState(st) {
+    if (!st || typeof st !== 'object') return;
+    // Zusatzbereiche zuerst (buildForm liest die Modulvariablen).
+    if (st.thermik) {
+      thEnabled = !!st.thermik.on;
+      if (isFinite(st.thermik.T)) thT = st.thermik.T;
+      if (st.thermik.matHole) thHole = st.thermik.matHole;
+      if (st.thermik.matShaft) thShaft = st.thermik.matShaft;
+      try { localStorage.setItem('dtp-th-on', thEnabled ? '1' : '0'); localStorage.setItem('dtp-th-t', String(thT));
+        localStorage.setItem('dtp-th-hole', thHole); localStorage.setItem('dtp-th-shaft', thShaft); } catch (e) {}
+    }
+    if (st.oberflaeche) {
+      oaEnabled = !!st.oberflaeche.on;
+      if (isFinite(st.oberflaeche.rzHole)) rzHole = st.oberflaeche.rzHole;
+      if (isFinite(st.oberflaeche.rzShaft)) rzShaft = st.oberflaeche.rzShaft;
+      try { localStorage.setItem('dtp-oa-on', oaEnabled ? '1' : '0'); localStorage.setItem('dtp-oa-rzh', String(rzHole)); localStorage.setItem('dtp-oa-rzs', String(rzShaft)); } catch (e) {}
+    }
+    if (st.press) {
+      var p = st.press;
+      pvEnabled = !!p.on;
+      pvSideA = { key: p.matA || 'steel', own: !!p.ownA, cust: p.custA || null };
+      pvSideI = { key: p.matI || 'steel', own: !!p.ownI, cust: p.custI || null };
+      if (p.muKey) pvMuKey = p.muKey;
+      pvMuOwn = !!p.muOwn; if (isFinite(p.muVal) && p.muVal > 0) pvMuVal = p.muVal;
+      if (isFinite(p.lF)) pvLF = p.lF; if (isFinite(p.DAa)) pvDAa = p.DAa;
+      if (isFinite(p.DIi)) pvDIi = p.DIi; if (isFinite(p.Mt)) pvMt = p.Mt; if (isFinite(p.Fax)) pvFax = p.Fax;
+      persistPress();
+    }
+    // Modus + Passungs-/Freiformfelder.
+    var wantMode = (st.mode === 'freiform') ? 'freiform' : 'fit';
+    if (mode !== wantMode) { mode = wantMode; try { localStorage.setItem('dtp-mode', mode); } catch (e) {} }
+    buildForm();
+    if (mode === 'freiform' && st.freiform) {
+      if (elFfNominal && isFinite(st.freiform.nominal)) elFfNominal.value = String(st.freiform.nominal);
+      if (elFfClass && st.freiform.cls) elFfClass.value = st.freiform.cls;
+    } else if (st.fit) {
+      if (elNominal && isFinite(st.fit.nominal)) elNominal.value = String(st.fit.nominal);
+      if (elSystem && st.fit.system) elSystem.value = st.fit.system;
+      if (elHoleL && st.fit.hole) elHoleL.value = st.fit.hole.letter;
+      if (elHoleG && st.fit.hole) elHoleG.value = String(st.fit.hole.grade);
+      if (elShaftL && st.fit.shaft) elShaftL.value = st.fit.shaft.letter;
+      if (elShaftG && st.fit.shaft) elShaftG.value = String(st.fit.shaft.grade);
+    }
+    recalc();
+  }
+
+  /* Guard: in der Testversion Aktion abfangen und Hinweis zeigen. */
+  function guard(feature, action) {
+    if (RPM && !RPM.isFeatureAllowed(feature, edition)) { showLockedOverlay(); return; }
+    action();
+  }
+
+  function showLockedOverlay() {
+    var ov = el('div', 'modal-overlay locked-overlay open');
+    ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-modal', 'true');
+    var m = el('div', 'modal locked-modal');
+    var head = el('div', 'modal-head');
+    var h = el('h3'); h.setAttribute('data-i18n', 'outLockedTitle'); h.textContent = t('outLockedTitle'); head.appendChild(h);
+    var x = el('button', 'close', '✕'); x.type = 'button'; x.addEventListener('click', function () { closeOv(ov); });
+    head.appendChild(x); m.appendChild(head);
+    var b = el('div', 'modal-body');
+    var p = el('p', 'locked-text'); p.setAttribute('data-i18n', 'outLocked'); p.textContent = t('outLocked'); b.appendChild(p);
+    var ok = el('button', 'locked-ok'); ok.type = 'button'; ok.setAttribute('data-i18n', 'outOk'); ok.textContent = t('outOk');
+    ok.addEventListener('click', function () { closeOv(ov); }); b.appendChild(ok);
+    m.appendChild(b); ov.appendChild(m);
+    ov.addEventListener('click', function (e) { if (e.target === ov) closeOv(ov); });
+    document.body.appendChild(ov);
+  }
+  function closeOv(ov) { if (ov && ov.parentNode) ov.parentNode.removeChild(ov); }
+
+  /* Ergebnis als Klartext (Copy). Baut auf DTPReport.buildModel, ergänzt hier
+     um die konkreten Zeilen aus dem aktuellen Ergebnis. */
+  function currentModelCtx() {
+    var res = lastResult; if (!res) return null;
+    var head = (mode === 'freiform')
+      ? ('ISO 2768-' + (elFfClass ? elFfClass.value : 'm'))
+      : ('Ø' + fmtNum(res.input.nominal) + ' ' + res.input.hole.letter + res.input.hole.grade + '/' + res.input.shaft.letter + res.input.shaft.grade);
+    var resultLines = [], inputLines = [];
+    if (mode === 'fit') {
+      var f = res.fit;
+      inputLines.push({ label: t('fNominal'), value: fmtNum(res.input.nominal), unit: 'mm' });
+      if (f.art === 'SPIEL') {
+        resultLines.push({ label: t('rClearMin'), value: sgn(f.PSmin), unit: 'µm' });
+        resultLines.push({ label: t('rClearMax'), value: sgn(f.PSmax), unit: 'µm' });
+      } else if (f.art === 'UEBERMASS') {
+        resultLines.push({ label: t('rInterMin'), value: fmtUm(f.interferenceMin), unit: 'µm' });
+        resultLines.push({ label: t('rInterMax'), value: fmtUm(f.interferenceMax), unit: 'µm' });
+      } else {
+        resultLines.push({ label: t('rPlayMax'), value: sgn(f.PSmax), unit: 'µm' });
+        resultLines.push({ label: t('rInterMax'), value: fmtUm(f.interferenceMax), unit: 'µm' });
+      }
+      resultLines.push({ label: t('rFitTol'), value: fmtUm(f.PT), unit: 'µm' });
+    }
+    return { lang: lang, designation: designation, headline: head,
+             licensee: localStorage.getItem('dtp-licensee') || '',
+             resultLines: resultLines, inputLines: inputLines };
+  }
+
+  function buildCopyText() {
+    var ctx = currentModelCtx(); if (!ctx || !RPM) return '';
+    var m = RPM.buildModel(ctx);
+    var L = [];
+    L.push(m.title + (m.headline ? ' — ' + m.headline : ''));
+    if (m.designation) L.push(m.caps.designation + ': ' + m.designation);
+    L.push('');
+    L.push(m.caps.secResult + ':');
+    m.result.forEach(function (r) { L.push('  ' + r.label + ': ' + r.value + (r.unit ? ' ' + r.unit : '')); });
+    L.push('');
+    L.push(m.disclaimer);
+    return L.join('\n');
+  }
+
+  function buildCadNote() {
+    var res = lastResult; if (!res || mode !== 'fit') return '';
+    var i = res.input;
+    return 'Ø' + fmtNum(i.nominal) + ' ' + i.hole.letter + i.hole.grade + '/' + i.shaft.letter + i.shaft.grade;
+  }
+
+  function flashToast(msgKey) {
+    var tst = el('div', 'toast', t(msgKey));
+    document.body.appendChild(tst);
+    void tst.offsetWidth; tst.classList.add('show');
+    setTimeout(function () { tst.classList.remove('show'); setTimeout(function () { if (tst.parentNode) tst.parentNode.removeChild(tst); }, 300); }, 2000);
+  }
+
+  function doCopyText() {
+    var txt = buildCopyText(); if (!txt) return;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(txt).then(function () { flashToast('outCopied'); }, function () { fallbackCopy(txt); });
+    } else fallbackCopy(txt);
+  }
+  function doCopyCad() {
+    var txt = buildCadNote(); if (!txt) return;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(txt).then(function () { flashToast('outCopied'); }, function () { fallbackCopy(txt); });
+    } else fallbackCopy(txt);
+  }
+  function fallbackCopy(txt) {
+    try {
+      var ta = document.createElement('textarea'); ta.value = txt;
+      document.body.appendChild(ta); ta.select();
+      var okc = document.execCommand && document.execCommand('copy');
+      document.body.removeChild(ta);
+      flashToast(okc ? 'outCopied' : 'outCopyFail');
+    } catch (e) { flashToast('outCopyFail'); }
+  }
+
+  function doSaveDtp() {
+    if (!RPM) return;
+    var text = RPM.toDtp({ state: collectState(), designation: designation });
+    var fname = RPM.dtpFilename(designation);
+    try {
+      var blob = new Blob([text], { type: 'application/json' });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a'); a.href = url; a.download = fname;
+      document.body.appendChild(a); a.click();
+      setTimeout(function () { if (a.parentNode) a.parentNode.removeChild(a); URL.revokeObjectURL(url); }, 100);
+      flashToast('outSaved');
+    } catch (e) { /* still: nichts */ }
+  }
+
+  var asFileInput = null;
+  function doLoadDtp() {
+    if (!asFileInput) {
+      asFileInput = document.createElement('input');
+      asFileInput.type = 'file'; asFileInput.accept = '.dtp,application/json';
+      asFileInput.style.display = 'none';
+      asFileInput.addEventListener('change', function () {
+        var file = asFileInput.files && asFileInput.files[0]; if (!file) return;
+        var reader = new FileReader();
+        reader.onload = function () {
+          var r = RPM.fromDtp(String(reader.result));
+          if (!r.ok) { showLoadError(r.error); }
+          else { designation = r.designation || ''; try { localStorage.setItem('dtp-desig', designation); } catch (e) {} applyState(r.state); flashToast('outLoaded'); }
+          asFileInput.value = '';
+        };
+        reader.readAsText(file);
+      });
+      document.body.appendChild(asFileInput);
+    }
+    asFileInput.click();
+  }
+  function showLoadError(code) {
+    var ov = el('div', 'modal-overlay locked-overlay open');
+    var m = el('div', 'modal locked-modal');
+    var head = el('div', 'modal-head'); var h = el('h3'); h.setAttribute('data-i18n', 'outLoad'); h.textContent = t('outLoad'); head.appendChild(h);
+    var x = el('button', 'close', '✕'); x.type = 'button'; x.addEventListener('click', function () { closeOv(ov); }); head.appendChild(x); m.appendChild(head);
+    var b = el('div', 'modal-body'); var p = el('p', 'locked-text warn');
+    var mk = 'outLoadErr_' + code; p.setAttribute('data-i18n', mk); p.textContent = t(mk); b.appendChild(p);
+    var ok = el('button', 'locked-ok'); ok.type = 'button'; ok.setAttribute('data-i18n', 'outOk'); ok.textContent = t('outOk'); ok.addEventListener('click', function () { closeOv(ov); }); b.appendChild(ok);
+    m.appendChild(b); ov.appendChild(m); ov.addEventListener('click', function (e) { if (e.target === ov) closeOv(ov); });
+    document.body.appendChild(ov);
+  }
+
+  function doPrint() { try { window.print(); } catch (e) {} }
+
+  /* Die sichtbare Leiste. */
+  function renderOutputBar() {
+    if (!RPM) return;
+    var bar = el('div', 'output-bar');
+    var head = el('div', 'output-head'); head.setAttribute('data-i18n', 'outHeading'); head.textContent = t('outHeading');
+    bar.appendChild(head);
+
+    var dwrap = el('div', 'output-design');
+    var dlab = el('label'); dlab.setAttribute('data-i18n', 'outDesign'); dlab.textContent = t('outDesign');
+    var din = el('input'); din.type = 'text'; din.className = 'design-input'; din.value = designation; din.maxLength = 80;
+    din.addEventListener('input', function () { designation = din.value; try { localStorage.setItem('dtp-desig', designation); } catch (e) {} });
+    dwrap.appendChild(dlab); dwrap.appendChild(din);
+    bar.appendChild(dwrap);
+
+    var row = el('div', 'output-btns');
+    function btn(labelKey, feature, action, cls) {
+      var b = el('button', 'out-btn' + (cls ? ' ' + cls : '')); b.type = 'button';
+      b.setAttribute('data-i18n', labelKey); b.textContent = t(labelKey);
+      if (edition === 'test' && RPM.GATED_FEATURES.indexOf(feature) >= 0) b.classList.add('locked');
+      b.addEventListener('click', function () { guard(feature, action); });
+      row.appendChild(b);
+    }
+    btn('outCopy', 'copy', doCopyText);
+    if (mode === 'fit') btn('outCad', 'cad', doCopyCad);
+    btn('outSave', 'save', doSaveDtp);
+    btn('outLoad', 'load', doLoadDtp);
+    btn('outPrint', 'print', doPrint, 'primary');
+    bar.appendChild(row);
+
+    resultHost.appendChild(bar);
   }
 
   function on(id, ev, fn) { var e = document.getElementById(id); if (e) e.addEventListener(ev, fn); }
