@@ -692,3 +692,97 @@ input.locked { background: var(--line-soft); color: var(--muted); cursor: defaul
 .pv-own-row { margin: 6px 0 2px; }
 .pv-own-row input.num { max-width: 110px; }
 .pv-cust { margin-top: 6px; }
+
+/* ==========================================================================
+   B11-UI — Passungs-Assistent: Button + animiertes Overlay. Passt zu den
+   bestehenden Tokens (--accent Cyan, --brass Messing). Respektiert
+   prefers-reduced-motion (globale Regel weiter unten deaktiviert Animationen). */
+.form-top { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+.form-top .mode-switch { flex: 0 0 auto; }
+.assist-btn {
+  margin-left: auto; display: inline-flex; align-items: center; gap: 7px;
+  padding: 9px 15px; border-radius: 999px; cursor: pointer;
+  color: #1a1005; font-weight: 700; font-size: 13px; border: 0;
+  background: linear-gradient(135deg, var(--brass) 0%, #e6c268 50%, var(--brass) 100%);
+  background-size: 200% 100%; box-shadow: 0 4px 14px -4px rgba(202,160,74,.6);
+  transition: transform .15s ease, box-shadow .2s ease, background-position .6s ease;
+}
+.assist-btn:hover { transform: translateY(-1px); box-shadow: 0 7px 20px -5px rgba(202,160,74,.75); background-position: 100% 0; }
+.assist-btn:active { transform: translateY(0); }
+.assist-spark { font-size: 14px; animation: assist-sparkle 2.4s ease-in-out infinite; }
+@keyframes assist-sparkle { 0%,100% { opacity: .65; transform: scale(1) rotate(0); } 50% { opacity: 1; transform: scale(1.25) rotate(20deg); } }
+
+/* Overlay öffnet mit Fade + sanftem Hochgleiten. */
+.assist-overlay { opacity: 0; transition: opacity .2s ease; }
+.assist-overlay.open { opacity: 1; }
+.assist-modal { max-width: 480px; transform: translateY(14px) scale(.98); opacity: .6; transition: transform .26s cubic-bezier(.2,.8,.25,1), opacity .26s ease; }
+.assist-overlay.open .assist-modal { transform: translateY(0) scale(1); opacity: 1; }
+.assist-body { padding: 18px; }
+
+/* Schritt-Wechsel: rein von rechts, raus nach links. */
+.assist-step, .assist-results { animation: assist-in .28s cubic-bezier(.2,.8,.25,1) both; }
+.assist-step.assist-leave, .assist-results.assist-leave { animation: assist-out .13s ease forwards; }
+@keyframes assist-in  { from { opacity: 0; transform: translateX(16px); } to { opacity: 1; transform: translateX(0); } }
+@keyframes assist-out { from { opacity: 1; transform: translateX(0); } to { opacity: 0; transform: translateX(-16px); } }
+
+.assist-nominal { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+.assist-nominal label { font-size: 13px; color: var(--muted); flex: 1 1 auto; }
+.assist-nominal input.num { max-width: 100px; }
+.assist-nominal-unit { font-size: 13px; color: var(--muted); }
+.assist-nominal.shake { animation: assist-shake .45s ease; }
+@keyframes assist-shake { 0%,100%{transform:translateX(0)} 20%,60%{transform:translateX(-5px)} 40%,80%{transform:translateX(5px)} }
+.assist-intro { font-size: 13px; color: var(--muted); line-height: 1.5; margin-bottom: 14px; }
+.assist-warn { width: 100%; margin-top: 6px; font-size: 12px; color: #e5484d; }
+
+.assist-progress { margin-bottom: 14px; }
+.assist-bar { height: 5px; border-radius: 999px; background: var(--line-soft); overflow: hidden; }
+.assist-bar-fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg, var(--accent), #6fe0ec); transition: width .35s cubic-bezier(.2,.8,.25,1); }
+.assist-progress-text { margin-top: 6px; font-size: 11.5px; color: var(--muted); letter-spacing: .02em; }
+
+.assist-q { font-size: 16px; font-weight: 700; color: var(--fg); margin-bottom: 14px; line-height: 1.35; }
+.assist-opts { display: grid; gap: 9px; }
+.assist-opt {
+  text-align: left; padding: 13px 15px; border-radius: 12px; cursor: pointer;
+  border: 1.5px solid var(--line); background: var(--surface-2, var(--bg));
+  display: flex; flex-direction: column; gap: 2px;
+  transition: border-color .16s ease, transform .12s ease, box-shadow .16s ease, background .16s ease;
+  animation: assist-opt-pop .32s ease both;
+}
+@keyframes assist-opt-pop { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+.assist-opt:hover { border-color: var(--accent); transform: translateY(-1px); box-shadow: 0 6px 18px -8px var(--accent); }
+.assist-opt:active { transform: translateY(0) scale(.99); }
+.assist-opt-main { font-size: 14px; font-weight: 650; color: var(--fg); }
+.assist-opt-sub { font-size: 12px; color: var(--muted); }
+
+.assist-nav { display: flex; gap: 10px; margin-top: 16px; }
+.assist-nav-btn { padding: 8px 14px; border-radius: 9px; border: 1px solid var(--line); background: transparent; color: var(--muted); cursor: pointer; font-size: 13px; transition: color .15s, border-color .15s; }
+.assist-nav-btn:hover { color: var(--fg); border-color: var(--accent); }
+
+.assist-res-title { font-size: 16px; font-weight: 700; margin-bottom: 4px; }
+.assist-res-lead { font-size: 12.5px; color: var(--muted); margin-bottom: 14px; }
+.assist-card {
+  border: 1.5px solid var(--line); border-radius: 14px; padding: 14px 15px; margin-bottom: 11px;
+  background: var(--surface); animation: assist-card-in .4s cubic-bezier(.2,.8,.25,1) both;
+}
+@keyframes assist-card-in { from { opacity: 0; transform: translateY(12px) scale(.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
+.assist-card-top { display: flex; align-items: center; gap: 9px; }
+.assist-card-fit { font: 800 22px/1 var(--font-num, monospace); color: var(--accent); letter-spacing: .01em; }
+.assist-badge { font-size: 13px; color: var(--brass); }
+.assist-card-reason { font-size: 13px; color: var(--fg); line-height: 1.5; margin: 8px 0 2px; }
+.assist-card-alt { font-size: 12px; color: var(--muted); margin-top: 4px; }
+.assist-alt-fit { font-family: var(--font-num, monospace); color: var(--shaft); font-weight: 700; }
+.assist-card-hint { font-size: 12px; color: var(--muted); margin-top: 7px; padding-left: 10px; border-left: 3px solid var(--accent); line-height: 1.45; }
+.assist-card-hint.warn { color: #e5484d; border-left-color: #e5484d; }
+.assist-apply {
+  margin-top: 12px; width: 100%; padding: 11px; border-radius: 10px; border: 0; cursor: pointer;
+  font-weight: 700; font-size: 14px; color: #06222a;
+  background: linear-gradient(135deg, var(--accent), #6fe0ec); box-shadow: 0 4px 14px -5px var(--accent);
+  transition: transform .14s ease, box-shadow .18s ease;
+}
+.assist-apply:hover { transform: translateY(-1px); box-shadow: 0 7px 20px -6px var(--accent); }
+.assist-apply:active { transform: translateY(0); }
+
+@media print { .assist-btn, .assist-overlay { display: none !important; } }
+@media (prefers-reduced-motion: reduce) {
+  .assist-spark, .assist-step, .assist-results, .assist-opt, .assist-card, .assist-modal { animation: none !important; transition: none !important; }
+}

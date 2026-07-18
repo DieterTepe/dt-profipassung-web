@@ -700,6 +700,165 @@
     ['de', 'en', 'pt'].forEach(function (l) { for (var k in s[l]) STR[l][k] = s[l][k]; });
   })();
 
+  /* B11-UI — Passungs-Assistent: Button, Dialog, Fragen/Antworten,
+     Begründungen (AS_R_*) und Hinweise (AS_HINT_*) — DE/EN/PT. */
+  (function () {
+    var s = {
+      de: {
+        asBtn: 'Passung finden', asTitle: 'Passungs-Assistent',
+        asIntro: 'Ein paar kurze Fragen — und ich schlage passende Passungen mit Begründung vor.',
+        asProgress: 'Frage {n} von {t}', asBack: 'Zurück', asRestart: 'Neu starten', asClose: 'Schließen',
+        asNominal: 'Nennmaß (Durchmesser)', asResultTitle: 'Meine Vorschläge',
+        asResultLead: 'Für {mm} mm — nach Eignung geordnet. Tippe „Übernehmen".',
+        asApply: 'Übernehmen', asAltPrefix: 'Einheitswelle-Alternative:',
+        asNoNominal: 'Bitte zuerst ein Nennmaß eintragen.',
+        // Fragen
+        asQ_purpose: 'Was soll die Verbindung tun?',
+        asQ_demount: 'Wie oft wird sie wieder auseinandergebaut?',
+        asQ_precision: 'Wie genau muss die Führung sein?',
+        asQ_hubMat: 'Woraus besteht die Nabe (das Außenteil)?',
+        asQ_temp: 'In welchem Temperaturbereich läuft sie?',
+        // Antworten
+        asA_SLIDE: 'Gleiten / drehen', asA_SLIDE_sub: 'Lager, Führung, Welle dreht sich',
+        asA_HANDFIT: 'Von Hand fügen / lösen', asA_HANDFIT_sub: 'Schiebesitz, Zentrieren, ohne Presse',
+        asA_FIXED: 'Fest sitzen & Moment übertragen', asA_FIXED_sub: 'Zahnrad, Riemenscheibe, Kupplung',
+        asA_OFTEN: 'Oft', asA_OFTEN_sub: 'regelmäßige Wartung',
+        asA_SELDOM: 'Selten', asA_SELDOM_sub: 'nur bei Reparatur',
+        asA_NEVER: 'Praktisch nie', asA_NEVER_sub: 'dauerhafte Verbindung',
+        asA_NORMAL_p: 'Normal', asA_NORMAL_p_sub: 'übliche Anforderung',
+        asA_HIGH: 'Hochpräzise', asA_HIGH_sub: 'enge Führung, wenig Spiel',
+        asA_LOW: 'Unkritisch', asA_LOW_sub: 'Hauptsache es passt',
+        asA_STEEL: 'Stahl', asA_STEEL_sub: 'Standard, belastbar',
+        asA_CAST: 'Grauguss', asA_CAST_sub: 'spröde — Vorsicht beim Pressen',
+        asA_LIGHT: 'Leichtmetall', asA_LIGHT_sub: 'Alu/Mg — geringere Festigkeit',
+        asA_NORMAL_t: 'Normal', asA_NORMAL_t_sub: 'etwa Raumtemperatur',
+        asA_HOT: 'Heiß (> 100 °C)', asA_HOT_sub: 'Betrieb wird deutlich warm',
+        // Begründungen
+        AS_R_G6: 'Minimales Spiel, läuft leichtgängig — die klassische Präzisions-Führung.',
+        AS_R_G5_PREC: 'Noch enger für höchste Genauigkeit; Fertigung wird anspruchsvoller.',
+        AS_R_F7: 'Bewährter Laufsitz mit sicherem Schmierspalt.',
+        AS_R_F7_LOOSE: 'Etwas mehr Luft — gutmütig bei Verschmutzung oder Wärme.',
+        AS_R_E8: 'Großzügiger Ölspalt für sicher gleitende Gleitlager.',
+        AS_R_JS6: 'Sitzt wackelfrei zentriert und lässt sich doch von Hand fügen und lösen.',
+        AS_R_H6: 'Spiel nahe null — verschiebbar, ohne zu klemmen (Schiebesitz).',
+        AS_R_H8_LOOSE: 'Bequem fügbarer Schiebesitz, wenn es nicht auf Präzision ankommt.',
+        AS_R_K6_LIGHT: 'Leichter Übergang mit guter Zentrierung.',
+        AS_R_K6: 'Fester Übergang, noch demontierbar — gut mit Passfeder.',
+        AS_R_M6: 'Etwas fester als k6, weiter demontierbar.',
+        AS_R_N6: 'Fester Sitz, mit Presse fügbar — überträgt schon spürbar Moment.',
+        AS_R_P6: 'Leichter Presssitz — sicherer Halt, selten gelöst.',
+        AS_R_R6: 'Presssitz für höhere Momente — praktisch dauerhaft.',
+        AS_R_S6: 'Kräftiger Pressverband — überträgt große Momente reibschlüssig.',
+        AS_R_U8: 'Schwerer Schrumpfsitz für sehr große Momente; thermisch fügen.',
+        // Hinweise
+        AS_HINT_PRESS: 'Presssitz — im Bereich „Pressverband (DIN 7190)" prüfen, ob Druck und Sicherheiten passen.',
+        AS_HINT_SHRINK: 'Schrumpfsitz: meist thermisches Fügen nötig — der Pressverband-Bereich rechnet die Temperaturen.',
+        AS_HINT_LIGHT_HUB: '⚠ Leichtmetall-Nabe: geringere Festigkeit — im Pressverband unbedingt p_zul und Sicherheit prüfen.',
+        AS_HINT_CAST_HUB: 'Grauguss-Nabe ist spröde: im Pressverband gegen Bruch (Rm) mit Sicherheit ≥ 2…3 rechnen.',
+        AS_HINT_TEMP: 'Heißbetrieb: den Bereich „Betrieb (Thermik)" aktivieren — Wärme verändert das Spiel.'
+      },
+      en: {
+        asBtn: 'Find a fit', asTitle: 'Fit Assistant',
+        asIntro: 'A few quick questions — then I suggest suitable fits with reasons.',
+        asProgress: 'Question {n} of {t}', asBack: 'Back', asRestart: 'Restart', asClose: 'Close',
+        asNominal: 'Nominal size (diameter)', asResultTitle: 'My suggestions',
+        asResultLead: 'For {mm} mm — ordered by suitability. Tap “Apply”.',
+        asApply: 'Apply', asAltPrefix: 'Shaft-basis alternative:',
+        asNoNominal: 'Please enter a nominal size first.',
+        asQ_purpose: 'What should the joint do?',
+        asQ_demount: 'How often is it taken apart again?',
+        asQ_precision: 'How precise must the guidance be?',
+        asQ_hubMat: 'What is the hub (outer part) made of?',
+        asQ_temp: 'What temperature range does it run in?',
+        asA_SLIDE: 'Slide / rotate', asA_SLIDE_sub: 'bearing, guide, shaft turns',
+        asA_HANDFIT: 'Join / release by hand', asA_HANDFIT_sub: 'sliding fit, centring, no press',
+        asA_FIXED: 'Sit tight & transmit torque', asA_FIXED_sub: 'gear, pulley, coupling',
+        asA_OFTEN: 'Often', asA_OFTEN_sub: 'regular maintenance',
+        asA_SELDOM: 'Seldom', asA_SELDOM_sub: 'only for repair',
+        asA_NEVER: 'Practically never', asA_NEVER_sub: 'permanent joint',
+        asA_NORMAL_p: 'Normal', asA_NORMAL_p_sub: 'usual requirement',
+        asA_HIGH: 'High precision', asA_HIGH_sub: 'tight guidance, little play',
+        asA_LOW: 'Uncritical', asA_LOW_sub: 'just needs to fit',
+        asA_STEEL: 'Steel', asA_STEEL_sub: 'standard, strong',
+        asA_CAST: 'Grey cast iron', asA_CAST_sub: 'brittle — careful when pressing',
+        asA_LIGHT: 'Light metal', asA_LIGHT_sub: 'Al/Mg — lower strength',
+        asA_NORMAL_t: 'Normal', asA_NORMAL_t_sub: 'about room temperature',
+        asA_HOT: 'Hot (> 100 °C)', asA_HOT_sub: 'runs clearly warm',
+        AS_R_G6: 'Minimal play, runs freely — the classic precision guide.',
+        AS_R_G5_PREC: 'Even tighter for highest accuracy; manufacturing gets harder.',
+        AS_R_F7: 'Proven running fit with a safe lubrication gap.',
+        AS_R_F7_LOOSE: 'A little more room — forgiving with dirt or heat.',
+        AS_R_E8: 'Generous oil gap for safely sliding plain bearings.',
+        AS_R_JS6: 'Sits centred without wobble yet joins and releases by hand.',
+        AS_R_H6: 'Play near zero — slides without jamming (sliding fit).',
+        AS_R_H8_LOOSE: 'Comfortably joinable sliding fit when precision is not key.',
+        AS_R_K6_LIGHT: 'Light transition with good centring.',
+        AS_R_K6: 'Firm transition, still removable — good with a key.',
+        AS_R_M6: 'A bit firmer than k6, still removable.',
+        AS_R_N6: 'Tight fit, joinable with a press — already transmits torque.',
+        AS_R_P6: 'Light press fit — secure hold, rarely released.',
+        AS_R_R6: 'Press fit for higher torque — practically permanent.',
+        AS_R_S6: 'Strong press fit — transmits large torque by friction.',
+        AS_R_U8: 'Heavy shrink fit for very large torque; join thermally.',
+        AS_HINT_PRESS: 'Press fit — check pressure and safeties in the “Press fit (DIN 7190)” section.',
+        AS_HINT_SHRINK: 'Shrink fit: usually thermal joining needed — the press-fit section computes the temperatures.',
+        AS_HINT_LIGHT_HUB: '⚠ Light-metal hub: lower strength — be sure to check p_zul and safety in the press fit.',
+        AS_HINT_CAST_HUB: 'Grey cast iron hub is brittle: compute against fracture (Rm) with safety ≥ 2…3 in the press fit.',
+        AS_HINT_TEMP: 'Hot operation: enable the “Operation (thermal)” section — heat changes the clearance.'
+      },
+      pt: {
+        asBtn: 'Encontrar ajuste', asTitle: 'Assistente de Ajuste',
+        asIntro: 'Algumas perguntas rápidas — e eu sugiro ajustes adequados com justificativa.',
+        asProgress: 'Pergunta {n} de {t}', asBack: 'Voltar', asRestart: 'Recomeçar', asClose: 'Fechar',
+        asNominal: 'Dimensão nominal (diâmetro)', asResultTitle: 'Minhas sugestões',
+        asResultLead: 'Para {mm} mm — ordenadas por adequação. Toque em “Aplicar”.',
+        asApply: 'Aplicar', asAltPrefix: 'Alternativa eixo-base:',
+        asNoNominal: 'Informe primeiro uma dimensão nominal.',
+        asQ_purpose: 'O que a união deve fazer?',
+        asQ_demount: 'Com que frequência será desmontada?',
+        asQ_precision: 'Qual a precisão necessária da guia?',
+        asQ_hubMat: 'De que é feito o cubo (peça externa)?',
+        asQ_temp: 'Em que faixa de temperatura ela opera?',
+        asA_SLIDE: 'Deslizar / girar', asA_SLIDE_sub: 'mancal, guia, eixo gira',
+        asA_HANDFIT: 'Montar / soltar à mão', asA_HANDFIT_sub: 'ajuste deslizante, centragem, sem prensa',
+        asA_FIXED: 'Fixar & transmitir torque', asA_FIXED_sub: 'engrenagem, polia, acoplamento',
+        asA_OFTEN: 'Com frequência', asA_OFTEN_sub: 'manutenção regular',
+        asA_SELDOM: 'Raramente', asA_SELDOM_sub: 'só em reparo',
+        asA_NEVER: 'Praticamente nunca', asA_NEVER_sub: 'união permanente',
+        asA_NORMAL_p: 'Normal', asA_NORMAL_p_sub: 'exigência usual',
+        asA_HIGH: 'Alta precisão', asA_HIGH_sub: 'guia justa, pouca folga',
+        asA_LOW: 'Não crítico', asA_LOW_sub: 'só precisa encaixar',
+        asA_STEEL: 'Aço', asA_STEEL_sub: 'padrão, resistente',
+        asA_CAST: 'Ferro fundido', asA_CAST_sub: 'frágil — cuidado ao prensar',
+        asA_LIGHT: 'Metal leve', asA_LIGHT_sub: 'Al/Mg — menor resistência',
+        asA_NORMAL_t: 'Normal', asA_NORMAL_t_sub: 'cerca da temperatura ambiente',
+        asA_HOT: 'Quente (> 100 °C)', asA_HOT_sub: 'aquece bastante',
+        AS_R_G6: 'Folga mínima, gira leve — a guia de precisão clássica.',
+        AS_R_G5_PREC: 'Ainda mais justo para máxima precisão; fabricação mais exigente.',
+        AS_R_F7: 'Ajuste de giro consagrado com fresta de lubrificação segura.',
+        AS_R_F7_LOOSE: 'Um pouco mais de folga — tolerante a sujeira ou calor.',
+        AS_R_E8: 'Fresta de óleo generosa para mancais deslizantes seguros.',
+        AS_R_JS6: 'Fica centrado sem folga e ainda monta e solta à mão.',
+        AS_R_H6: 'Folga quase nula — desliza sem travar (ajuste deslizante).',
+        AS_R_H8_LOOSE: 'Ajuste deslizante fácil de montar quando a precisão não importa.',
+        AS_R_K6_LIGHT: 'Transição leve com boa centragem.',
+        AS_R_K6: 'Transição firme, ainda desmontável — boa com chaveta.',
+        AS_R_M6: 'Um pouco mais firme que k6, ainda desmontável.',
+        AS_R_N6: 'Assento firme, montável com prensa — já transmite torque.',
+        AS_R_P6: 'Ajuste prensado leve — fixação segura, raramente solto.',
+        AS_R_R6: 'Ajuste prensado para torque maior — praticamente permanente.',
+        AS_R_S6: 'Ajuste prensado forte — transmite grande torque por atrito.',
+        AS_R_U8: 'Ajuste por contração pesado para torque muito grande; montar termicamente.',
+        AS_HINT_PRESS: 'Ajuste prensado — verifique pressão e seguranças na seção “Ajuste prensado (DIN 7190)”.',
+        AS_HINT_SHRINK: 'Contração: geralmente exige montagem térmica — a seção de ajuste prensado calcula as temperaturas.',
+        AS_HINT_LIGHT_HUB: '⚠ Cubo de metal leve: menor resistência — verifique p_zul e segurança no ajuste prensado.',
+        AS_HINT_CAST_HUB: 'Cubo de ferro fundido é frágil: calcule contra ruptura (Rm) com segurança ≥ 2…3 no ajuste prensado.',
+        AS_HINT_TEMP: 'Operação quente: ative a seção “Operação (térmica)” — o calor altera a folga.'
+      }
+    };
+    ['de', 'en', 'pt'].forEach(function (l) { for (var k in s[l]) STR[l][k] = s[l][k]; });
+  })();
+
   /* ======================================================================= *
    * 2) Zustand + kleine Helfer
    * ======================================================================= */
@@ -828,7 +987,17 @@
 
   function buildForm() {
     host.textContent = '';
-    host.appendChild(buildModeSwitch());
+    var top = el('div', 'form-top');
+    top.appendChild(buildModeSwitch());
+    var asBtn = el('button', 'assist-btn'); asBtn.type = 'button';
+    asBtn.setAttribute('data-i18n', 'asBtn'); 
+    var spark = el('span', 'assist-spark', '✦');
+    var lab = el('span', 'assist-lbl'); lab.setAttribute('data-i18n', 'asBtn'); lab.textContent = t('asBtn');
+    asBtn.textContent = ''; asBtn.appendChild(spark); asBtn.appendChild(lab);
+    asBtn.setAttribute('aria-haspopup', 'dialog');
+    asBtn.addEventListener('click', openAssistant);
+    top.appendChild(asBtn);
+    host.appendChild(top);
     if (mode === 'freiform') { buildFreiformFormInner(); return; }
     buildFitFormInner();
   }
@@ -1946,6 +2115,233 @@
   /* ======================================================================= *
    * 8) Start
    * ======================================================================= */
+  /* ===================================================================== *
+   * B11-UI — Passungs-Assistent: Overlay-Dialog. Kernlogik: DTPAssistent.
+   * Ablauf: Nennmaß + 4 Fragen (auto-weiter) → bis zu 3 Vorschlagskarten →
+   * „Übernehmen" setzt Nennmaß + Passung und rechnet. Sanft animiert.
+   * ===================================================================== */
+  var asOverlay = null, asAnswers = {}, asNominalVal = '';
+  var AS = window.DTPAssistent;
+
+  function openAssistant() {
+    if (!AS) return;
+    asAnswers = {};
+    asNominalVal = (elNominal && elNominal.value) || (mode === 'fit' ? '25' : '25');
+    if (!asOverlay) asOverlay = buildAssistantShell();
+    document.body.appendChild(asOverlay);
+    asOverlay.classList.remove('open'); // reflow-Trigger für Einblend-Animation
+    void asOverlay.offsetWidth;
+    asOverlay.classList.add('open');
+    renderAssistantStep();
+  }
+
+  function closeAssistant() {
+    if (!asOverlay) return;
+    asOverlay.classList.remove('open');
+    var ov = asOverlay;
+    setTimeout(function () { if (ov && ov.parentNode) ov.parentNode.removeChild(ov); }, 200);
+  }
+
+  function buildAssistantShell() {
+    var ov = el('div', 'modal-overlay assist-overlay');
+    ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-modal', 'true');
+    var m = el('div', 'modal assist-modal');
+    var head = el('div', 'modal-head');
+    var h = el('h3'); h.setAttribute('data-i18n', 'asTitle'); h.textContent = t('asTitle');
+    head.appendChild(h);
+    var x = el('button', 'close', '✕'); x.type = 'button';
+    x.setAttribute('aria-label', t('asClose')); x.setAttribute('data-i18n-aria', 'asClose');
+    x.addEventListener('click', closeAssistant);
+    head.appendChild(x);
+    m.appendChild(head);
+    var body = el('div', 'modal-body assist-body');
+    m.appendChild(body);
+    ov.appendChild(m);
+    ov._body = body;
+    // Backdrop-Klick + Escape schließen.
+    ov.addEventListener('click', function (e) { if (e.target === ov) closeAssistant(); });
+    ov.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeAssistant(); });
+    return ov;
+  }
+
+  function renderAssistantStep() {
+    var body = asOverlay._body; body.textContent = '';
+    var qid = AS.nextQuestion(asAnswers);
+
+    if (qid === null) { renderAssistantResults(body); return; }
+
+    // Fortschritt berechnen (4 Fragen; die 4. hängt vom Zweck ab).
+    var order = ['purpose', 'demount', 'precision', (asAnswers.purpose === 'FIXED' ? 'hubMat' : 'temp')];
+    var idx = order.indexOf(qid); if (idx < 0) idx = 0;
+    var total = 4;
+
+    var card = el('div', 'assist-step');
+
+    // Schritt 0: Nennmaß-Feld (nur einmal, oben, bleibt über die Fragen sichtbar).
+    if (idx === 0) {
+      var nb = el('div', 'assist-nominal');
+      var nlab = el('label'); nlab.setAttribute('data-i18n', 'asNominal'); nlab.textContent = t('asNominal');
+      var nin = el('input'); nin.type = 'number'; nin.className = 'num'; nin.step = 'any'; nin.min = '1';
+      nin.value = asNominalVal; nin.setAttribute('inputmode', 'decimal');
+      nin.addEventListener('input', function () { asNominalVal = nin.value; });
+      var unit = el('span', 'assist-nominal-unit', 'mm');
+      nb.appendChild(nlab); nb.appendChild(nin); nb.appendChild(unit);
+      card.appendChild(nb);
+      var intro = el('div', 'assist-intro'); intro.setAttribute('data-i18n', 'asIntro'); intro.textContent = t('asIntro');
+      card.appendChild(intro);
+    }
+
+    var prog = el('div', 'assist-progress');
+    var bar = el('div', 'assist-bar');
+    var fill = el('div', 'assist-bar-fill'); fill.style.width = (idx / total * 100) + '%';
+    bar.appendChild(fill);
+    var ptext = el('div', 'assist-progress-text');
+    ptext.textContent = t('asProgress').replace('{n}', String(idx + 1)).replace('{t}', String(total));
+    prog.appendChild(bar); prog.appendChild(ptext);
+    card.appendChild(prog);
+
+    var q = el('div', 'assist-q'); q.setAttribute('data-i18n', 'asQ_' + qid); q.textContent = t('asQ_' + qid);
+    card.appendChild(q);
+
+    var opts = el('div', 'assist-opts');
+    AS.optionsFor(qid).forEach(function (val, i) {
+      var subKey = optSubKey(qid, val);
+      var b = el('button', 'assist-opt'); b.type = 'button';
+      b.style.animationDelay = (i * 45) + 'ms';
+      var main = el('span', 'assist-opt-main');
+      main.setAttribute('data-i18n', optMainKey(qid, val)); main.textContent = t(optMainKey(qid, val));
+      b.appendChild(main);
+      if (subKey) {
+        var sub = el('span', 'assist-opt-sub'); sub.setAttribute('data-i18n', subKey); sub.textContent = t(subKey);
+        b.appendChild(sub);
+      }
+      b.addEventListener('click', function () {
+        if (idx === 0) {
+          var nv = parseFloat(String(asNominalVal).replace(',', '.'));
+          if (!(nv > 0)) { flashNominalWarning(card); return; }
+        }
+        asAnswers[qid] = val;
+        transitionStep();
+      });
+      opts.appendChild(b);
+    });
+    card.appendChild(opts);
+
+    // Navigationszeile.
+    var nav = el('div', 'assist-nav');
+    if (idx > 0) {
+      var back = el('button', 'assist-nav-btn'); back.type = 'button';
+      back.setAttribute('data-i18n', 'asBack'); back.textContent = t('asBack');
+      back.addEventListener('click', function () {
+        delete asAnswers[order[idx - 1]];
+        // Falls purpose zurückgenommen wird, die kontextabhängige 4. Antwort mit entfernen.
+        if (order[idx - 1] === 'purpose') { delete asAnswers.hubMat; delete asAnswers.temp; }
+        transitionStep();
+      });
+      nav.appendChild(back);
+    }
+    card.appendChild(nav);
+
+    body.appendChild(card);
+  }
+
+  function transitionStep() {
+    var body = asOverlay._body;
+    var cur = body.querySelector('.assist-step, .assist-results');
+    if (cur) {
+      cur.classList.add('assist-leave');
+      setTimeout(renderAssistantStep, 130);
+    } else {
+      renderAssistantStep();
+    }
+  }
+
+  function flashNominalWarning(card) {
+    var old = card.querySelector('.assist-warn');
+    if (old) return;
+    var w = el('div', 'assist-warn'); w.setAttribute('data-i18n', 'asNoNominal'); w.textContent = t('asNoNominal');
+    var nb = card.querySelector('.assist-nominal');
+    if (nb) { nb.classList.add('shake'); setTimeout(function () { nb.classList.remove('shake'); }, 500); nb.appendChild(w); }
+  }
+
+  function renderAssistantResults(body) {
+    var res = AS.recommend(asAnswers);
+    var wrap = el('div', 'assist-results');
+    var nv = parseFloat(String(asNominalVal).replace(',', '.'));
+    var title = el('div', 'assist-res-title'); title.setAttribute('data-i18n', 'asResultTitle'); title.textContent = t('asResultTitle');
+    wrap.appendChild(title);
+    var lead = el('div', 'assist-res-lead');
+    lead.textContent = t('asResultLead').replace('{mm}', decComma(String(nv)));
+    wrap.appendChild(lead);
+
+    if (res.ok) {
+      res.suggestions.forEach(function (sg, i) {
+        var c = el('div', 'assist-card'); c.style.animationDelay = (i * 80) + 'ms';
+        var top = el('div', 'assist-card-top');
+        var fit = el('div', 'assist-card-fit', sg.fit);
+        top.appendChild(fit);
+        if (i === 0) { var badge = el('span', 'assist-badge', '★'); top.appendChild(badge); }
+        c.appendChild(top);
+        var reason = el('div', 'assist-card-reason'); reason.setAttribute('data-i18n', sg.reasonCode); reason.textContent = t(sg.reasonCode);
+        c.appendChild(reason);
+        if (sg.hBasisAlt) {
+          var alt = el('div', 'assist-card-alt');
+          var ap = el('span', 'assist-alt-pre'); ap.setAttribute('data-i18n', 'asAltPrefix'); ap.textContent = t('asAltPrefix');
+          var av = el('span', 'assist-alt-fit', ' ' + sg.hBasisAlt);
+          alt.appendChild(ap); alt.appendChild(av);
+          c.appendChild(alt);
+        }
+        if (sg.hintCode) {
+          var hint = el('div', 'assist-card-hint' + (sg.hintCode === 'AS_HINT_LIGHT_HUB' ? ' warn' : ''));
+          hint.setAttribute('data-i18n', sg.hintCode); hint.textContent = t(sg.hintCode);
+          c.appendChild(hint);
+        }
+        var apply = el('button', 'assist-apply'); apply.type = 'button';
+        apply.setAttribute('data-i18n', 'asApply'); apply.textContent = t('asApply');
+        apply.addEventListener('click', function () { applyAssistantSuggestion(sg.fit, nv); });
+        c.appendChild(apply);
+        wrap.appendChild(c);
+      });
+    }
+
+    var nav = el('div', 'assist-nav');
+    var restart = el('button', 'assist-nav-btn'); restart.type = 'button';
+    restart.setAttribute('data-i18n', 'asRestart'); restart.textContent = t('asRestart');
+    restart.addEventListener('click', function () { asAnswers = {}; transitionStep(); });
+    nav.appendChild(restart);
+    wrap.appendChild(nav);
+
+    body.appendChild(wrap);
+  }
+
+  /* „Übernehmen": Nennmaß + Passung ins Formular, Modus auf Passung, rechnen. */
+  function applyAssistantSuggestion(fitCode, nominal) {
+    var full = (nominal > 0 ? String(nominal) + ' ' : '25 ') + fitCode;
+    var p = S.parseFit(full);
+    if (!p || !p.ok) { closeAssistant(); return; }
+    if (mode !== 'fit') { mode = 'fit'; try { localStorage.setItem('dtp-mode', mode); } catch (e) {} buildForm(); }
+    if (nominal > 0 && elNominal) elNominal.value = String(nominal);
+    if (elHoleL) elHoleL.value = p.hole.letter;
+    if (elHoleG) elHoleG.value = String(p.hole.grade);
+    if (elShaftL) elShaftL.value = p.shaft.letter;
+    if (elShaftG) elShaftG.value = String(p.shaft.grade);
+    if (elSystem) elSystem.value = p.system || 'EB';
+    closeAssistant();
+    recalc();
+    if (resultHost && resultHost.scrollIntoView) {
+      try { resultHost.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (e) {}
+    }
+  }
+
+  function optMainKey(qid, val) {
+    if (qid === 'precision' && val === 'NORMAL') return 'asA_NORMAL_p';
+    if (qid === 'temp' && val === 'NORMAL') return 'asA_NORMAL_t';
+    return 'asA_' + val;
+  }
+  function optSubKey(qid, val) {
+    return optMainKey(qid, val) + '_sub';
+  }
+
   function on(id, ev, fn) { var e = document.getElementById(id); if (e) e.addEventListener(ev, fn); }
 
   function init() {

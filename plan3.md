@@ -26,10 +26,10 @@ komplette Wahrheit steht in diesem Plan und in den Projektdateien. So steigst du
    nach jeder Änderung ausliefern; nach Pause zuerst prüfen, was in /mnt/project schon
    angekommen ist, und Verlorenes identisch wieder einspielen.
 
-4) NÄCHSTE AUFGABE: **B11-UI — Dialog-Overlay in ui.js.** Der DOM-freie Kern (assistent.js,
-   DTPAssistent) ist fertig, grün und eingebunden; jetzt fehlt nur noch das Overlay (Button
-   oben → 4-Fragen-Dialog → bis zu 3 Vorschlagskarten → „Übernehmen" setzt Felder + rechnet).
-   Danach B14 → B15 → B13 → B16 (V1). Toleranzkette (B12) bewusst ins **V1.1-Update** verschoben.
+4) NÄCHSTE AUFGABE: **B14 — Ausgaben** (Port report.js: Copy-Text, CAD-Snippet, .dtp
+   speichern/laden, Druck→PDF, RTF, CSV). Danach B15 → B13 → B16 (V1). Toleranzkette (B12)
+   bewusst ins **V1.1-Update** verschoben. (B11 Passungs-Assistent ist komplett — Kern
+   assistent.js + Overlay-Dialog in ui.js, am Handy noch zu bestätigen.)
 
 5) ARBEITSWEISE JE BAUSTEIN (Fließband, minimale Diffs):
    bauen → `node --check` alle JS → i18n-Paritätsprüfung (alle Keys in DE/EN/PT vollständig)
@@ -56,9 +56,9 @@ komplette Wahrheit steht in diesem Plan und in den Projektdateien. So steigst du
 ═══════════════════════════════════════════════════════════════════════════
 
 ═══════════════════════════════════════════════════════════════════════════
-Plan-Version : 3.1 · Stand 2026-07-17 · Status: **B1–B10 bestätigt · B11 Passungs-Assistent
-               KERN (assistent.js + Harness) gebaut, grün & ausgeliefert — es fehlt noch das
-               UI-Overlay in ui.js (B11-UI) + Handy-Bestätigung.**
+Plan-Version : 3.2 · Stand 2026-07-18 · Status: **B1–B10 bestätigt · B11 Passungs-Assistent
+               KOMPLETT (Kern assistent.js + Overlay-Dialog in ui.js) gebaut, grün &
+               ausgeliefert — Handy-Bestätigung ausstehend.** Nächster Baustein: **B14 Ausgaben.**
 Basislinie   : **154.676 Assertions, 0 Fehler** — prüfbar per `node test_passung.js`,
                am Handy über **DT-ProfiPassung_Pruefstand.html** (grünes Banner = weiterbauen).
 Produktname  : **DT-ProfiPassung** (Arbeitstitel — vor Markteintritt Marke/Domain prüfen).
@@ -80,9 +80,9 @@ Zielgruppe   : Konstrukteure, Fertigung/QS, Ausbildung — Laie bis Profi. Preis
 ## 1. Reihenfolge-Entscheidung (Kern von plan3)
 
 **V1 — verkaufbare erste Version, in dieser Reihenfolge:**
-1. **B11 Passungs-Assistent** — Frage-Dialog → bis zu 3 begründete Passungsvorschläge,
-   Übernahme per Tipp. Größter Mehrwert (Laienführung = Alleinstellungsmerkmal), nutzt die
-   schon vorhandene Empfehlungsmatrix. **← NÄCHSTE AUFGABE.**
+1. **B11 Passungs-Assistent** ✓ KOMPLETT (Handy-Bestätigung ausstehend) — Frage-Dialog → bis
+   zu 3 begründete Passungsvorschläge, Übernahme per Tipp. Größter Mehrwert (Laienführung =
+   Alleinstellungsmerkmal), nutzt die vorhandene Empfehlungsmatrix.
 2. **B14 Ausgaben** — Copy-Text, CAD-Notiz-Snippet, `.dtp` speichern/laden, Druck→PDF, RTF,
    CSV. Schließt die größte spürbare Lücke (Nutzer kann Ergebnisse mitnehmen). Port `report.js`.
 3. **B15 Edition/Registrierung/Impressum** — Test/Voll-Trennung + Sperren der Ausgaben in der
@@ -355,6 +355,26 @@ Tokens): B11-UI in ui.js** — Button-Overlay-Dialog, i18n-Texte (Fragen/Antwort
 AS_R_*/AS_HINT_* ×3 Sprachen), Vorschlagskarten mit „Übernehmen" → setzt Nennmaß+Passung und
 ruft recalc. Muster: bestehende Overlays + labeledField/attachFieldHelp. **Wiedereinstieg mit
 „weiter mit B11-UI".**
+
+**v3.2 (2026-07-18) · B11 Passungs-Assistent KOMPLETT (Overlay-Dialog; Handy-Bestätigung
+ausstehend):** UI-Teil in **ui.js** auf dem DOM-freien Kern (assistent.js) aufgesetzt.
+**Assistent-Button** („✦ Passung finden", Messing-Pill mit Funkel-Animation) rechts in der
+Formularkopfzeile (neue .form-top-Leiste). **Overlay-Dialog** (nutzt das .modal-Muster, sanft
+ein-/ausgeblendet): kleines **Nennmaß-Feld** (Dieters Wunsch, Pflicht vor Weiter, mit Shake-
+Warnung), 4 Fragen als große Antwort-Kacheln mit Sub-Text, **automatisches Weitergleiten** beim
+Tippen (rein-von-rechts/raus-nach-links-Animation), Fortschrittsbalken + „Frage n von 4",
+„Zurück" (nimmt Antwort zurück; bei purpose-Reset auch die kontextabhängige 4. Antwort).
+Ergebnis: bis zu **3 Vorschlagskarten** (Passung groß in Akzentfarbe, ★ auf dem Top-Treffer,
+Laien-Begründung, optional h-Basis-Alternative + Hinweis, „Übernehmen"-Button). „Übernehmen"
+setzt Nennmaß+Passung, wechselt in den Passungsmodus, ruft recalc und scrollt zum Ergebnis.
+**67 i18n-Keys ×3 Sprachen** (Button, Fragen asQ_*, Antworten asA_*+_sub, Begründungen AS_R_*,
+Hinweise AS_HINT_*) — Parität 0 Fehler. **style.css**: vollständiges .assist-*-Set mit
+Animationen, respektiert prefers-reduced-motion, Print blendet aus. **dom_smoke_b10a.js**:
+Shim um querySelector/querySelectorAll/removeChild/offsetWidth/scrollIntoView erweitert;
+Assistent-Flow-Test (Button→Overlay→FIXED/NEVER/STEEL-Pfad→H7/s6-Vorschlag+Pressverband-
+Hinweis→Übernehmen setzt Nennmaß 60+rechnet→Sprachwechsel) → **47 OK, 0 Fehler**. Harness-
+Basislinie unverändert **154.676** (reiner UI-Schritt). Geändert: ui.js, style.css,
+dom_smoke_b10a.js, plan3.md. **Nächster Schritt: Handy-Bestätigung B11 → dann B14 Ausgaben.**
 
 ═══════════════════════════════════════════════════════════════════════════
 Ende plan3.md · DT-ProfiPassung

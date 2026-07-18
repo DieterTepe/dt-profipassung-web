@@ -69,6 +69,17 @@ Elem.prototype.walk = function (fn) {
 Elem.prototype.findAll = function (pred) {
   var out = []; this.walk(function (n) { if (pred(n)) out.push(n); }); return out;
 };
+Elem.prototype.removeChild = function (c) {
+  var i = this.children.indexOf(c); if (i >= 0) { this.children.splice(i, 1); c.parentNode = null; } return c;
+};
+Elem.prototype.querySelectorAll = function (sel) {
+  var parts = String(sel).split(',').map(function (s) { return s.trim(); });
+  var self = this;
+  return this.findAll(function (n) { return n !== self && parts.some(function (p) { return matchSel(n, p); }); });
+};
+Elem.prototype.querySelector = function (sel) { var r = this.querySelectorAll(sel); return r.length ? r[0] : null; };
+Object.defineProperty(Elem.prototype, 'offsetWidth', { get: function () { return 100; } });
+Elem.prototype.scrollIntoView = function () {};
 
 var docRoot = new Elem('html');
 var body = new Elem('body'); docRoot.appendChild(body);
@@ -114,7 +125,7 @@ global.localStorage = localStorageShim;
 
 /* ------------------------------------------------- Module in Reihenfolge */
 ['daten.js', 'validate.js', 'solver.js', 'freiform.js', 'thermik.js',
- 'rechenweg.js', 'schaubild.js', 'beratung.js', 'pressverband.js', 'ui.js'].forEach(function (f) {
+ 'rechenweg.js', 'schaubild.js', 'beratung.js', 'pressverband.js', 'assistent.js', 'ui.js'].forEach(function (f) {
   (0, eval)(fs.readFileSync(__dirname + '/' + f, 'utf8') + '\n//# sourceURL=' + f);
 });
 
@@ -240,6 +251,82 @@ var pvStepTitles = byId.resultHost.findAll(function (n) { return n.classList.con
 ok(pvStepTitles.length >= 8, 'Preset: PV-Rechenweg mit vielen Schritten (ist: ' + pvStepTitles.length + ')');
 // Preset zurücksetzen für die folgenden Tests:
 presetSel.value = ''; 
+
+/* B11-UI: Passungs-Assistent — Button vorhanden, Overlay öffnet, 4-Fragen-Flow,
+   Vorschlagskarten, „Übernehmen" setzt Passung + rechnet. setTimeout wird für
+   den Test sofort ausgeführt (Transitions überspringen). */
+(function () {
+  // setTimeout synchronisieren, damit Schrittwechsel im Test sofort greifen:
+  var _realST = global.setTimeout;
+  global.setTimeout = function (fn) { if (typeof fn === 'function') fn(); return 0; };
+
+  var asBtn = formHost.findAll(function (n) { return n.classList.contains('assist-btn'); })[0];
+  ok(!!asBtn, 'Assistent-Button im Formularkopf vorhanden');
+
+  function overlay() { return body.findAll(function (n) { return n.classList.contains('assist-overlay'); })[0]; }
+  asBtn.fire('click');
+  var ov = overlay();
+  ok(!!ov, 'Klick öffnet das Assistent-Overlay');
+  ok(ov && ov.classList.contains('open'), 'Overlay ist geöffnet (open)');
+
+  function stepOpts() { return ov.findAll(function (n) { return n.classList.contains('assist-opt'); }); }
+  function progressText() { var p = ov.findAll(function (n) { return n.classList.contains('assist-progress-text'); })[0]; return p ? p.textContent : ''; }
+  function qText() { var q = ov.findAll(function (n) { return n.classList.contains('assist-q'); })[0]; return q ? q.textContent : ''; }
+
+  // Frage 1: Nennmaß-Feld + purpose-Optionen (3 Stück).
+  var nomIn = ov.findAll(function (n) { return n.tagName === 'INPUT'; })[0];
+  ok(!!nomIn, 'Frage 1 zeigt Nennmaß-Feld');
+  ok(stepOpts().length === 3, 'Frage 1 (Zweck) hat 3 Antworten (ist: ' + stepOpts().length + ')');
+  ok(/1/.test(progressText()) && /4/.test(progressText()), 'Fortschritt „1 von 4"');
+
+  // Pfad FIXED wählen → 4. Frage muss Werkstoff (hubMat) sein.
+  nomIn.value = '60'; nomIn.fire('input');
+  // purpose = FIXED (3. Option)
+  stepOpts()[2].fire('click');
+  ok(/2/.test(progressText()), 'nach Zweckwahl → Frage 2');
+  // demount = NEVER (3. Option)
+  stepOpts()[2].fire('click');
+  ok(/3/.test(progressText()), 'nach Demontage → Frage 3');
+  // precision = NORMAL (1. Option)
+  stepOpts()[0].fire('click');
+  // Frage 4 = hubMat (FIXED-Zweig)
+  ok(stepOpts().length === 3, 'FIXED → 4. Frage mit 3 Werkstoff-Optionen');
+  var q4 = qText();
+  // hubMat = STEEL (1. Option) → Ergebnisse
+  stepOpts()[0].fire('click');
+
+  function cards() { return ov.findAll(function (n) { return n.classList.contains('assist-card'); }); }
+  ok(cards().length >= 1 && cards().length <= 3, 'Ergebnis: 1–3 Vorschlagskarten (ist: ' + cards().length + ')');
+  var fitTexts = ov.findAll(function (n) { return n.classList.contains('assist-card-fit'); }).map(function (n) { return n.textContent; });
+  ok(fitTexts.indexOf('H7/s6') >= 0, 'FIXED/NEVER → Presssitz H7/s6 unter den Vorschlägen');
+  var hints = ov.findAll(function (n) { return n.classList.contains('assist-card-hint'); });
+  ok(hints.length >= 1, 'Presssitz-Vorschlag zeigt Pressverband-Hinweis');
+
+  // „Übernehmen" auf der ersten Karte → Overlay zu, Passung im Formular, Ergebnis da.
+  var applyBtns = ov.findAll(function (n) { return n.classList.contains('assist-apply'); });
+  ok(applyBtns.length >= 1, 'jede Karte hat einen Übernehmen-Knopf');
+  applyBtns[0].fire('click');
+  ok(!overlay() || !overlay().classList.contains('open'), 'nach Übernehmen ist das Overlay geschlossen');
+  // Passungsfelder gesetzt (Nennmaß 60, erste Vorschlagspassung):
+  var sels2 = formHost.findAll(function (n) { return n.tagName === 'SELECT'; });
+  var nomAfter = formHost.findAll(function (n) { return n.tagName === 'INPUT' && n.type === 'number'; })[0];
+  ok(nomAfter && String(nomAfter.value) === '60', 'Übernehmen setzt Nennmaß 60 (ist: ' + (nomAfter && nomAfter.value) + ')');
+  ok(byId.resultHost.children.length > 0, 'nach Übernehmen ist ein Ergebnis gerechnet');
+
+  // i18n: Overlay erneut öffnen, Sprache wechseln, Fragetext ändert sich.
+  asBtn.fire('click'); ov = overlay();
+  var qDe = qText();
+  langEn.fire('click');
+  // Overlay wird durch Sprachwechsel nicht neu gerendert; erneut öffnen:
+  if (overlay()) { overlay().classList.remove('open'); }
+  asBtn.fire('click'); ov = overlay();
+  var qEn = qText();
+  ok(qDe && qEn && qDe !== qEn, 'Assistent-Fragen folgen dem Sprachwechsel (DE≠EN)');
+  langDe.fire('click');
+  if (overlay()) overlay().classList.remove('open');
+
+  global.setTimeout = _realST;
+})();
 
 /* Freiform-Modus: dort 2 ⓘ (Nennmaß + Klasse). */
 var modeBtns = formHost.findAll(function (n) { return n.tagName === 'BUTTON' && n.getAttribute('data-i18n') === 'modeFreiform'; });
