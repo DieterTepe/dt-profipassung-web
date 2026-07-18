@@ -26,10 +26,12 @@ komplette Wahrheit steht in diesem Plan und in den Projektdateien. So steigst du
    nach jeder Änderung ausliefern; nach Pause zuerst prüfen, was in /mnt/project schon
    angekommen ist, und Verlorenes identisch wieder einspielen.
 
-4) NÄCHSTE AUFGABE: **B14 — Ausgaben** (Port report.js: Copy-Text, CAD-Snippet, .dtp
-   speichern/laden, Druck→PDF, RTF, CSV). Danach B15 → B13 → B16 (V1). Toleranzkette (B12)
-   bewusst ins **V1.1-Update** verschoben. (B11 Passungs-Assistent ist komplett — Kern
-   assistent.js + Overlay-Dialog in ui.js, am Handy noch zu bestätigen.)
+4) NÄCHSTE AUFGABE: **B14 Ausgaben — weiter mit UI-Verdrahtung + Copy.** Etappe 1 (report.js:
+   Datenmodell buildModel, .dtp toDtp/fromDtp, Gating) ist gebaut, grün & eingebunden. Offene
+   Etappen: (2) UI — Ausgabe-Leiste + echter .dtp-Download/-Upload + Copy-Text + CAD-Snippet;
+   (3) Druck→PDF; (4) RTF + CSV. ALLES läuft durch guard() — Testversion sperrt jede Ausgabe
+   (Dieters Vorgabe: nichts verlässt das Programm; auch der Datei-Import wird blockiert).
+   Danach B15 → B13 → B16 (V1). Toleranzkette (B12) im **V1.1-Update**.
 
 5) ARBEITSWEISE JE BAUSTEIN (Fließband, minimale Diffs):
    bauen → `node --check` alle JS → i18n-Paritätsprüfung (alle Keys in DE/EN/PT vollständig)
@@ -56,10 +58,10 @@ komplette Wahrheit steht in diesem Plan und in den Projektdateien. So steigst du
 ═══════════════════════════════════════════════════════════════════════════
 
 ═══════════════════════════════════════════════════════════════════════════
-Plan-Version : 3.2 · Stand 2026-07-18 · Status: **B1–B10 bestätigt · B11 Passungs-Assistent
-               KOMPLETT (Kern assistent.js + Overlay-Dialog in ui.js) gebaut, grün &
-               ausgeliefert — Handy-Bestätigung ausstehend.** Nächster Baustein: **B14 Ausgaben.**
-Basislinie   : **154.676 Assertions, 0 Fehler** — prüfbar per `node test_passung.js`,
+Plan-Version : 3.3 · Stand 2026-07-18 · Status: **B1–B11 bestätigt · B14 Ausgaben ETAPPE 1
+               (report.js: Datenmodell + .dtp Save/Load + Gating) gebaut, grün & ausgeliefert —
+               UI-Verdrahtung folgt.** Nächste Etappe: B14-Copy (Copy-Text + CAD-Snippet + UI).
+Basislinie   : **154.752 Assertions, 0 Fehler** — prüfbar per `node test_passung.js`,
                am Handy über **DT-ProfiPassung_Pruefstand.html** (grünes Banner = weiterbauen).
 Produktname  : **DT-ProfiPassung** (Arbeitstitel — vor Markteintritt Marke/Domain prüfen).
                Produktversion startet bei v0.1.0.
@@ -375,6 +377,23 @@ Assistent-Flow-Test (Button→Overlay→FIXED/NEVER/STEEL-Pfad→H7/s6-Vorschlag
 Hinweis→Übernehmen setzt Nennmaß 60+rechnet→Sprachwechsel) → **47 OK, 0 Fehler**. Harness-
 Basislinie unverändert **154.676** (reiner UI-Schritt). Geändert: ui.js, style.css,
 dom_smoke_b10a.js, plan3.md. **Nächster Schritt: Handy-Bestätigung B11 → dann B14 Ausgaben.**
+
+**v3.3 (2026-07-18) · B14 Ausgaben — ETAPPE 1: Datenmodell + .dtp + Gating (gebaut &
+ausgeliefert; UI folgt):** Alte Schrauben-report.js im Ordner durch die Passungs-Version
+ersetzt. Neues **report.js** (`DTPReport`, UMD, DOM-frei): **buildModel(ctx)** = sprachneutrales
+Datenmodell (Titel, Headline, Ergebnis-/Eingabezeilen, Zusatzbereiche, Rechenweg-Schritte,
+Disclaimer mit ISO 286/2768/DIN 7190) als Grundlage aller Text-Exporte. **.dtp Save/Load**:
+toDtp → JSON mit Kennung „DT-ProfiPassung" + Schema 1, enthält NUR Eingaben (state); fromDtp
+liest robust zurück mit eigenen Fehlercodes (RP_ERR_EMPTY/JSON/FORMAT/SCHEMA) — Ergebnisse
+werden beim Laden neu gerechnet (kein Drift). dtpFilename säubert Bezeichnung. **Gating**
+(Dieters Vorgabe): GATED_FEATURES = save/load/print/copy/cad/rtf/csv; isFeatureAllowed → in der
+**Testversion ist JEDE Ausgabe gesperrt**, Vollversion/unbekannte Edition = alles erlaubt
+(sichere Voreinstellung). Lizenznehmer-/Editionszeilen + Wasserzeichentext ×3 wie Schraube.
+Einbindung in alle drei HTMLs (nach assistent.js). **test_passung.js Abschnitt 22** (Gating
+je Feature × Edition, .dtp Round-Trip bit-identisch + Idempotenz, 9 Fehlerpfade, Dateiname,
+Lizenznehmer, buildModel ×3 Sprachen, Formatierung) → **Basislinie 154.676 → 154.752 (+76)**.
+NUR neues Modul + Harness + HTML-Einbindung. **Nächste Etappe: B14-UI (Ausgabe-Leiste, echter
+.dtp-Download/-Upload durch guard(), Copy-Text, CAD-Snippet). Wiedereinstieg „weiter mit B14-UI".**
 
 ═══════════════════════════════════════════════════════════════════════════
 Ende plan3.md · DT-ProfiPassung

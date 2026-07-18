@@ -25,6 +25,7 @@ var SB = isNode ? require('./schaubild.js') : globalThis.DTPSchaubild;
 var BR = isNode ? require('./beratung.js')  : globalThis.DTPBeratung;
 var PV = isNode ? require('./pressverband.js') : globalThis.DTPPress;
 var AS = isNode ? require('./assistent.js') : globalThis.DTPAssistent;
+var RP = isNode ? require('./report.js') : globalThis.DTPReport;
 
 /* --- Mini-Assert-Framework (Muster: DT-ProfiSchraube) ---------------------- */
 var pass = 0, fail = 0, fails = [];
@@ -1575,6 +1576,93 @@ section('21) Passungs-Assistent');
   var snap = JSON.stringify(inp);
   AS.recommend(inp);
   ok(JSON.stringify(inp) === snap, 'recommend mutiert die Antworten nicht');
+})();
+
+/* === 22) B14 — Ausgaben: .dtp Save/Load, Gating, Datenmodell =============== */
+section('22) Ausgaben (report.js)');
+(function () {
+  if (!RP) { ok(false, 'DTPReport nicht geladen'); return; }
+
+  // 22.1 Gating Test/Voll — Testversion sperrt JEDE Ausgabe (Dieters Vorgabe).
+  ok(RP.GATED_FEATURES.length === 7, 'GATED_FEATURES: 7 Ausgabewege gelistet');
+  ['save', 'load', 'print', 'copy', 'cad', 'rtf', 'csv'].forEach(function (f) {
+    ok(RP.GATED_FEATURES.indexOf(f) >= 0, 'GATED enthält ' + f);
+    ok(RP.isFeatureAllowed(f, 'test') === false, 'Testversion sperrt ' + f);
+    ok(RP.isFeatureAllowed(f, 'full') === true, 'Vollversion erlaubt ' + f);
+    ok(RP.isFeatureAllowed(f, undefined) === true, 'unbekannte Edition erlaubt ' + f + ' (sichere Voreinstellung)');
+    ok(RP.isFeatureAllowed(f, 'irgendwas') === true, 'fremde Kennung erlaubt ' + f);
+  });
+  ok(RP.shouldWatermark('test') === true && RP.shouldWatermark('full') === false, 'Wasserzeichen nur in Testversion');
+  ['de', 'en', 'pt'].forEach(function (l) { ok(RP.watermarkText(l).length > 10, 'Wasserzeichentext ' + l); });
+
+  // 22.2 .dtp Round-Trip: state bleibt bit-identisch (Eingaben, keine Ergebnisse).
+  var state1 = {
+    mode: 'fit', nominal: 50, hole: { letter: 'H', grade: 7 }, shaft: { letter: 'g', grade: 6 },
+    system: 'EB',
+    thermik: { on: true, T: 80, matHole: 'steel', matShaft: 'aluminum' },
+    oberflaeche: { on: true, rzHole: 4, rzShaft: 1.6 },
+    press: { on: true, matA: 'steel', matI: 'steel', muKey: 'STST_DRY', lF: 50, DAa: 120, DIi: 0, Mt: 250, Fax: 0 }
+  };
+  var text1 = RP.toDtp({ state: state1, designation: 'Getriebe-Lagersitz', now: '2026-07-18T10:00:00.000Z' });
+  ok(typeof text1 === 'string' && text1.indexOf('DT-ProfiPassung') >= 0, '.dtp ist JSON mit Kennung');
+  var back = RP.fromDtp(text1);
+  ok(back.ok === true, '.dtp lädt fehlerfrei zurück');
+  ok(JSON.stringify(back.state) === JSON.stringify(state1), '.dtp Round-Trip: state bit-identisch');
+  ok(back.designation === 'Getriebe-Lagersitz', '.dtp Round-Trip: Bezeichnung erhalten');
+  ok(back.created === '2026-07-18T10:00:00.000Z', '.dtp Round-Trip: Datum erhalten');
+  ok(back.schema === RP.DTP_SCHEMA, '.dtp Round-Trip: Schema-Version');
+
+  // Doppelter Round-Trip ist stabil (Idempotenz).
+  var text2 = RP.toDtp({ state: back.state, designation: back.designation, now: back.created });
+  ok(text2 === text1, '.dtp doppelter Round-Trip identisch');
+
+  // 22.3 Robust gegen fremde/defekte Dateien — je eigener Fehlercode.
+  ok(RP.fromDtp('').error === 'RP_ERR_EMPTY', 'leere Datei → RP_ERR_EMPTY');
+  ok(RP.fromDtp('   ').error === 'RP_ERR_EMPTY', 'nur Whitespace → RP_ERR_EMPTY');
+  ok(RP.fromDtp('{kein json').error === 'RP_ERR_JSON', 'kaputtes JSON → RP_ERR_JSON');
+  ok(RP.fromDtp('{"foo":1}').error === 'RP_ERR_FORMAT', 'fremdes JSON → RP_ERR_FORMAT');
+  ok(RP.fromDtp(JSON.stringify({ magic: 'DT-ProfiPassung' })).error === 'RP_ERR_FORMAT', 'Kennung ohne state → RP_ERR_FORMAT');
+  ok(RP.fromDtp(JSON.stringify({ magic: 'FALSCH', schema: 1, state: {} })).error === 'RP_ERR_FORMAT', 'falsche Kennung → RP_ERR_FORMAT');
+  ok(RP.fromDtp(JSON.stringify({ magic: 'DT-ProfiPassung', schema: 99, state: {} })).error === 'RP_ERR_SCHEMA', 'zu neues Schema → RP_ERR_SCHEMA');
+  ok(RP.fromDtp('null').error === 'RP_ERR_FORMAT', 'JSON null → RP_ERR_FORMAT');
+  ok(RP.fromDtp('[]').error === 'RP_ERR_FORMAT', 'JSON-Array → RP_ERR_FORMAT');
+
+  // 22.4 Dateiname aus Bezeichnung (sicher, ohne Sonderzeichen).
+  ok(RP.dtpFilename('Getriebe-Lagersitz') === 'Getriebe-Lagersitz.dtp', 'Dateiname aus Bezeichnung');
+  ok(RP.dtpFilename('') === 'Passung.dtp', 'leere Bezeichnung → Passung.dtp');
+  ok(RP.dtpFilename('a/b:c*?') === 'abc.dtp', 'Sonderzeichen entfernt');
+  ok(RP.dtpFilename('Ø50 H7/g6').indexOf('.dtp') > 0, 'Umlaute/Sonderzeichen tolerant, Endung .dtp');
+  ok(/\.dtp$/.test(RP.dtpFilename('Test Name')), 'Leerzeichen → Unterstrich, Endung .dtp');
+
+  // 22.5 Lizenznehmer / Editionszeile (Muster der Schraube).
+  ok(RP.licenseeName('  Max   Muster ') === 'Max Muster', 'licenseeName normalisiert Whitespace');
+  ok(RP.licenseeName(null) === '', 'licenseeName(null) → leer');
+  ok(RP.editionLicenseeLine('Vollversion', 'Max Muster', 'de').indexOf('Max Muster') > 0, 'Editionszeile mit Name');
+  ok(RP.editionLicenseeLine('Vollversion', '', 'de') === 'Vollversion', 'Editionszeile ohne Name = nur Edition');
+  ok(RP.licenseeField('Max', 'de') && RP.licenseeField('', 'de') === null, 'licenseeField nur bei Name');
+
+  // 22.6 buildModel — sprachneutrales Datenmodell (Grundlage der Text-Exporte).
+  var m = RP.buildModel({
+    lang: 'de', designation: 'Lagersitz', headline: '\u00d850 H7/g6', now: '2026-07-18T00:00:00Z',
+    dataVersion: 'ISO 286-2:2020', licensee: 'Max Muster',
+    resultLines: [{ label: 'Kleinstspiel', value: '+9', unit: '\u00b5m' }, { label: 'Gr\u00f6\u00dftspiel', value: '+50', unit: '\u00b5m' }],
+    inputLines: [{ label: 'Nennma\u00df', value: '50', unit: 'mm' }],
+    extraSections: [{ title: 'Thermik', rows: [{ label: 'Temperatur', value: '80', unit: '\u00b0C' }] }],
+    steps: [{ title: 'Kleinstspiel', expr: 'EI \u2212 es = 0 \u2212 (\u22129) = +9 \u00b5m', ok: true }]
+  });
+  ok(m.title === 'DT-ProfiPassung' && m.headline === '\u00d850 H7/g6', 'buildModel: Titel + Headline');
+  ok(m.date === '2026-07-18', 'buildModel: Datum aus ISO-Zeitstempel');
+  ok(m.result.length === 2 && m.inputs.length === 1, 'buildModel: Ergebnis-/Eingabezeilen');
+  ok(m.extras.length === 1 && m.extras[0].rows.length === 1, 'buildModel: Zusatzbereiche');
+  ok(m.steps.length === 1 && m.steps[0].ok === true, 'buildModel: Rechenweg-Schritte');
+  ok(m.licensee && m.licensee.value === 'Max Muster', 'buildModel: Lizenznehmer');
+  ok(m.disclaimer.indexOf('ISO 286') >= 0, 'buildModel: Disclaimer nennt Normen');
+  var mEn = RP.buildModel({ lang: 'en' }), mPt = RP.buildModel({ lang: 'pt' });
+  ok(mEn.caps.secResult !== m.caps.secResult && mPt.caps.secResult !== m.caps.secResult, 'buildModel: Überschriften je Sprache verschieden');
+
+  // 22.7 num/sgnUm Formatierung locale-korrekt.
+  ok(RP.num(1234.5, 'de', 1) === '1234,5' && RP.num(1234.5, 'en', 1) === '1234.5', 'num: Dezimaltrenner je Sprache');
+  ok(RP.sgnUm(9, 'de') === '+9' && RP.sgnUm(-25, 'de') === '-25', 'sgnUm: Vorzeichen');
 })();
 
 /* === Zusammenfassung ====================================================== */
