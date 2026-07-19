@@ -589,5 +589,42 @@ if (modeBtns.length === 1) {
   }
 })();
 
+/* ---------------------------------------------------------------------------
+ * F4 (2026-07): Sprachwechsel überschreibt eine fehlerhafte Kurzeingabe nicht.
+ * F5 (2026-07): symmetrische Felder (JS/js) zeigen bis 0,1 µm (4 Nachkommast.).
+ * ------------------------------------------------------------------------- */
+(function () {
+  function langBtn(l) { return body.findAll(function (n) { return n.classList.contains('lang-btn') && n.getAttribute('data-lang') === l; })[0]; }
+  function fitInput() { return formHost.findAll(function (n) { return n.classList.contains('fit-input'); })[0]; }
+  function fitMsg() { return formHost.findAll(function (n) { return n.classList.contains('field-msg'); })[0]; }
+  function resText() { return byId.resultHost.findAll(function (n) { return true; }).map(function (n) { return n.textContent || ''; }).join(' '); }
+  var mFit = formHost.findAll(function (n) { return n.tagName === 'BUTTON' && n.getAttribute('data-i18n') === 'modeFit'; })[0];
+  if (mFit) mFit.fire('click');
+
+  // F4: fehlerhafte Kurzeingabe überlebt Sprachwechsel
+  if (langBtn('de')) langBtn('de').fire('click');
+  fitInput().value = '50 H7/g6'; fitInput().fire('input');
+  fitInput().value = '50 XYZ'; fitInput().fire('input');
+  ok(fitMsg().hidden === false, 'F4: ungültige Kurzeingabe zeigt Fehlermeldung');
+  if (langBtn('en')) langBtn('en').fire('click');
+  ok(fitInput().value === '50 XYZ', 'F4: „50 XYZ" bleibt nach Sprachwechsel erhalten (ist: „' + fitInput().value + '")');
+  ok(fitMsg().hidden === false, 'F4: Fehlermeldung nach Sprachwechsel weiter sichtbar');
+  // gültige Eingabe wird nach Sprachwechsel weiterhin korrekt geführt
+  if (langBtn('de')) langBtn('de').fire('click');
+  fitInput().value = '50 H7/g6'; fitInput().fire('input');
+  if (langBtn('en')) langBtn('en').fire('click');
+  ok(/H7\/g6/.test(fitInput().value) && fitMsg().hidden === true, 'F4: gültige Kurzeingabe bleibt korrekt (H7/g6)');
+  if (langBtn('de')) langBtn('de').fire('click');
+
+  // F5: JS/js zeigt 4 Nachkommastellen, Normalfall bleibt 3-stellig
+  fitInput().value = '50 JS7/js6'; fitInput().fire('input');
+  var rt = resText();
+  ok(/50,0125/.test(rt) && /49,9875/.test(rt), 'F5: JS7 zeigt 50,0125 / 49,9875');
+  ok(!/50,013/.test(rt) && !/49,988/.test(rt), 'F5: keine falsch gerundeten 50,013 / 49,988');
+  fitInput().value = '50 H7/g6'; fitInput().fire('input');
+  var rt2 = resText();
+  ok(/50,025/.test(rt2) && !/50,0250/.test(rt2), 'F5: Normalfall 50 H7 bleibt „50,025" (3 Stellen)');
+})();
+
 console.log('\nDOM-Smoke B10a: ' + okCount + ' OK, ' + failCount + ' Fehler');
 process.exit(failCount ? 1 : 0);

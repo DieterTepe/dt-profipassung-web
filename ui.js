@@ -1006,7 +1006,13 @@
   }
   function el(tag, cls, txt) { var e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; }
   function decComma(s) { return lang === 'en' ? s : s.replace('.', ','); }
-  function fmtMm(x) { return decComma(Number(x).toFixed(3)); }
+  function fmtMm(x) {
+    // Grenzmaße bis 0,1 µm genau anzeigen: 4 Nachkommastellen, aber eine überflüssige
+    // Null abschneiden → „50,025" bleibt 3-stellig, „50,0125" (JS/js, halbe µm) 4-stellig.
+    var s = (Math.round(Number(x) * 10000) / 10000).toFixed(4);
+    if (s.charAt(s.length - 1) === '0') s = s.slice(0, -1);
+    return decComma(s);
+  }
   function fmtUm(x) { return decComma(Number.isInteger(x) ? String(x) : Number(x).toFixed(1)); }
   function sgn(x) { return (x > 0 ? '+' : '') + fmtUm(x); }
   function fmtNum(x) { return decComma(String(x)); }
@@ -2206,8 +2212,10 @@
   }
   function setLang(l) {
     lang = l; localStorage.setItem('dtp-lang', l); applyI18n(); applyEdition();
-    if (elFit && String(elFit.value || '').trim() !== '' && !elFitMsg.hidden) onFitInput(); // Fehlertext in neuer Sprache
-    recalc();
+    var fitError = elFit && String(elFit.value || '').trim() !== '' && !elFitMsg.hidden;
+    if (fitError) onFitInput();       // Fehlertext in neuer Sprache neu aufbauen
+    run();                            // Ergebnisanzeige in neuer Sprache
+    if (!fitError) refreshFitField(); // Kurzeingabe NUR nachziehen, wenn kein Fehler ansteht (sonst bliebe Getipptes erhalten)
   }
   function applyTheme(theme) { document.documentElement.setAttribute('data-theme', theme); localStorage.setItem('dtp-theme', theme); }
 

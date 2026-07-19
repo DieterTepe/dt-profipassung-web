@@ -93,7 +93,7 @@
    * 2) Grenzmaße/Abmaße eines Toleranzfelds einsammeln (aus daten.js).
    *    Rückgabe µm-Abmaße (ganzzahlig) + mm-Grenzmaße (auf µm gerundet).
    * =======================================================================*/
-  function round3(x) { return Math.round(x * 1000) / 1000; }
+  function round4(x) { return Math.round(x * 10000) / 10000; }
 
   function fieldOf(nominal, letter, grade, isHole) {
     var dev = isHole
@@ -106,8 +106,8 @@
       letter: letter, grade: grade,
       upper: upper, lower: lower,
       T: upper - lower,                     // Toleranz [µm]
-      Go: round3(nominal + upper / 1000),   // Höchstmaß [mm]
-      Gu: round3(nominal + lower / 1000),   // Mindestmaß [mm]
+      Go: round4(nominal + upper / 1000),   // Höchstmaß [mm]
+      Gu: round4(nominal + lower / 1000),   // Mindestmaß [mm]
       symmetric: !!dev.symmetric,
       unverified: !!dev.unverified
     };
