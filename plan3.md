@@ -26,10 +26,11 @@ komplette Wahrheit steht in diesem Plan und in den Projektdateien. So steigst du
    nach jeder Änderung ausliefern; nach Pause zuerst prüfen, was in /mnt/project schon
    angekommen ist, und Verlorenes identisch wieder einspielen.
 
-4) NÄCHSTE AUFGABE: **B13 — ANSI B4.1** (zöllige Passungsklassen als Datentabellen, gleiche
-   Pipeline wie ISO). B15 ist komplett: Aktivierung beim Erststart (nur Voll, ohne Eintrag),
-   „Vollversion · lizenziert für <Name>", 10-s-Long-Press-Reset auf der Marke, Info-ⓘ mit
-   Impressum. Danach B16 (V1). Toleranzkette (B12) im **V1.1-Update**.
+4) NÄCHSTE AUFGABE: **B16 — Feinschliff** (letzter V1-Baustein; Spezifikation in Abschnitt 4).
+   Vorgehen: Beim Einstieg zuerst Dieter die B16-Teilpunkte kurz aufgliedern und GEMEINSAM
+   priorisieren, dann in Etappen bauen (Fließband wie immer). Wiedereinstiegs-Stichwort:
+   „weiter mit B16". NICHT mehr in V1: B13 ANSI B4.1 (→ optionales Update, Dieters
+   Entscheidung 2026-07-19) und B12 Toleranzkette (→ V1.1-Update). Nach B16: V1-LAUNCH.
 
 5) ARBEITSWEISE JE BAUSTEIN (Fließband, minimale Diffs):
    bauen → `node --check` alle JS → i18n-Paritätsprüfung (alle Keys in DE/EN/PT vollständig)
@@ -56,9 +57,10 @@ komplette Wahrheit steht in diesem Plan und in den Projektdateien. So steigst du
 ═══════════════════════════════════════════════════════════════════════════
 
 ═══════════════════════════════════════════════════════════════════════════
-Plan-Version : 3.6 · Stand 2026-07-19 · Status: **B1–B11 + B14 bestätigt · B15 Edition/
-               Registrierung/Impressum KOMPLETT gebaut, grün & ausgeliefert — Handy-Bestätigung
-               ausstehend.** Nächster Baustein: **B13 ANSI B4.1.**
+Plan-Version : 3.7 · Stand 2026-07-19 · Status: **B1–B11, B14 und B15 komplett & am Handy
+               bestätigt.** [DECISION] B13 ANSI B4.1 aus V1 GESTRICHEN (→ optionales späteres
+               Update; Mehrwert in Europa gering, reine Tabellennorm = hoher Belegaufwand).
+               Nächster & letzter V1-Baustein: **B16 Feinschliff.**
 Basislinie   : **154.765 Assertions, 0 Fehler** — prüfbar per `node test_passung.js`,
                am Handy über **DT-ProfiPassung_Pruefstand.html** (grünes Banner = weiterbauen).
 Produktname  : **DT-ProfiPassung** (Arbeitstitel — vor Markteintritt Marke/Domain prüfen).
@@ -80,29 +82,33 @@ Zielgruppe   : Konstrukteure, Fertigung/QS, Ausbildung — Laie bis Profi. Preis
 ## 1. Reihenfolge-Entscheidung (Kern von plan3)
 
 **V1 — verkaufbare erste Version, in dieser Reihenfolge:**
-1. **B11 Passungs-Assistent** ✓ KOMPLETT (Handy-Bestätigung ausstehend) — Frage-Dialog → bis
+1. **B11 Passungs-Assistent** ✓ BESTÄTIGT — Frage-Dialog → bis
    zu 3 begründete Passungsvorschläge, Übernahme per Tipp. Größter Mehrwert (Laienführung =
    Alleinstellungsmerkmal), nutzt die vorhandene Empfehlungsmatrix.
-2. **B14 Ausgaben** ✓ KOMPLETT — `.dtp` speichern/öffnen, Druck→PDF, Word (.rtf); oben in der
+2. **B14 Ausgaben** ✓ BESTÄTIGT — `.dtp` speichern/öffnen, Druck→PDF, Word (.rtf); oben in der
    Aktionsleiste. CSV & Copy/CAD bewusst weggelassen (PDF trägt die Grafik). Testversion sperrt
    alle Ausgaben via guard.
-3. **B15 Edition/Registrierung/Impressum** ✓ KOMPLETT (Handy-Bestätigung ausstehend) —
+3. **B15 Edition/Registrierung/Impressum** ✓ BESTÄTIGT —
    Aktivierungsdialog, Lizenzzeile, Long-Press-Reset, Info-ⓘ mit Impressum.
-4. **B13 ANSI B4.1** — zöllige Passungsklassen (RC/LC/LT/LN/FN), gleiche Pipeline wie ISO.
-   Wichtig für Export-/US-Markt, sauber abgrenzbar.
-5. **B16 Feinschliff** — Passungs-Explorer/Wissens-Basis komplett, restliche Presets (≥15),
-   Code-Audit, Build- und Obfuskierungs-Vorbereitung (Test- + Voll-Build).
+4. **B16 Feinschliff** ← NÄCHSTER & LETZTER V1-BAUSTEIN — Passungs-Explorer/Wissens-Basis,
+   restliche Presets (≥15), DIN-7190-Literaturanker nachtragen, Code-Audit, Build- und
+   Obfuskierungs-Vorbereitung (zwei identische Bündel, Unterschied nur window.DT_EDITION).
+   Danach: **V1-LAUNCH.**
 
-**V1.1 — geplantes Update nach Launch:**
+**Spätere Updates (nach Launch):**
 - **B12 Toleranzkette** (WC/RSS/Monte-Carlo, Histogramm, Ausschuss in ppm/%, eigenes
   `kette.js`, eigener Formularbereich mit Maßliste, Brücke „aktuelle Passung als Kettenglied
   übernehmen"). Bewusst als eigenständiges großes Feature-Update ausgegliedert — entlastet V1
   und liefert ein starkes Argument für Bestandskunden. Fachbasis steht bereits in Abschnitt 4.
+- **B13 ANSI B4.1** (optional, nur bei Nachfrage) — [DECISION 2026-07-19] aus V1 gestrichen:
+  Zielmarkt (DE/EN/PT über Digistore24) ist ISO-geprägt, Brasilien ebenfalls ISO; reine
+  Tabellennorm ohne Formel-Quervergleich = hohes Fehlerrisiko bei geringem Nutzen. Architektur
+  bleibt vorbereitet (daten.js erweiterbar; Spec-Kurzform in Abschnitt 4).
 
-Begründung der Reihenfolge: Nach **B11+B14+B15** ist das Produkt technisch auslieferbar
-(rechnet alles Wesentliche, führt Laien, kann exportieren, hat Test/Voll-Trennung). B13 und
-B16 runden V1 ab. Die Toleranzkette ist das aufwändigste, in sich geschlossene Restmodul und
-eignet sich perfekt als Post-Launch-Update.
+Begründung der Reihenfolge: Nach **B11+B14+B15** (alle bestätigt) ist das Produkt technisch
+auslieferbar (rechnet alles Wesentliche, führt Laien, kann exportieren, hat Test/Voll-Trennung
+samt Registrierung). B16 rundet V1 ab — danach Launch. Die Toleranzkette ist das aufwändigste,
+in sich geschlossene Restmodul und eignet sich perfekt als Post-Launch-Update.
 
 ---
 
@@ -244,15 +250,29 @@ Lizenznehmer in Export-Köpfen). Vollversion zeigt dezente Kennzeichnung „Voll
 bis B15 zeigt die Vollversion oben bewusst keinen Balken. Impressum-ⓘ (Daten s. 2.2).
 DoD: Gating-Sektion im Harness (streng auf `'test'`), beide Builds fehlerfrei.
 
-### B13 — ANSI B4.1 (F13)
-Zöllige Passungsklassen RC1–RC9 · LC · LT · LN · FN1–FN5 als Datentabellen in daten.js (intern
-ganzzahlig 0,0001 in), in/mm-Anzeige umschaltbar, gleiche Rechen-/Anzeige-/Rechenweg-Pipeline
-wie ISO. DoD: je ein Tabellen-Anker pro Klasse, in/mm-Anzeige, Rechenweg dreisprachig.
+### B13 — ANSI B4.1 (NICHT V1 — optionales späteres Update, [DECISION 2026-07-19])
+Falls je gebaut: zöllige Passungsklassen RC1–RC9 · LC · LT · LN · FN1–FN5 als Datentabellen in
+daten.js (intern ganzzahlig 0,0001 in), in/mm-Anzeige umschaltbar, gleiche Rechen-/Anzeige-/
+Rechenweg-Pipeline wie ISO. Achtung reine Tabellennorm: JEDER Wert braucht ≥2 unabhängige
+Belege (Machinery's Handbook + frei publizierte Auszüge); ehrliche Lücken statt Falschwerten.
+DoD: je ein Tabellen-Anker pro Klasse, in/mm-Anzeige, Rechenweg dreisprachig.
 
-### B16 — Feinschliff
-Passungs-Explorer/Wissens-Basis komplett (Was & Warum · Passungs-Typologie · Taylor/Hülle ·
-Verfahren↔IT · Montage-Tipps) · restliche Presets auf ≥15 (Liste F18) · DIN-7190-Literatur-Anker
-nachtragen (offener Punkt aus B10b) · Code-Audit · Build-/Obfuskierungs-Vorbereitung.
+### B16 — Feinschliff (NÄCHSTER & LETZTER V1-BAUSTEIN)
+Beim Einstieg zuerst Dieter diese Teilpunkte aufgliedern und GEMEINSAM priorisieren; dann in
+Etappen (je Etappe Fließband + Handy-Bestätigung):
+a) **Presets ausbauen** auf ≥15 sinnvolle Beispiele über alle Bereiche (ISO-Passungen quer
+   durch die Typologie · Freiform/ISO 2768 · Thermik · Pressverband — Liste mit Dieter).
+b) **Passungs-Explorer/Wissens-Basis** (antippbare Wissenstexte ×3 Sprachen): Was ist eine
+   Passung & warum · Spiel/Übergang/Übermaß-Typologie · Taylorscher Grundsatz/Hüllbedingung ·
+   Fertigungsverfahren ↔ erreichbare IT-Grade · Montage-Tipps.
+c) **DIN-7190-Literaturanker nachtragen** (offener ehrlicher Punkt aus B10b; Prüfwert steht in
+   Abschnitt 3) + evtl. weitere externe Anker-Nachträge.
+d) **Code-Audit**: toter Code, Konsistenz der Muster, Fehlerpfade, i18n-Vollprüfung, Print-CSS.
+e) **Build-/Obfuskierungs-Vorbereitung** (Dieters Vorgabe): EIN gebündeltes, obfuskiertes
+   Script, zweimal ausgeliefert — die zwei HTMLs unterscheiden sich NUR in window.DT_EDITION
+   ('full'/'test'). Bündelungsreihenfolge = Ladereihenfolge (2.1); DEV-Dateien (test_passung,
+   dom_smoke_*) bleiben draußen.
+DoD je Etappe im Einstieg festlegen. Nach B16: **V1-LAUNCH** (Produktversion v1.0.0).
 
 ### B12 — Toleranzkette (V1.1-UPDATE, nach Launch, F11)
 Neues `kette.js` (DOM-frei): Schließmaß M₀ = Σ aᵢ·Cᵢ. Worst-Case T₀ = Σ|aᵢ|·Tᵢ · RSS
@@ -320,10 +340,12 @@ Handy-Prüfung über `DT-ProfiPassung_Pruefstand.html` (grünes Banner = weiterb
 - Kein jsPDF (Druck→PDF + RTF decken „PDF/Word" ab) · kein DXF/STEP in V1 (CAD-Feature = Text-
   Snippet F14) · keine Hover-/Zoom-Interaktion in der Zeichnung (Erklärungen über antippbare
   Legenden-Chips; Zahlen nur in der HTML-Legende) · Monte-Carlo Default N=20.000, Seed Pflicht.
-- Testversion sperrt Copy/Snippet/.dtp/Druck/RTF/CSV; Registrierung = Personalisierung ohne
-  Kopierschutz (Long-Press-Reset). ANSI B4.1 fest in V1 (B13).
+- Testversion sperrt ALLE Ausgaben (.dtp-Speichern/Öffnen, Druck/PDF, Word-RTF); Copy-Text,
+  CAD-Snippet und CSV wurden in B14 KOMPLETT entfernt (PDF trägt die Grafik). Registrierung =
+  Personalisierung ohne Kopierschutz (Long-Press-Reset).
 - **Später (nicht V1):** Formtoleranz-Vollmodul (GD&T; V1 hat nur die 1/3-Hinweisregel),
-  PNG-Export, DXF-Notizblock, weitere Normsysteme (JIS). **Toleranzkette = V1.1-Update (B12).**
+  PNG-Export, DXF-Notizblock, weitere Normsysteme (JIS). **Toleranzkette = V1.1-Update (B12) ·
+  ANSI B4.1 = optionales Update (B13, [DECISION 2026-07-19]).**
 
 ## 8. Startpaket (Projektordner)
 Pflicht: dieser Plan (plan3.md). Vorlagen/Referenz (read-only, `_s`): style_s.css · ui_s.js ·
@@ -460,6 +482,18 @@ Geändert: ui.js, beide Produktiv-HTMLs, dom_smoke_b10a.js, dom_smoke_b14_test.j
 **Nächster Baustein nach Handy-Bestätigung: B13 ANSI B4.1.** Hinweis Build-Ziel (Dieters
 Vorgabe): am Ende zwei identische, obfuskierte Script-Bündel, die sich NUR in
 `window.DT_EDITION` ('full'/'test') unterscheiden → B16.
+
+**v3.7 (2026-07-19) · B15 am Handy BESTÄTIGT · [DECISION] B13 ANSI B4.1 aus V1 gestrichen:**
+Dieters Entscheidung (mit Claude-Empfehlung): Mehrwert von ANSI B4.1 im ISO-geprägten Zielmarkt
+(DE/EN/PT via Digistore24, inkl. Brasilien) gering; als reine Tabellennorm ohne Formel-
+Quervergleich zudem hoher Beleg-/Fehlerrisiko-Aufwand. B13 → optionales späteres Update (Spec
+in Abschnitt 4 bleibt als Kurzreferenz). **V1-Restweg damit: nur noch B16 Feinschliff → Launch.**
+B16 in Abschnitt 4 in Etappen a–e aufgegliedert (Presets ≥15 · Explorer/Wissens-Basis ·
+DIN-7190-Anker · Code-Audit · Build/Obfuskierung mit DT_EDITION-Weiche); Einstieg beginnt mit
+gemeinsamer Priorisierung mit Dieter. Kickoff-Block, Reihenfolge (Abschnitt 1) und Update-Liste
+entsprechend umgestellt; B11/B14/B15 als BESTÄTIGT markiert. Keine Codeänderung — Basislinie
+unverändert **154.765 / 0**, Smokes 79 + 17 OK. **Wiedereinstieg (auch für frischen Chat):
+Kickoff-Block lesen → „weiter mit B16" → Teilpunkte a–e mit Dieter priorisieren → Etappe 1.**
 
 ═══════════════════════════════════════════════════════════════════════════
 Ende plan3.md · DT-ProfiPassung
