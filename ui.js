@@ -1633,6 +1633,7 @@
   /* Unvollständige Eingabe: neutraler Hinweis, welche Felder noch fehlen. */
   function renderIncomplete(missing) {
     resultHost.textContent = '';
+    lastResult = null;   // kein gültiges Ergebnis → Export als „bitte zuerst rechnen"
     var b = el('div', 'status-banner idle');
     b.textContent = t('hintIncomplete') + ' ' + missing.map(function (k) { return t(k); }).join(', ');
     resultHost.appendChild(b);
@@ -2011,6 +2012,7 @@
 
   function renderErrors(errors) {
     resultHost.textContent = '';
+    lastResult = null;   // Fehler → kein gültiges Ergebnis für den Export
     var banner = el('div', 'verdict-banner bad');
     banner.appendChild(el('span', 'vb-dot', '✕'));
     var body = el('div', 'vb-body');
@@ -2024,6 +2026,7 @@
   /* Freiform (ISO 2768) — Ergebnisanzeige. */
   function renderFreiform(res) {
     resultHost.textContent = '';
+    lastResult = res;   // gültiges Freiform-Ergebnis auch für Export verfügbar machen
     var i = res.input;
     var echo = el('div', 'fit-echo');
     echo.textContent = 'Ø' + (Number.isInteger(i.nominal) ? i.nominal : fmtMm(i.nominal)) + ' ISO 2768-' + i.cls;
@@ -2065,6 +2068,7 @@
 
   function renderFreiformError(res) {
     resultHost.textContent = '';
+    lastResult = null;   // Freiform-Fehler → kein gültiges Ergebnis für den Export
     var banner = el('div', 'verdict-banner bad');
     banner.appendChild(el('span', 'vb-dot', '✕'));
     var b = el('div', 'vb-body');
@@ -2651,6 +2655,19 @@
   }
   function closeOv(ov) { if (ov && ov.parentNode) ov.parentNode.removeChild(ov); }
 
+  /* Kurze Status-Rückmeldung in der Aktionsleiste (#dtMsg). War bisher an fünf
+     Stellen aufgerufen, aber nie definiert → in der Vollversion warf jede Ausgabe
+     eine ReferenceError. No-op, falls das Statuselement fehlt (z. B. im Test-Shim). */
+  var toastTimer = null;
+  function flashToast(key) {
+    var m = document.getElementById('dtMsg');
+    if (!m) return;
+    m.textContent = t(key);
+    m.className = 'dt-msg ' + (key === 'outNoCalc' ? 'warn' : 'ok');
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { m.textContent = ''; m.className = 'dt-msg'; }, 3500);
+  }
+
   /* Ergebnis als Klartext (Copy). Baut auf DTPReport.buildModel, ergänzt hier
      um die konkreten Zeilen aus dem aktuellen Ergebnis. */
   /* Copy-Text/CAD-Notiz entfernt (nicht benötigt). Speichern/Öffnen sitzen oben
@@ -2751,6 +2768,9 @@
       }
       ctx.extraSections = extras;
     }
+    if (mode === 'freiform' && window.DTPRechenweg && window.DTPRechenweg.buildFreiform) {
+      pushSteps(window.DTPRechenweg.buildFreiform(res, rwFmt()));
+    }
     ctx.steps = steps;
     return ctx;
   }
@@ -2762,10 +2782,17 @@
   /* Basis-ctx (Kopf + Ergebnis-/Eingabezeilen) wie für Copy, aber wiederverwendbar. */
   function currentReportBase(res) {
     var head = (mode === 'freiform')
-      ? ('ISO 2768-' + (elFfClass ? elFfClass.value : 'm'))
+      ? ('Ø' + fmtNum(res.input.nominal) + ' ISO 2768-' + res.input.cls)
       : ('Ø' + fmtNum(res.input.nominal) + ' ' + res.input.hole.letter + res.input.hole.grade + '/' + res.input.shaft.letter + res.input.shaft.grade);
     var resultLines = [], inputLines = [];
-    if (mode === 'fit') {
+    if (mode === 'freiform') {
+      inputLines.push({ label: t('fNominal'), value: fmtNum(res.input.nominal), unit: 'mm' });
+      inputLines.push({ label: t('ffClass'), value: 'ISO 2768-' + res.input.cls, unit: '' });
+      resultLines.push({ label: t('rFfDev'), value: '±' + fmtMm(res.dev), unit: 'mm' });
+      resultLines.push({ label: t('rMaxSize'), value: fmtMm(res.Go), unit: 'mm' });
+      resultLines.push({ label: t('rMinSize'), value: fmtMm(res.Gu), unit: 'mm' });
+      resultLines.push({ label: t('rTol'), value: fmtMm(res.tol), unit: 'mm' });
+    } else {
       var f = res.fit;
       inputLines.push({ label: t('fNominal'), value: fmtNum(res.input.nominal), unit: 'mm' });
       inputLines.push({ label: t('fSystem'), value: res.system, unit: '' });
@@ -2782,7 +2809,8 @@
       resultLines.push({ label: t('rFitTol'), value: fmtUm(f.PT), unit: 'µm' });
     }
     return { lang: lang, designation: designation, headline: head,
-             now: new Date().toISOString(), dataVersion: 'ISO 286-2:2020',
+             now: new Date().toISOString(),
+             dataVersion: (mode === 'freiform') ? 'ISO 2768-1:1991' : 'ISO 286-2:2020',
              licensee: localStorage.getItem('dtp-licensee') || '',
              resultLines: resultLines, inputLines: inputLines };
   }

@@ -504,5 +504,47 @@ if (modeBtns.length === 1) {
   ok(msg.hidden === true && hL.value === 'H' && sL.value === 'g', 'F3: "50 g6/H7" → korrekt sortiert H7/g6');
 })();
 
+/* ---------------------------------------------------------------------------
+ * F2 (2026-07): Freiform-Export enthält echte Freiform-Daten; nach Fehler/leer
+ * kein stiller Alt-Export. (Deckt zugleich F7 ab: flashToast muss definiert sein
+ * — der outNoCalc-Pfad wird durch lastResult=null erst erreichbar.)
+ * ------------------------------------------------------------------------- */
+(function () {
+  function modeBtn(key) { return formHost.findAll(function (n) { return n.tagName === 'BUTTON' && n.getAttribute('data-i18n') === key; })[0]; }
+  function fitInput() { return formHost.findAll(function (n) { return n.classList.contains('fit-input'); })[0]; }
+  // Echten Export-Inhalt abgreifen (Blob speichert seinen ersten Teil), danach wiederherstellen.
+  var savedBlob = global.Blob, blobText = null;
+  global.Blob = function (parts) { blobText = (parts && parts[0] != null) ? String(parts[0]) : ''; this.parts = parts; };
+  function grab(fireFn) { blobText = null; fireFn(); return blobText || ''; }
+
+  var mFit = modeBtn('modeFit'); if (mFit) mFit.fire('click');
+  var fi = fitInput();
+  if (!fi || !byId.rtfBtn) { ok(false, 'F2: Fit-Feld/RTF-Button auffindbar'); global.Blob = savedBlob; return; }
+  fi.value = '50 H7/g6'; fi.fire('input');
+
+  var mFf = modeBtn('modeFreiform'); ok(!!mFf, 'F2: Freiform-Umschalter vorhanden'); mFf.fire('click');
+  var ffN = formHost.findAll(function (n) { return n.tagName === 'INPUT' && n.type === 'number'; })[0];
+  ok(!!ffN, 'F2: Freiform-Nennmaßfeld vorhanden'); ffN.value = '250'; ffN.fire('input');
+
+  var txt = grab(function () { byId.rtfBtn.fire('click'); });
+  ok(txt.length > 0, 'F2: Freiform-RTF wird erzeugt (Inhalt vorhanden)');
+  ok(txt.indexOf('ISO 2768-') >= 0, 'F2: RTF enthält ISO-2768-Inhalt (Kopf/Datenstand)');
+  ok(txt.indexOf('H7') < 0, 'F2: RTF enthält KEINE alte Passung (H7)');
+  ok(txt.indexOf('250') >= 0, 'F2: RTF enthält das Freiform-Nennmaß 250');
+  ok(txt.indexOf('ISO 2768-1') >= 0, 'F2: RTF enthält Freiform-Rechenweg/Datenstand');
+
+  ffN.value = ''; ffN.fire('input');
+  var txt0 = grab(function () { byId.rtfBtn.fire('click'); });
+  ok(txt0 === '', 'F2: leeres Nennmaß → KEIN Export (outNoCalc, kein Crash)');
+
+  if (mFit) modeBtn('modeFit').fire('click');
+  fitInput().value = '40 H7/p6'; fitInput().fire('input');
+  var txt2 = grab(function () { byId.rtfBtn.fire('click'); });
+  ok(txt2.indexOf('H7') >= 0 && txt2.indexOf('p6') >= 0, 'F2: Fit-Export wieder korrekt (40 H7/p6)');
+  ok(txt2.indexOf('ISO 2768-') < 0, 'F2: Fit-Export ohne Freiform-Reste (nur Disclaimer nennt 2768)');
+
+  global.Blob = savedBlob;
+})();
+
 console.log('\nDOM-Smoke B10a: ' + okCount + ' OK, ' + failCount + ' Fehler');
 process.exit(failCount ? 1 : 0);
