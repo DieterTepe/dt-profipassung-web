@@ -1560,12 +1560,23 @@
     if (raw === '') { elFitMsg.hidden = true; return; }
     var p = S.parseFit(raw);
     if (!p.ok) { elFitMsg.textContent = msgOf({ code: p.error || 'ERR_PARSE_FIELD' }); elFitMsg.hidden = false; return; }
+    // Nur übernehmen, wenn beide Buchstaben (richtige Schreibweise/Rolle) UND beide Grade in
+    // die Auswahl-Listen passen. Sonst blieben Felder still fehlbelegt und es würde ein ANDERER
+    // als der getippte Wert gerechnet. Genaue Ursache (Schreibweise, Grad-Bereich, Norm-Lücke)
+    // liefert der echte Kern → klare Meldung statt stiller Fehlrechnung.
+    var transferable = HOLE_LETTERS.indexOf(p.hole.letter) >= 0 && SHAFT_LETTERS.indexOf(p.shaft.letter) >= 0
+                     && GRADES.indexOf(p.hole.grade) >= 0 && GRADES.indexOf(p.shaft.grade) >= 0;
+    if (!transferable) {
+      var chk = S.computeFit({ nominal: p.nominal, hole: p.hole, shaft: p.shaft, system: p.system });
+      var entry = (chk && chk.errors && chk.errors[0]) ? chk.errors[0] : { code: 'ERR_LETTER_CASE' };
+      elFitMsg.textContent = msgOf(entry); elFitMsg.hidden = false; return;
+    }
     elFitMsg.hidden = true;
     elNominal.value = String(p.nominal);
-    if (HOLE_LETTERS.indexOf(p.hole.letter) >= 0) elHoleL.value = p.hole.letter;
-    if (GRADES.indexOf(p.hole.grade) >= 0) elHoleG.value = String(p.hole.grade);
-    if (SHAFT_LETTERS.indexOf(p.shaft.letter) >= 0) elShaftL.value = p.shaft.letter;
-    if (GRADES.indexOf(p.shaft.grade) >= 0) elShaftG.value = String(p.shaft.grade);
+    elHoleL.value = p.hole.letter;
+    elHoleG.value = String(p.hole.grade);
+    elShaftL.value = p.shaft.letter;
+    elShaftG.value = String(p.shaft.grade);
     elSystem.value = p.system || 'FREE';
     run(); // rendern, aber elFit NICHT überschreiben (Nutzer tippt gerade)
   }

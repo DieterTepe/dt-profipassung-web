@@ -463,5 +463,46 @@ if (modeBtns.length === 1) {
   ok(ffTexts[0] !== txDe[1], 'Freiform-Nennmaß hat EIGENE Hilfe (nicht die ISO-286-Hilfe)');
 }
 
+/* ---------------------------------------------------------------------------
+ * F3 (2026-07): Kurzeingabe darf bei falscher Schreibweise/Grad NICHT still
+ * ein anderes als das getippte Feld rechnen — Fehlermeldung + kein stiller run.
+ * ------------------------------------------------------------------------- */
+(function () {
+  var fitBackMode = formHost.findAll(function (n) { return n.tagName === 'BUTTON' && n.getAttribute('data-i18n') === 'modeFit'; });
+  if (fitBackMode.length) fitBackMode[0].fire('click');   // zurück in den Passungsmodus
+  function sels() { return formHost.findAll(function (n) { return n.tagName === 'SELECT'; }); }
+  function fitEl() { return formHost.findAll(function (n) { return n.classList.contains('fit-input'); })[0]; }
+  function msgEl() { return formHost.findAll(function (n) { return n.classList.contains('field-msg'); })[0]; }
+  var s = sels(); var hL = s[1], hG = s[2], sL = s[3], sG = s[4];
+  var fi = fitEl(), msg = msgEl();
+  if (!fi || !msg || !hL || !sL) { ok(false, 'F3: Kurzeingabe/Felder auffindbar'); return; }
+
+  function type(v) { fi.value = v; fi.fire('input'); }
+
+  type('50 H7/g6');
+  ok(hL.value === 'H' && sL.value === 'g' && msg.hidden === true, 'F3: gültig 50 H7/g6 → Felder H/g, keine Meldung');
+
+  type('50 h7/g6');
+  ok(msg.hidden === false, 'F3: "50 h7/g6" (zwei klein) → Fehlermeldung sichtbar');
+  ok(!(hL.value === 'H' && sL.value === 'g' && msg.hidden), 'F3: "50 h7/g6" → KEINE stille H7/g6-Rechnung');
+
+  type('50 H7/g6'); type('50 H7/G6');
+  ok(msg.hidden === false, 'F3: "50 H7/G6" (zwei groß) → Fehlermeldung sichtbar');
+
+  type('50 H7/g6'); type('50 H17/g6');
+  ok(msg.hidden === false && hG.value !== '17', 'F3: "50 H17/g6" (Grad>16) → Meldung, Feld nicht 17');
+
+  type('50 H7/n6');
+  ok(msg.hidden === true && hL.value === 'H' && sL.value === 'n' && hG.value === '7' && sG.value === '6', 'F3: "50 H7/n6" → gültig, Felder korrekt');
+
+  type('50 H7/js6');
+  ok(msg.hidden === true && sL.value === 'js', 'F3: "50 H7/js6" → gültig, Welle js');
+  type('50 JS7/h6');
+  ok(msg.hidden === true && hL.value === 'JS' && sL.value === 'h', 'F3: "50 JS7/h6" → gültig, Bohrung JS');
+
+  type('50 g6/H7');
+  ok(msg.hidden === true && hL.value === 'H' && sL.value === 'g', 'F3: "50 g6/H7" → korrekt sortiert H7/g6');
+})();
+
 console.log('\nDOM-Smoke B10a: ' + okCount + ' OK, ' + failCount + ' Fehler');
 process.exit(failCount ? 1 : 0);
