@@ -215,19 +215,28 @@
         rwHeading: 'Rechenweg', rwAllOk: 'alle Schritte geprüft', rwFail: 'Prüfung fehlgeschlagen',
         rwTitleIT: 'IT-Grundtoleranzen', rwTitleDevBore: 'Grenzabmaße Bohrung', rwTitleDevShaft: 'Grenzabmaße Welle',
         rwTitleLimBore: 'Grenzmaße Bohrung', rwTitleLimShaft: 'Grenzmaße Welle',
-        rwClearMax: 'Höchstspiel', rwClearMin: 'Mindestspiel', rwFitTol: 'Passtoleranz', rwArt: 'Passungsart'
+        rwClearMax: 'Höchstspiel', rwClearMin: 'Mindestspiel', rwFitTol: 'Passtoleranz', rwArt: 'Passungsart',
+        rww_crosscheck: 'Gegenprobe', rww_fullfilm: 'Vollschmierung', rww_mixedfilm: 'Mischreibung',
+        rww_gap: 'Spalt', rww_ductile: 'duktil', rww_brittle: 'spröde', rww_joinplay: 'Fügespiel',
+        rww_hubto: 'Nabe auf', rww_shaftto: 'Welle auf', rww_noresidual: 'kein Restübermaß'
       },
       en: {
         rwHeading: 'Calculation', rwAllOk: 'all steps verified', rwFail: 'verification failed',
         rwTitleIT: 'Fundamental tolerances', rwTitleDevBore: 'Limit deviations, hole', rwTitleDevShaft: 'Limit deviations, shaft',
         rwTitleLimBore: 'Limits, hole', rwTitleLimShaft: 'Limits, shaft',
-        rwClearMax: 'Maximum clearance', rwClearMin: 'Minimum clearance', rwFitTol: 'Fit tolerance', rwArt: 'Type of fit'
+        rwClearMax: 'Maximum clearance', rwClearMin: 'Minimum clearance', rwFitTol: 'Fit tolerance', rwArt: 'Type of fit',
+        rww_crosscheck: 'cross-check', rww_fullfilm: 'full-film lubrication', rww_mixedfilm: 'mixed friction',
+        rww_gap: 'gap', rww_ductile: 'ductile', rww_brittle: 'brittle', rww_joinplay: 'joining clearance',
+        rww_hubto: 'hub to', rww_shaftto: 'shaft to', rww_noresidual: 'no residual interference'
       },
       pt: {
         rwHeading: 'Cálculo', rwAllOk: 'todos os passos verificados', rwFail: 'verificação falhou',
         rwTitleIT: 'Tolerâncias fundamentais', rwTitleDevBore: 'Desvios-limite, furo', rwTitleDevShaft: 'Desvios-limite, eixo',
         rwTitleLimBore: 'Dimensões-limite, furo', rwTitleLimShaft: 'Dimensões-limite, eixo',
-        rwClearMax: 'Folga máxima', rwClearMin: 'Folga mínima', rwFitTol: 'Tolerância do ajuste', rwArt: 'Tipo de ajuste'
+        rwClearMax: 'Folga máxima', rwClearMin: 'Folga mínima', rwFitTol: 'Tolerância do ajuste', rwArt: 'Tipo de ajuste',
+        rww_crosscheck: 'verificação', rww_fullfilm: 'lubrificação completa', rww_mixedfilm: 'atrito misto',
+        rww_gap: 'folga', rww_ductile: 'dúctil', rww_brittle: 'frágil', rww_joinplay: 'folga de montagem',
+        rww_hubto: 'cubo a', rww_shaftto: 'eixo a', rww_noresidual: 'sem interferência residual'
       }
     };
     ['de', 'en', 'pt'].forEach(function (l) { for (var k in s[l]) STR[l][k] = s[l][k]; });
@@ -1890,7 +1899,13 @@
   }
 
   /* Aufklappbarer, selbstprüfender Rechenweg (B6). */
-  function rwFmt() { return { um: sgn, umU: fmtUm, mm: fmtMm, n: fmtNum }; }
+  function rwFmt() {
+    return { um: sgn, umU: fmtUm, mm: fmtMm, n: fmtNum, w: {
+      crosscheck: t('rww_crosscheck'), fullfilm: t('rww_fullfilm'), mixedfilm: t('rww_mixedfilm'),
+      gap: t('rww_gap'), ductile: t('rww_ductile'), brittle: t('rww_brittle'), joinplay: t('rww_joinplay'),
+      hubto: t('rww_hubto'), shaftto: t('rww_shaftto'), noresidual: t('rww_noresidual')
+    } };
+  }
 
   /* Aufklappbarer, selbstprüfender Rechenweg — nimmt eine oder mehrere Gruppen
    * [{ titleKey?, data:{steps,allOk} }]. So erscheint JEDE Berechnung als Nachweis. */

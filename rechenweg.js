@@ -16,6 +16,20 @@
   function round3(x) { return Math.round(x * 1000) / 1000; }
   function eq(a, b) { return Math.abs(a - b) < 1e-6; }
 
+  /* Sprachabhängige Wort-Schnipsel im Rechenweg. Standard = Deutsch; ui.js
+   * reicht über fmt.w die Übersetzungen (DE/EN/PT) durch. So bleibt rechenweg.js
+   * DOM-frei/Node-testbar (ohne fmt.w = deutsche Ausgabe wie bisher). */
+  var RW_DEFAULT_WORDS = {
+    crosscheck: 'Gegenprobe', fullfilm: 'Vollschmierung', mixedfilm: 'Mischreibung',
+    gap: 'Spalt', ductile: 'duktil', brittle: 'spröde', joinplay: 'Fügespiel',
+    hubto: 'Nabe auf', shaftto: 'Welle auf', noresidual: 'kein Restübermaß'
+  };
+  function wordsOf(fmt) {
+    var w = (fmt && fmt.w) || {}, o = {};
+    for (var k in RW_DEFAULT_WORDS) o[k] = (w[k] != null) ? w[k] : RW_DEFAULT_WORDS[k];
+    return o;
+  }
+
   // Standard-Formatierer (falls ui.js keine Locale-Formatierer übergibt):
   function umSignedDefault(x) { return (x > 0 ? '+' : '') + (Number.isInteger(x) ? String(x) : x.toFixed(1)); }
   function umPlainDefault(x) { return Number.isInteger(x) ? String(x) : x.toFixed(1); }
@@ -30,6 +44,7 @@
     var um = fmt.um || umSignedDefault;   // signiert, z. B. „+25", „−9"
     var umU = fmt.umU || umPlainDefault;  // vorzeichenlos, z. B. „25"
     var mm = fmt.mm || mmDefault;
+    var W = wordsOf(fmt);
 
     var H = res.hole, S = res.shaft, F = res.fit, N = res.input.nominal;
     var hl = res.input.hole.letter + res.input.hole.grade;
@@ -84,7 +99,7 @@
     var pt = H.T + S.T;
     step('rwFitTol',
       'PT = T_B + T_W = ' + umU(H.T) + ' + ' + umU(S.T) + ' = ' + umU(pt) + ' µm' +
-      '   (Gegenprobe: PS_max − PS_min = ' + umU(F.PSmax - F.PSmin) + ')',
+      '   (' + W.crosscheck + ': PS_max − PS_min = ' + umU(F.PSmax - F.PSmin) + ')',
       eq(pt, F.PT) && eq(pt, F.PSmax - F.PSmin));
 
     // 9) Passungsart aus der Trichotomie
@@ -145,6 +160,7 @@
     if (!res || !res.ok) return { steps: [], allOk: false };
     fmt = fmt || {};
     var umU = fmt.umU || umPlainDefault, n = fmt.n || function (x) { return String(x); };
+    var W = wordsOf(fmt);
     function nn(x) { x = Number(x); return (isFinite(x) && x > 0) ? x : 0; }
     var RzB = nn(rz && rz.RzB), RzW = nn(rz && rz.RzW), RzSum = RzB + RzW;
     var TB = res.hole.T, TS = res.shaft.T, F = res.fit;
@@ -160,18 +176,18 @@
 
     if (F.art === 'SPIEL') {
       var Sm = F.PSmin, sw = Sm - 0.4 * RzSum;
-      step('rwOaSwirk', 'S_wirk = S_min − 0,4·ΣRz = ' + umU(Sm) + ' − 0,4·' + n(round1(RzSum)) + ' = ' + n(round1(sw)) + ' µm',
+      step('rwOaSwirk', 'S_wirk = S_min − ' + n(0.4) + '·ΣRz = ' + umU(Sm) + ' − ' + n(0.4) + '·' + n(round1(RzSum)) + ' = ' + n(round1(sw)) + ' µm',
         eq(round1(sw + 0.4 * RzSum), round1(Sm)));
       var thr = Sm / 3, gap = Sm - RzSum, film = RzSum <= thr + 1e-9;
       step('rwLubeThr', 'S_min / 3 = ' + umU(Sm) + ' / 3 = ' + n(round1(thr)) + ' µm',
         eq(round1(3 * thr), round1(Sm)));
-      step('rwLubeGap', 'Spalt = S_min − ΣRz = ' + umU(Sm) + ' − ' + n(round1(RzSum)) + ' = ' + n(round1(gap)) + ' µm',
+      step('rwLubeGap', W.gap + ' = S_min − ΣRz = ' + umU(Sm) + ' − ' + n(round1(RzSum)) + ' = ' + n(round1(gap)) + ' µm',
         eq(round1(gap + RzSum), round1(Sm)));
-      step('rwLubeRule', 'ΣRz ' + (film ? '≤' : '>') + ' S_min/3 : ' + n(round1(RzSum)) + (film ? ' ≤ ' : ' > ') + n(round1(thr)) + ' µm → ' + (film ? 'Vollschmierung' : 'Mischreibung'),
+      step('rwLubeRule', 'ΣRz ' + (film ? '≤' : '>') + ' S_min/3 : ' + n(round1(RzSum)) + (film ? ' ≤ ' : ' > ') + n(round1(thr)) + ' µm → ' + (film ? W.fullfilm : W.mixedfilm),
         (RzSum <= thr + 1e-9) === film, film ? 'SPIEL' : 'UEBERGANG');
     } else if (F.art === 'UEBERMASS') {
       var Um = F.interferenceMin, uw = Um - 0.8 * RzSum;
-      step('rwOaUwirk', 'Ü_wirk = Ü_min − 0,8·ΣRz = ' + umU(Um) + ' − 0,8·' + n(round1(RzSum)) + ' = ' + n(round1(uw)) + ' µm',
+      step('rwOaUwirk', 'Ü_wirk = Ü_min − ' + n(0.8) + '·ΣRz = ' + umU(Um) + ' − ' + n(0.8) + '·' + n(round1(RzSum)) + ' = ' + n(round1(uw)) + ' µm',
         eq(round1(uw + 0.8 * RzSum), round1(Um)));
     }
     return { steps: steps, allOk: steps.every(function (s) { return s.ok; }) };
@@ -189,6 +205,7 @@
     fmt = fmt || {};
     var umU = fmt.umU || umPlainDefault;
     var n = fmt.n || function (x) { return String(x); };
+    var WORDS = wordsOf(fmt);   // eigener Name: 'W' ist hier die Nachgiebigkeit (s. u.)
     function p2(x) { return n(round2(x)); }         // N/mm², Nm: 2 Nachkommastellen
     function p1(x) { return n(round1(x)); }
     function mm(x) { return n(round2(x)); }
@@ -200,12 +217,12 @@
 
     // 1) Glättung → wirksame Übermaße.
     var RzA = pv.RzA || 0, RzI = pv.RzI || 0, G = 0.8 * (RzA + RzI);
-    step('rwPvSmooth', 'G = 0,8·(Rz_A + Rz_I) = 0,8·(' + umU(RzA) + ' + ' + umU(RzI) + ') = ' + umU(round2(G)) + ' µm',
+    step('rwPvSmooth', 'G = ' + n(0.8) + '·(Rz_A + Rz_I) = ' + n(0.8) + '·(' + umU(RzA) + ' + ' + umU(RzI) + ') = ' + umU(round2(G)) + ' µm',
       eq(round3(G), round3(v.G_um)));
     step('rwPvUwMax', 'U_w,max = U_max − G = ' + umU(pv.Umax) + ' − ' + umU(round2(G)) + ' = ' + umU(round2(pv.Umax - G)) + ' µm',
       eq(round3(pv.Umax - G), round3(v.Uw_max_um)));
     var uwminRaw = pv.Umin - G;
-    step('rwPvUwMin', 'U_w,min = U_min − G = ' + umU(pv.Umin) + ' − ' + umU(round2(G)) + ' = ' + umU(round2(uwminRaw)) + ' µm' + (uwminRaw <= 0 ? ' → 0 (kein Restübermaß)' : ''),
+    step('rwPvUwMin', 'U_w,min = U_min − G = ' + umU(pv.Umin) + ' − ' + umU(round2(G)) + ' = ' + umU(round2(uwminRaw)) + ' µm' + (uwminRaw <= 0 ? ' → 0 (' + WORDS.noresidual + ')' : ''),
       eq(round3(Math.max(0, uwminRaw)), round3(v.Uw_min_um)));
 
     // 2) Geometrieverhältnisse.
@@ -238,20 +255,20 @@
     var hypA = mA.brittle ? 'NH' : 'GEH';
     if (mA.brittle) {
       var pzA = (1 - QA * QA) / (1 + QA * QA) * mA.Rm;
-      step('rwPvPzulA', 'p_zul,A = (1−Q_A²)/(1+Q_A²)·R_m,A = ' + p2(pzA) + ' N/mm² (spröde, NH)',
+      step('rwPvPzulA', 'p_zul,A = (1−Q_A²)/(1+Q_A²)·R_m,A = ' + p2(pzA) + ' N/mm² (' + WORDS.brittle + ', NH)',
         relEqRW(pzA, v.pzulA), 'brittle');
     } else {
       var pzA2 = (1 - QA * QA) * mA.Re / Math.sqrt(3);
-      step('rwPvPzulA', 'p_zul,A = (1−Q_A²)·R_e,A/√3 = ' + p2(pzA2) + ' N/mm² (duktil, GEH)',
+      step('rwPvPzulA', 'p_zul,A = (1−Q_A²)·R_e,A/√3 = ' + p2(pzA2) + ' N/mm² (' + WORDS.ductile + ', GEH)',
         relEqRW(pzA2, v.pzulA));
     }
     if (mI.brittle) {
       var pzI = (1 - QI * QI) / (1 + QI * QI) * mI.Rm;
-      step('rwPvPzulI', 'p_zul,I = (1−Q_I²)/(1+Q_I²)·R_m,I = ' + p2(pzI) + ' N/mm² (spröde, NH)',
+      step('rwPvPzulI', 'p_zul,I = (1−Q_I²)/(1+Q_I²)·R_m,I = ' + p2(pzI) + ' N/mm² (' + WORDS.brittle + ', NH)',
         relEqRW(pzI, v.pzulI), 'brittle');
     } else {
       var pzI2 = (1 - QI * QI) * mI.Re / Math.sqrt(3);
-      step('rwPvPzulI', 'p_zul,I = (1−Q_I²)·R_e,I/√3 = ' + p2(pzI2) + ' N/mm² (duktil, GEH)',
+      step('rwPvPzulI', 'p_zul,I = (1−Q_I²)·R_e,I/√3 = ' + p2(pzI2) + ' N/mm² (' + WORDS.ductile + ', GEH)',
         relEqRW(pzI2, v.pzulI));
     }
     step('rwPvPzul', 'p_zul = min(p_zul,A ; p_zul,I) = ' + p2(v.pzul) + ' N/mm²',
@@ -282,16 +299,16 @@
     var Fe = mu * v.p_max * AF;
     step('rwPvFe', 'F_e = µ·p_max·A_F = ' + n(mu) + '·' + p2(v.p_max) + '·' + n(round1(AF)) + ' = ' + n(round0(Fe)) + ' N',
       relEqRW(Fe, v.Fe_N));
-    step('rwPvSf', 'S_f ≈ 1 µm/mm · D_F = ' + umU(round1(v.Sf_um)) + ' µm (Fügespiel)',
+    step('rwPvSf', 'S_f ≈ 1 µm/mm · D_F = ' + umU(round1(v.Sf_um)) + ' µm (' + WORDS.joinplay + ')',
       eq(round3(DF), round3(v.Sf_um)));
     if (v.T_hub_C !== null && v.T_hub_C !== undefined && mA.alpha > 0) {
       var dTh = (pv.Umax + v.Sf_um) * 1000 / (mA.alpha * DF);
-      step('rwPvTHub', 'ΔT_A = (U_max + S_f)/(α_A·D_F) = (' + umU(pv.Umax) + '+' + umU(round1(v.Sf_um)) + ')/(' + n(mA.alpha) + '·' + mm(DF) + ') = ' + p1(dTh) + ' K → Nabe auf ' + p1(v.T0_C + dTh) + ' °C',
+      step('rwPvTHub', 'ΔT_A = (U_max + S_f)/(α_A·D_F) = (' + umU(pv.Umax) + '+' + umU(round1(v.Sf_um)) + ')/(' + n(mA.alpha) + '·' + mm(DF) + ') = ' + p1(dTh) + ' K → ' + WORDS.hubto + ' ' + p1(v.T0_C + dTh) + ' °C',
         relEqRW(dTh, v.dT_hub_K));
     }
     if (v.T_shaft_C !== null && v.T_shaft_C !== undefined && mI.alpha > 0) {
       var dTs = (pv.Umax + v.Sf_um) * 1000 / (mI.alpha * DF);
-      step('rwPvTShaft', 'ΔT_I = (U_max + S_f)/(α_I·D_F) = ' + p1(dTs) + ' K → Welle auf ' + p1(v.T0_C - dTs) + ' °C',
+      step('rwPvTShaft', 'ΔT_I = (U_max + S_f)/(α_I·D_F) = ' + p1(dTs) + ' K → ' + WORDS.shaftto + ' ' + p1(v.T0_C - dTs) + ' °C',
         relEqRW(dTs, v.dT_shaft_K));
     }
 

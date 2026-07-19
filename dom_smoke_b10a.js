@@ -546,5 +546,48 @@ if (modeBtns.length === 1) {
   global.Blob = savedBlob;
 })();
 
+/* ---------------------------------------------------------------------------
+ * F1 (2026-07): Rechenweg-Wörter übersetzbar (fmt.w). EN/PT dürfen keine
+ * deutschen Wörter mehr zeigen; DE bleibt Fallback. Zugleich Regressionsschutz
+ * für die Namenskollision 'W' (Nachgiebigkeit) in buildPressverband.
+ * ------------------------------------------------------------------------- */
+(function () {
+  function langBtn(l) { return body.findAll(function (n) { return n.classList.contains('lang-btn') && n.getAttribute('data-lang') === l; })[0]; }
+  function fitInput() { return formHost.findAll(function (n) { return n.classList.contains('fit-input'); })[0]; }
+  function rwText() { return byId.resultHost.findAll(function (n) { return n.classList.contains('rw-expr'); }).map(function (n) { return n.textContent; }).join(' '); }
+  var mFit = formHost.findAll(function (n) { return n.tagName === 'BUTTON' && n.getAttribute('data-i18n') === 'modeFit'; })[0];
+  if (mFit) mFit.fire('click');
+
+  if (langBtn('de')) langBtn('de').fire('click');
+  fitInput().value = '50 H7/g6'; fitInput().fire('input');
+  ok(/Gegenprobe/.test(rwText()), 'F1: DE-Rechenweg zeigt „Gegenprobe“');
+
+  if (langBtn('en')) langBtn('en').fire('click');
+  fitInput().value = '50 H7/g6'; fitInput().fire('input');
+  var enTxt = rwText();
+  ok(/cross-check/.test(enTxt) && !/Gegenprobe/.test(enTxt), 'F1: EN-Rechenweg zeigt „cross-check“ statt „Gegenprobe“');
+  if (langBtn('de')) langBtn('de').fire('click');
+
+  // Direkter Modultest: Pressverband-Rechenweg mit EN-Wörtern, ohne deutsche Reste,
+  // Nachgiebigkeit W (Formel) unversehrt.
+  var RW = window.DTPRechenweg, S = window.DTPSolver, TH = window.DTPThermik, PV = window.DTPPress;
+  if (RW && S && TH && PV) {
+    var rP = S.computeFit('60 H7/s6');
+    var pvArgs = { DF: 60, lF: 50, DAa: 120, DIi: 0, Umax: rP.fit.interferenceMax, Umin: rP.fit.interferenceMin, RzA: 4, RzI: 1.6, matA: TH.MAT.steel, matI: TH.MAT.steel, mu: 0.14, Mt: 250, Fax: 0 };
+    var pc = PV.compute({ DF: 60, lF: 50, DAa: 120, DIi: 0, U_max_um: rP.fit.interferenceMax, U_min_um: rP.fit.interferenceMin, RzA_um: 4, RzI_um: 1.6, matA: TH.MAT.steel, matI: TH.MAT.steel, mu: 0.14, Mt_Nm: 250, Fax_N: 0 });
+    var enW = { um: function (x) { return (x > 0 ? '+' : '') + x; }, umU: function (x) { return String(x); }, mm: function (x) { return Number(x).toFixed(3); }, n: function (x) { return String(x); },
+      w: { crosscheck: 'cross-check', fullfilm: 'full-film lubrication', mixedfilm: 'mixed friction', gap: 'gap', ductile: 'ductile', brittle: 'brittle', joinplay: 'joining clearance', hubto: 'hub to', shaftto: 'shaft to', noresidual: 'no residual interference' } };
+    var joined = RW.buildPressverband(pvArgs, pc.r, enW).steps.map(function (s) { return s.expr; }).join(' ');
+    ok(!/duktil|spröde|Fügespiel|Nabe auf|Welle auf|Restübermaß/.test(joined), 'F1: EN-Pressverband ohne deutsche Wörter');
+    ok(/ductile|joining clearance|hub to/.test(joined), 'F1: EN-Pressverband trägt übersetzte Wörter');
+    ok(/W = K_A\/E_A \+ K_I\/E_I/.test(joined), 'F1: Nachgiebigkeit W (Formel) unversehrt trotz WORDS-Umbenennung');
+    // DE-Fallback (ohne fmt.w) bleibt deutsch:
+    var joinedDe = RW.buildPressverband(pvArgs, pc.r).steps.map(function (s) { return s.expr; }).join(' ');
+    ok(/duktil/.test(joinedDe) && /Fügespiel/.test(joinedDe), 'F1: DE-Fallback ohne fmt bleibt deutsch');
+  } else {
+    ok(false, 'F1: Module für Pressverband-Rechenweg verfügbar');
+  }
+})();
+
 console.log('\nDOM-Smoke B10a: ' + okCount + ' OK, ' + failCount + ' Fehler');
 process.exit(failCount ? 1 : 0);
