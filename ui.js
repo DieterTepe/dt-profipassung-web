@@ -723,7 +723,7 @@
         asNominal: 'Nennmaß (Durchmesser)', asResultTitle: 'Meine Vorschläge',
         asResultLead: 'Für {mm} mm — nach Eignung geordnet. Tippe „Übernehmen".',
         asApply: 'Übernehmen', asAltPrefix: 'Einheitswelle-Alternative:',
-        asNoNominal: 'Bitte zuerst ein Nennmaß eintragen.',
+        asNoNominal: 'Bitte ein Nennmaß von 1–500 mm eintragen.',
         // Fragen
         asQ_purpose: 'Was soll die Verbindung tun?',
         asQ_demount: 'Wie oft wird sie wieder auseinandergebaut?',
@@ -776,7 +776,7 @@
         asNominal: 'Nominal size (diameter)', asResultTitle: 'My suggestions',
         asResultLead: 'For {mm} mm — ordered by suitability. Tap “Apply”.',
         asApply: 'Apply', asAltPrefix: 'Shaft-basis alternative:',
-        asNoNominal: 'Please enter a nominal size first.',
+        asNoNominal: 'Please enter a nominal size of 1–500 mm.',
         asQ_purpose: 'What should the joint do?',
         asQ_demount: 'How often is it taken apart again?',
         asQ_precision: 'How precise must the guidance be?',
@@ -825,7 +825,7 @@
         asNominal: 'Dimensão nominal (diâmetro)', asResultTitle: 'Minhas sugestões',
         asResultLead: 'Para {mm} mm — ordenadas por adequação. Toque em “Aplicar”.',
         asApply: 'Aplicar', asAltPrefix: 'Alternativa eixo-base:',
-        asNoNominal: 'Informe primeiro uma dimensão nominal.',
+        asNoNominal: 'Informe uma dimensão nominal de 1–500 mm.',
         asQ_purpose: 'O que a união deve fazer?',
         asQ_demount: 'Com que frequência será desmontada?',
         asQ_precision: 'Qual a precisão necessária da guia?',
@@ -2311,6 +2311,7 @@
     m.appendChild(b); ov.appendChild(m);
     ov.addEventListener('click', function (e) { if (e.target === ov) closeOv(ov); });
     document.body.appendChild(ov);
+    wireModalDismiss(ov, function () { closeOv(ov); }, x);   // Escape schließt, Fokus auf ✕
   }
 
   /* Verdrahtung von Registrierung, Info und Long-Press (aus init gerufen). */
@@ -2448,7 +2449,7 @@
       b.addEventListener('click', function () {
         if (idx === 0) {
           var nv = parseFloat(String(asNominalVal).replace(',', '.'));
-          if (!(nv > 0)) { flashNominalWarning(card); return; }
+          if (!(nv >= 1 && nv <= 500)) { flashNominalWarning(card); return; }
         }
         asAnswers[qid] = val;
         transitionStep();
@@ -2675,8 +2676,29 @@
     m.appendChild(b); ov.appendChild(m);
     ov.addEventListener('click', function (e) { if (e.target === ov) closeOv(ov); });
     document.body.appendChild(ov);
+    wireModalDismiss(ov, function () { closeOv(ov); }, ok);   // Escape schließt, Fokus auf „OK“
   }
   function closeOv(ov) { if (ov && ov.parentNode) ov.parentNode.removeChild(ov); }
+
+  /* Escape schließt, Tab bleibt im Dialog (Fokusfalle), Anfangsfokus gesetzt.
+   * Listener sitzt am Overlay (wie beim Assistenten) → entfällt mit dem Knoten,
+   * kein document-Listener nötig. focusEl/.focus() defensiv (Shim-sicher). */
+  function wireModalDismiss(ov, closeFn, focusEl) {
+    function focusables() {
+      return Array.prototype.slice.call(ov.querySelectorAll('button, a[href], input, select, textarea'))
+        .filter(function (n) { return !n.disabled; });
+    }
+    ov.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') { if (e.preventDefault) e.preventDefault(); closeFn(); return; }
+      if (e.key === 'Tab') {
+        var f = focusables(); if (f.length < 2) return;
+        var first = f[0], last = f[f.length - 1], a = document.activeElement;
+        if (e.shiftKey && a === first) { if (e.preventDefault) e.preventDefault(); if (last.focus) last.focus(); }
+        else if (!e.shiftKey && a === last) { if (e.preventDefault) e.preventDefault(); if (first.focus) first.focus(); }
+      }
+    });
+    if (focusEl && focusEl.focus) { try { focusEl.focus(); } catch (e) {} }
+  }
 
   /* Kurze Status-Rückmeldung in der Aktionsleiste (#dtMsg). War bisher an fünf
      Stellen aufgerufen, aber nie definiert → in der Vollversion warf jede Ausgabe
@@ -2833,7 +2855,9 @@
     }
     return { lang: lang, designation: designation, headline: head,
              now: new Date().toISOString(),
-             dataVersion: (mode === 'freiform') ? 'ISO 2768-1:1991' : 'ISO 286-2:2020',
+             dataVersion: (mode === 'freiform')
+               ? 'ISO 2768-1:1991'
+               : ('ISO 286-2:2020' + (pvEnabled && pvLastCalc ? ' · DIN 7190-1:2017' : '')),
              licensee: localStorage.getItem('dtp-licensee') || '',
              resultLines: resultLines, inputLines: inputLines };
   }

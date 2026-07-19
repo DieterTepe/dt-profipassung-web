@@ -182,7 +182,7 @@
       var ch = s[i], c = s.charCodeAt(i);
       if (ch === '\\' || ch === '{' || ch === '}') out += '\\' + ch;
       else if (ch === '\n') out += '\\par ';
-      else if (c > 127) out += '\\u' + c + '?';
+      else if (c > 127) out += '\\u' + (c > 32767 ? c - 65536 : c) + '?'; // RTF: signed 16-bit (Surrogate/Emoji korrekt)
       else out += ch;
     }
     return out;

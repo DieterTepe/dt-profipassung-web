@@ -626,5 +626,68 @@ if (modeBtns.length === 1) {
   ok(/50,025/.test(rt2) && !/50,0250/.test(rt2), 'F5: Normalfall 50 H7 bleibt „50,025" (3 Stellen)');
 })();
 
+/* ---------------------------------------------------------------------------
+ * F6 (2026-07): Kleinkram — RTF-Unicode (Emoji), Datenstand je Modus,
+ * Assistent-Nennmaßbereich 1–500, Overlay-Escape.
+ * ------------------------------------------------------------------------- */
+(function () {
+  function fitInput() { return formHost.findAll(function (n) { return n.classList.contains('fit-input'); })[0]; }
+  function modeBtn(k) { return formHost.findAll(function (n) { return n.tagName === 'BUTTON' && n.getAttribute('data-i18n') === k; })[0]; }
+
+  // F6a: RTF-Unicode — Emoji in Bezeichnung → alle Codes signed-16-bit
+  var R = window.DTPReport;
+  if (R && R.buildRTF) {
+    var rtf = R.buildRTF({ lang: 'de', designation: 'Welle ' + String.fromCodePoint(0x1F600), headline: 'H', now: '2026-01-01T00:00:00Z', resultLines: [{ label: 'x', value: '1', unit: 'µm' }], inputLines: [], steps: [] });
+    var codes = (rtf.match(/\\u(-?\d+)\?/g) || []).map(function (c) { return parseInt(c.replace(/\\u|\?/g, ''), 10); });
+    ok(codes.length > 0 && codes.every(function (n) { return n >= -32768 && n <= 32767; }), 'F6a: RTF-Unicode alle signed-16-bit (Emoji ok)');
+  } else { ok(false, 'F6a: DTPReport verfügbar'); }
+
+  // F6b: Datenstand modusabhängig (Fit=ISO 286, Freiform=ISO 2768)
+  if (modeBtn('modeFit')) modeBtn('modeFit').fire('click');
+  fitInput().value = '50 H7/g6'; fitInput().fire('input');
+  var savB = global.Blob, blob = null;
+  global.Blob = function (p) { blob = (p && p[0] != null) ? String(p[0]) : ''; this.parts = p; };
+  blob = null; byId.rtfBtn.fire('click'); var rFit = blob || '';
+  modeBtn('modeFreiform').fire('click');
+  var ffN = formHost.findAll(function (n) { return n.tagName === 'INPUT' && n.type === 'number'; })[0]; ffN.value = '120'; ffN.fire('input');
+  blob = null; byId.rtfBtn.fire('click'); var rFf = blob || '';
+  global.Blob = savB;
+  ok(/ISO 286-2:2020/.test(rFit) && !/2768-1:1991/.test(rFit), 'F6b: Fit-Bericht Datenstand ISO 286');
+  ok(/ISO 2768-1:1991/.test(rFf), 'F6b: Freiform-Bericht Datenstand ISO 2768');
+  if (modeBtn('modeFit')) modeBtn('modeFit').fire('click');
+
+  // F6d: Assistent prüft Nennmaß 1–500
+  var asBtn = body.findAll(function (n) { return n.classList.contains('assist-btn'); })[0];
+  if (asBtn) {
+    asBtn.fire('click');
+    function nominalInput() { return body.findAll(function (n) { return n.tagName === 'INPUT' && n.getAttribute('inputmode') === 'decimal'; })[0]; }
+    function optButtons() { return body.findAll(function (n) { return n.classList.contains('assist-opt'); }); }
+    function warn() { return body.findAll(function (n) { return n.classList.contains('assist-warn'); })[0]; }
+    var nin = nominalInput();
+    if (nin) {
+      // gültig zuerst (frisch, ohne Warnung), dann ungültig → Warnung.
+      nin.value = '50'; nin.fire('input');
+      var o0 = optButtons(); if (o0.length) o0[0].fire('click');
+      ok(!warn(), 'F6d: Nennmaß 50 (gültig) → keine Warnung');
+      var ninB = nominalInput() || nin; ninB.value = '600'; ninB.fire('input');
+      var o1 = optButtons(); if (o1.length) o1[0].fire('click');
+      ok(!!warn(), 'F6d: Nennmaß 600 (außer Bereich) → Warnung, kein Fortschritt');
+    } else { ok(false, 'F6d: Assistent-Nennmaßfeld'); }
+    // Assistenten wieder schließen (Escape am Overlay)
+    var asOv = body.findAll(function (n) { return n.classList.contains('assist-overlay'); })[0];
+    if (asOv && asOv._events && asOv._events.keydown) asOv._events.keydown.forEach(function (fn) { fn.call(asOv, { key: 'Escape', preventDefault: function () {}, target: asOv }); });
+  } else { ok(false, 'F6d: assist-btn verfügbar'); }
+
+  // F6e: Info-Overlay schließt per Escape
+  if (byId.infoBtn) {
+    function lockedOv() { return body.findAll(function (n) { return n.classList.contains('locked-overlay'); }); }
+    byId.infoBtn.fire('click');
+    var ov = lockedOv()[lockedOv().length - 1];
+    ok(!!ov, 'F6e: Info-Overlay geöffnet');
+    if (ov && ov._events && ov._events.keydown) ov._events.keydown.forEach(function (fn) { fn.call(ov, { key: 'Escape', preventDefault: function () {}, target: ov }); });
+    ok(lockedOv().indexOf(ov) < 0, 'F6e: Escape schließt das Info-Overlay');
+  } else { ok(false, 'F6e: infoBtn verfügbar'); }
+})();
+
 console.log('\nDOM-Smoke B10a: ' + okCount + ' OK, ' + failCount + ' Fehler');
 process.exit(failCount ? 1 : 0);
