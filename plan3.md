@@ -26,10 +26,10 @@ komplette Wahrheit steht in diesem Plan und in den Projektdateien. So steigst du
    nach jeder Änderung ausliefern; nach Pause zuerst prüfen, was in /mnt/project schon
    angekommen ist, und Verlorenes identisch wieder einspielen.
 
-4) NÄCHSTE AUFGABE: **B15 — Edition/Registrierung/Impressum.** B14 Ausgaben ist komplett
-   (Speichern/Öffnen .dtp + Drucken/PDF + Word .rtf oben in der Aktionsleiste; CSV & Copy/CAD
-   bewusst weggelassen; Testversion sperrt alles via guard). Danach B13 → B16 (V1).
-   Toleranzkette (B12) im **V1.1-Update**.
+4) NÄCHSTE AUFGABE: **B13 — ANSI B4.1** (zöllige Passungsklassen als Datentabellen, gleiche
+   Pipeline wie ISO). B15 ist komplett: Aktivierung beim Erststart (nur Voll, ohne Eintrag),
+   „Vollversion · lizenziert für <Name>", 10-s-Long-Press-Reset auf der Marke, Info-ⓘ mit
+   Impressum. Danach B16 (V1). Toleranzkette (B12) im **V1.1-Update**.
 
 5) ARBEITSWEISE JE BAUSTEIN (Fließband, minimale Diffs):
    bauen → `node --check` alle JS → i18n-Paritätsprüfung (alle Keys in DE/EN/PT vollständig)
@@ -56,10 +56,9 @@ komplette Wahrheit steht in diesem Plan und in den Projektdateien. So steigst du
 ═══════════════════════════════════════════════════════════════════════════
 
 ═══════════════════════════════════════════════════════════════════════════
-Plan-Version : 3.5 · Stand 2026-07-18 · Status: **B1–B11 bestätigt · B14 Ausgaben KOMPLETT
-               (obere Aktionsleiste: Speichern/Öffnen .dtp + Drucken/PDF + Word .rtf; Testversion
-               sperrt alles) gebaut, grün & ausgeliefert.** Nächster Baustein: **B15 Edition/
-               Registrierung/Impressum.**
+Plan-Version : 3.6 · Stand 2026-07-19 · Status: **B1–B11 + B14 bestätigt · B15 Edition/
+               Registrierung/Impressum KOMPLETT gebaut, grün & ausgeliefert — Handy-Bestätigung
+               ausstehend.** Nächster Baustein: **B13 ANSI B4.1.**
 Basislinie   : **154.765 Assertions, 0 Fehler** — prüfbar per `node test_passung.js`,
                am Handy über **DT-ProfiPassung_Pruefstand.html** (grünes Banner = weiterbauen).
 Produktname  : **DT-ProfiPassung** (Arbeitstitel — vor Markteintritt Marke/Domain prüfen).
@@ -87,8 +86,8 @@ Zielgruppe   : Konstrukteure, Fertigung/QS, Ausbildung — Laie bis Profi. Preis
 2. **B14 Ausgaben** ✓ KOMPLETT — `.dtp` speichern/öffnen, Druck→PDF, Word (.rtf); oben in der
    Aktionsleiste. CSV & Copy/CAD bewusst weggelassen (PDF trägt die Grafik). Testversion sperrt
    alle Ausgaben via guard.
-3. **B15 Edition/Registrierung/Impressum** — Test/Voll-Trennung + Sperren der Ausgaben in der
-   Testversion (gehört unmittelbar zu B14), Registrierung als Personalisierung, Impressum-ⓘ.
+3. **B15 Edition/Registrierung/Impressum** ✓ KOMPLETT (Handy-Bestätigung ausstehend) —
+   Aktivierungsdialog, Lizenzzeile, Long-Press-Reset, Info-ⓘ mit Impressum.
 4. **B13 ANSI B4.1** — zöllige Passungsklassen (RC/LC/LT/LN/FN), gleiche Pipeline wie ISO.
    Wichtig für Export-/US-Markt, sauber abgrenzbar.
 5. **B16 Feinschliff** — Passungs-Explorer/Wissens-Basis komplett, restliche Presets (≥15),
@@ -436,6 +435,31 @@ Speichern/Öffnen/Drucken/RTF alle gesperrt, print nicht gerufen) · Harness **1
 (+11)** (RTF-Wohlgeformtheit/Escaping/Dateiname ×3 Sprachen). Geändert: ui.js, report.js,
 style.css, test_passung.js, dom_smoke_b10a.js, dom_smoke_b14_test.js, beide Produktiv-HTMLs.
 **B14 abgeschlossen. Nächster Baustein: B15 Edition/Registrierung/Impressum.**
+
+**v3.6 (2026-07-19) · B15 Edition/Registrierung/Impressum KOMPLETT (gebaut & ausgeliefert;
+Handy-Bestätigung ausstehend) — alles 1:1 nach DT-ProfiSchraube (Referenzbilder im Ordner):**
+**HTMLs** (beide Produktiv): `licenseLine` unter der Marke · ⓘ-`infoBtn` neben dem Theme-Button ·
+statischer Aktivierungsdialog `#activation` (licName/licKey/licActivate/licLater). **ui.js**:
+LS-Schlüssel `dtp-licensee`/`dtp-license-key`; **Erststart-Aktivierung** nur in der Vollversion
+und nur ohne hinterlegten Namen (Digistore24-Daten; Aktivieren erst wenn BEIDE Felder gefüllt —
+bewusst KEINE Formatprüfung, „Später" schließt ohne Speichern → Dialog kommt beim nächsten
+Start wieder); applyEdition zeigt in Voll „Vollversion · lizenziert für <Name>" (via
+RPM.editionLicenseeLine, sprachgekoppelt, aktualisiert bei setLang), in Test den gelben Balken;
+**10-s-Long-Press** auf der Marke (mouse+touch) löscht Name+Schlüssel still; **Info-Overlay**
+(openInfo, dynamisch): Passungs-Beschreibung statt Schraube, Disclaimer, „Entwickelt von:
+Dieter Tepe · Mühlenstraße 2, 48477 Dreierwalde · Dieter.Tepe@live.de" + Link
+www.dt-profidreieck.de (Impressum/Datenschutz online). Lizenznehmer fließt bereits in
+.dtp/RTF-Kopf ein (currentReportBase liest `dtp-licensee`). 16 neue i18n-Keys ×3 (Parität 0).
+CSS war bereits vollständig portiert (edition-bar/license-line/act-field/info-imprint).
+**Prüfung:** dom_smoke_b10a.js **62 → 79 OK** (Erststart-Dialog offen · Aktivieren nur mit
+beiden Feldern · Speicherung · Kopfzeile mit Name · Lizenznehmer im Berichtsmodell · Long-Press
+löscht + Kopfzeile fällt zurück · Info-Overlay mit Passungstext/Impressum/Link) ·
+dom_smoke_b14_test.js **12 → 17 OK** (Testversion: gelber Balken, KEIN Aktivierungsdialog,
+keine Lizenzzeile, Info identisch) · Harness unverändert **154.765** (reiner UI-Baustein).
+Geändert: ui.js, beide Produktiv-HTMLs, dom_smoke_b10a.js, dom_smoke_b14_test.js, plan3.md.
+**Nächster Baustein nach Handy-Bestätigung: B13 ANSI B4.1.** Hinweis Build-Ziel (Dieters
+Vorgabe): am Ende zwei identische, obfuskierte Script-Bündel, die sich NUR in
+`window.DT_EDITION` ('full'/'test') unterscheiden → B16.
 
 ═══════════════════════════════════════════════════════════════════════════
 Ende plan3.md · DT-ProfiPassung

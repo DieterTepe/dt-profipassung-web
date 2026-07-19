@@ -20,6 +20,7 @@
   <div class="brand">
     <span class="mark">DT-ProfiPassung</span>
     <span class="tag" data-i18n="tagline">Toleranzen &amp; Passungen nach ISO 286</span>
+    <span class="license-line" id="licenseLine" hidden></span>
   </div>
   <div class="header-spacer"></div>
   <div class="header-controls">
@@ -35,6 +36,7 @@
       </button>
     </div>
     <button type="button" class="icon-btn" id="themeBtn" title="Hell / Dunkel" aria-label="Hell/Dunkel umschalten" data-i18n-title="themeTitle">◐</button>
+    <button type="button" class="icon-btn" id="infoBtn" title="Info" aria-label="Info">i</button>
   </div>
 </header>
 
@@ -99,6 +101,29 @@
 </footer>
 
 <!-- Engine-Module: klassische Skripte; daten -> validate -> solver -> rechenweg -> freiform -> thermik -> schaubild -> ui -->
+<div class="modal-overlay" id="activation" role="dialog" aria-modal="true" aria-labelledby="licTitle">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 id="licTitle" data-i18n="actTitle">Aktivierung</h3>
+    </div>
+    <div class="modal-body">
+      <p data-i18n="actPrompt">Bitte Namen und Lizenzschlüssel zur Aktivierung eingeben.</p>
+      <label class="act-field">
+        <span data-i18n="actName">Name</span>
+        <input type="text" id="licName" maxlength="80" autocomplete="name" data-i18n-ph="actNamePh" placeholder="Dein Name">
+      </label>
+      <label class="act-field">
+        <span data-i18n="actKey">Lizenzschlüssel</span>
+        <input type="text" id="licKey" maxlength="120" data-i18n-ph="actKeyPh" placeholder="Lizenzschlüssel von Digistore24">
+      </label>
+      <div class="act-actions">
+        <button type="button" class="btn btn-primary" id="licActivate" data-i18n="actActivate">Aktivieren</button>
+        <button type="button" class="btn btn-ghost" id="licLater" data-i18n="actLater">Später</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script src="daten.js"></script>
 <script src="validate.js"></script>
 <script src="solver.js"></script>

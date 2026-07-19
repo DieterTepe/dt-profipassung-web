@@ -881,7 +881,14 @@
         outClip: 'Ergebnis', outOk: 'Schließen',
         outPrintTitle: 'Bericht drucken oder als PDF speichern',
         outRtf: 'Word (.rtf)', outRtfTitle: 'Bericht als Word-Dokument (.rtf) speichern',
-        outRtfSaved: 'Word-Bericht (.rtf) gespeichert.', outNoCalc: 'Bitte zuerst rechnen.'
+        outRtfSaved: 'Word-Bericht (.rtf) gespeichert.', outNoCalc: 'Bitte zuerst rechnen.',
+        actTitle: 'Aktivierung', actPrompt: 'Bitte Namen und Lizenzschlüssel zur Aktivierung eingeben.',
+        actName: 'Name', actNamePh: 'Dein Name', actKey: 'Lizenzschlüssel',
+        actKeyPh: 'Lizenzschlüssel von Digistore24', actActivate: 'Aktivieren', actLater: 'Später',
+        infoDesc: 'Toleranzen & Passungen nach ISO 286 — mit Pressverband (DIN 7190), Allgemeintoleranzen (ISO 2768), Thermik-Check und Passungs-Assistent.',
+        infoDisclaimer: 'Berechnung ohne Gewähr, vor Produktivnutzung gegen die Originalnormen prüfen.',
+        infoHint: 'Normwerte sind tabellierte Werte nach ISO 286-2:2020; Rechenwege sind selbstprüfend.',
+        devBy: 'Entwickelt von', imprintLine: 'Vollständiges Impressum und Datenschutzerklärung online unter:'
       },
       en: {
         outHeading: 'Export & save', outDesign: 'Designation (optional)',
@@ -899,7 +906,14 @@
         outClip: 'Result', outOk: 'Close',
         outPrintTitle: 'Print the report or save as PDF',
         outRtf: 'Word (.rtf)', outRtfTitle: 'Save the report as a Word document (.rtf)',
-        outRtfSaved: 'Word report (.rtf) saved.', outNoCalc: 'Please calculate first.'
+        outRtfSaved: 'Word report (.rtf) saved.', outNoCalc: 'Please calculate first.',
+        actTitle: 'Activation', actPrompt: 'Please enter your name and license key to activate.',
+        actName: 'Name', actNamePh: 'Your name', actKey: 'License key',
+        actKeyPh: 'License key from Digistore24', actActivate: 'Activate', actLater: 'Later',
+        infoDesc: 'Tolerances & fits per ISO 286 — with press fit (DIN 7190), general tolerances (ISO 2768), thermal check and fit assistant.',
+        infoDisclaimer: 'Calculation without warranty; verify against the original standards before production use.',
+        infoHint: 'Standard values are tabulated per ISO 286-2:2020; calculation steps are self-checking.',
+        devBy: 'Developed by', imprintLine: 'Full legal notice and privacy policy online at:'
       },
       pt: {
         outHeading: 'Exportar & salvar', outDesign: 'Designação (opcional)',
@@ -917,7 +931,14 @@
         outClip: 'Resultado', outOk: 'Fechar',
         outPrintTitle: 'Imprimir o relatório ou salvar como PDF',
         outRtf: 'Word (.rtf)', outRtfTitle: 'Salvar o relatório como documento Word (.rtf)',
-        outRtfSaved: 'Relatório Word (.rtf) salvo.', outNoCalc: 'Calcule primeiro.'
+        outRtfSaved: 'Relatório Word (.rtf) salvo.', outNoCalc: 'Calcule primeiro.',
+        actTitle: 'Ativação', actPrompt: 'Insira seu nome e a chave de licença para ativar.',
+        actName: 'Nome', actNamePh: 'Seu nome', actKey: 'Chave de licença',
+        actKeyPh: 'Chave de licença da Digistore24', actActivate: 'Ativar', actLater: 'Mais tarde',
+        infoDesc: 'Tolerâncias & ajustes conforme ISO 286 — com ajuste prensado (DIN 7190), tolerâncias gerais (ISO 2768), verificação térmica e assistente de ajuste.',
+        infoDisclaimer: 'Cálculo sem garantia; verifique com as normas originais antes de uso produtivo.',
+        infoHint: 'Valores normativos são tabelados conforme ISO 286-2:2020; memórias de cálculo são autoverificáveis.',
+        devBy: 'Desenvolvido por', imprintLine: 'Impressum completo e política de privacidade online em:'
       }
     };
     ['de', 'en', 'pt'].forEach(function (l) { for (var k in s[l]) STR[l][k] = s[l][k]; });
@@ -2154,7 +2175,7 @@
     document.querySelectorAll('.lang-btn').forEach(function (b) { b.classList.toggle('active', b.getAttribute('data-lang') === lang); });
   }
   function setLang(l) {
-    lang = l; localStorage.setItem('dtp-lang', l); applyI18n();
+    lang = l; localStorage.setItem('dtp-lang', l); applyI18n(); applyEdition();
     if (elFit && String(elFit.value || '').trim() !== '' && !elFitMsg.hidden) onFitInput(); // Fehlertext in neuer Sprache
     recalc();
   }
@@ -2162,19 +2183,125 @@
 
   function applyEdition() {
     var bar = document.getElementById('editionBar');
-    if (!bar) return;
+    var line = document.getElementById('licenseLine');
     if (edition === 'test') {
-      // Testversion: dezenter gelber Hinweisbalken oben.
-      bar.hidden = false;
-      bar.className = 'edition-bar test';
-      bar.textContent = t('editionTest');
+      // Testversion: dezenter gelber Hinweisbalken oben, keine Lizenzzeile.
+      if (bar) { bar.hidden = false; bar.className = 'edition-bar test'; bar.textContent = t('editionTest'); }
+      if (line) { line.textContent = ''; line.hidden = true; }
     } else {
-      // Vollversion: kein Balken oben. Die dezente Kennzeichnung (mit Käufername)
-      // folgt in B15 (Registrierung), wie bei DT-ProfiSchraube.
-      bar.hidden = true;
-      bar.className = 'edition-bar full';
-      bar.textContent = '';
+      // Vollversion: kein Balken; dezente Kennzeichnung „Vollversion · lizenziert
+      // für <Name>" unter der Marke (wie DT-ProfiSchraube).
+      if (bar) { bar.hidden = true; bar.className = 'edition-bar full'; bar.textContent = ''; }
+      if (line) {
+        var name = storedLicensee();
+        line.textContent = RPM ? RPM.editionLicenseeLine(t('editionFull'), name, lang)
+                               : (t('editionFull') + (name ? ' · ' + name : ''));
+        line.hidden = false;
+      }
     }
+  }
+
+  /* ===================================================================== *
+   * B15 — Registrierung (nur Vollversion; reine Personalisierung, KEIN
+   * Zugangsschutz): Name + Schlüssel liegen in localStorage. Die Vollversion
+   * läuft auch ohne Eintrag vollständig — der Eintrag steuert nur die
+   * Kopfzeile und den Lizenznehmer im Berichtskopf. Kein Formatcheck des
+   * Schlüssels (bewusst: sanftes Hemmnis gegen Weitergabe, kein Kopierschutz).
+   * 10-s-Long-Press auf der Marke links oben löscht Name+Schlüssel wieder.
+   * ===================================================================== */
+  var LS_LIC_NAME = 'dtp-licensee', LS_LIC_KEY = 'dtp-license-key';
+  function storedLicensee() { try { return localStorage.getItem(LS_LIC_NAME) || ''; } catch (e) { return ''; } }
+  function saveLicensee(name, key) { try { localStorage.setItem(LS_LIC_NAME, name); localStorage.setItem(LS_LIC_KEY, key || ''); } catch (e) {} }
+  function clearLicensee() { try { localStorage.removeItem(LS_LIC_NAME); localStorage.removeItem(LS_LIC_KEY); } catch (e) {} }
+  function $id(id) { return document.getElementById(id); }
+  function licInputsFilled() {
+    var n = $id('licName'), k = $id('licKey');
+    var nameOk = RPM ? (RPM.licenseeName(n ? n.value : '') !== '') : !!(n && n.value.trim());
+    return nameOk && !!(k && String(k.value).trim());
+  }
+  function updateActivateBtn() { var b = $id('licActivate'); if (b) b.disabled = !licInputsFilled(); }
+  function openActivation() {
+    var m = $id('activation'); if (!m) return;
+    var n = $id('licName'), k = $id('licKey');
+    if (n) n.value = ''; if (k) k.value = '';
+    m.classList.add('open');
+    updateActivateBtn();
+    if (n && n.focus) n.focus();
+  }
+  function closeActivation() { var m = $id('activation'); if (m) m.classList.remove('open'); }
+  function doActivate() {
+    if (!licInputsFilled()) return;                  // beide Felder nötig (sanfter Anstoß)
+    var n = $id('licName'), k = $id('licKey');
+    var name = RPM ? RPM.licenseeName(n.value) : n.value.trim();
+    saveLicensee(name, String(k.value).trim());      // Schlüssel unverändert — KEINE Formatprüfung
+    closeActivation();
+    applyEdition();                                  // Kopfzeile sofort aktualisieren
+  }
+  function doLater() { closeActivation(); }          // ohne Speichern → Dialog beim nächsten Start erneut
+
+  /* Info-Overlay (ⓘ rechts oben): Beschreibung + Entwickler + Impressum-Link.
+   * Für Test- und Vollversion identisch. */
+  function openInfo() {
+    var ov = el('div', 'modal-overlay locked-overlay open');
+    ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-modal', 'true');
+    var m = el('div', 'modal');
+    var head = el('div', 'modal-head');
+    head.appendChild(el('h3', null, 'DT-ProfiPassung'));
+    var x = el('button', 'close', '✕'); x.type = 'button';
+    x.addEventListener('click', function () { closeOv(ov); });
+    head.appendChild(x); m.appendChild(head);
+    var b = el('div', 'modal-body');
+    b.appendChild(el('p', null, t('infoDesc')));
+    b.appendChild(el('p', null, t('infoDisclaimer')));
+    b.appendChild(el('p', null, t('infoHint')));
+    var imp = el('p', 'info-imprint');
+    imp.appendChild(document.createTextNode(t('devBy') + ': Dieter Tepe'));
+    imp.appendChild(el('br'));
+    imp.appendChild(document.createTextNode('Mühlenstraße 2, 48477 Dreierwalde'));
+    imp.appendChild(el('br'));
+    imp.appendChild(document.createTextNode('E-Mail: '));
+    var mail = el('a', null, 'Dieter.Tepe@live.de'); mail.href = 'mailto:Dieter.Tepe@live.de';
+    imp.appendChild(mail);
+    b.appendChild(imp);
+    var lp = el('p', 'info-imprint');
+    lp.appendChild(el('em', null, t('imprintLine')));
+    lp.appendChild(el('br'));
+    var link = el('a', null, 'www.dt-profidreieck.de');
+    link.href = 'https://www.dt-profidreieck.de/'; link.target = '_blank'; link.rel = 'noopener noreferrer';
+    lp.appendChild(link);
+    b.appendChild(lp);
+    m.appendChild(b); ov.appendChild(m);
+    ov.addEventListener('click', function (e) { if (e.target === ov) closeOv(ov); });
+    document.body.appendChild(ov);
+  }
+
+  /* Verdrahtung von Registrierung, Info und Long-Press (aus init gerufen). */
+  function wireEditionExtras() {
+    on('infoBtn', 'click', openInfo);
+    on('licActivate', 'click', doActivate);
+    on('licLater', 'click', doLater);
+    on('licName', 'input', updateActivateBtn);
+    on('licKey', 'input', updateActivateBtn);
+    var act = $id('activation');
+    if (act) act.addEventListener('click', function (e) { if (e.target === act) closeActivation(); });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeActivation(); });
+    // 10-s-Long-Press auf der Marke: Lizenz löschen (still), Kopfzeile fällt zurück.
+    var mark = null;
+    try { mark = document.querySelector('.brand .mark'); } catch (e) {}
+    if (!mark) { try { mark = document.querySelector('.mark'); } catch (e) {} }
+    if (mark) {
+      var lpTimer = null;
+      var lpStart = function () { if (lpTimer) return; lpTimer = setTimeout(function () { lpTimer = null; clearLicensee(); applyEdition(); }, 10000); };
+      var lpCancel = function () { if (lpTimer) { clearTimeout(lpTimer); lpTimer = null; } };
+      mark.addEventListener('mousedown', lpStart);
+      mark.addEventListener('mouseup', lpCancel);
+      mark.addEventListener('mouseleave', lpCancel);
+      mark.addEventListener('touchstart', lpStart, { passive: true });
+      mark.addEventListener('touchend', lpCancel);
+      mark.addEventListener('touchcancel', lpCancel);
+    }
+    // Erst-Start-Aktivierung: nur Vollversion und nur ohne hinterlegten Namen.
+    if (edition !== 'test' && !storedLicensee()) openActivation();
   }
 
   /* ======================================================================= *
@@ -2720,6 +2847,7 @@
     });
 
     applyEdition();
+    wireEditionExtras();
     applyI18n();
     recalc();
   }

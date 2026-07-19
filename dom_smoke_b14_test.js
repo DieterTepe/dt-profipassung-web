@@ -49,11 +49,18 @@ mk('div', 'formHost'); mk('div', 'resultHost'); mk('div', 'vizHost'); mk('select
 mk('button', 'calcBtn'); mk('button', 'resetBtn');
 mk('input', 'dtLabel'); mk('button', 'saveBtn'); mk('button', 'loadBtn'); mk('input', 'dtFile');
 mk('button', 'printBtn'); mk('button', 'rtfBtn');
+var brandMark = mk('span', null, 'mark');
+mk('span', 'licenseLine', 'license-line');
+mk('button', 'infoBtn', 'icon-btn');
+mk('div', 'activation', 'modal-overlay');
+mk('input', 'licName'); mk('input', 'licKey');
+mk('button', 'licActivate'); mk('button', 'licLater');
 ['de', 'en', 'pt'].forEach(function (l) { var b = mk('button', null, 'lang-btn'); b.setAttribute('data-lang', l); });
 
 var documentShim = {
   readyState: 'complete', documentElement: docRoot, body: body,
   createElement: function (t) { return new Elem(t); }, createElementNS: function (_n, t) { return new Elem(t); },
+  createTextNode: function (txt) { var e = new Elem('#text'); e.textContent = txt; return e; },
   getElementById: function (id) { return byId[id] || null; },
   querySelectorAll: function (sel) { return docRoot.findAll(function (n) { return matchSel(n, sel); }); },
   querySelector: function (sel) { var r = docRoot.findAll(function (n) { return matchSel(n, sel); }); return r.length ? r[0] : null; },
@@ -122,6 +129,17 @@ lockedOverlays()[0].findAll(function (n) { return n.classList.contains('locked-o
 var RP = global.DTPReport;
 ok(['save', 'load', 'print', 'rtf', 'csv'].every(function (f) { return RP.isFeatureAllowed(f, 'test') === false; }),
    'Testversion: report.js sperrt save/load/print/rtf/csv');
+
+/* B15: Editionsverhalten der Testversion. */
+ok(byId.editionBar.hidden === false && byId.editionBar.classList.contains('test'),
+   'Testversion: gelber „Testversion"-Balken sichtbar');
+ok(byId.editionBar.textContent.length > 3, 'Balken trägt Editionstext');
+ok(!byId.activation.classList.contains('open'), 'Testversion: KEIN Aktivierungsdialog beim Start');
+ok(byId.licenseLine.hidden === true, 'Testversion: keine Lizenzzeile in der Kopfzeile');
+// Info-Overlay funktioniert auch in der Testversion (identischer Inhalt).
+byId.infoBtn.fire('click');
+var infoOv = body.findAll(function (n) { return n.classList.contains('locked-overlay'); }).pop();
+ok(!!infoOv && infoOv.textContent.indexOf('Dreierwalde') >= 0, 'Testversion: Info-Overlay mit Impressum');
 
 global.setTimeout = _st;
 console.log('\nDOM-Smoke B14-Test: ' + okCount + ' OK, ' + failCount + ' Fehler');

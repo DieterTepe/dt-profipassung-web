@@ -96,6 +96,13 @@ mk('select', 'presetSel'); mk('div', 'editionBar');
 mk('button', 'calcBtn'); mk('button', 'resetBtn');
 mk('input', 'dtLabel'); mk('button', 'saveBtn'); mk('button', 'loadBtn'); mk('input', 'dtFile');
 mk('button', 'printBtn'); mk('button', 'rtfBtn');
+/* B15: Kopfzeile + Aktivierungs-Dialog (statisch wie in der Produktiv-HTML). */
+var brandMark = mk('span', null, 'mark'); brandMark.textContent = 'DT-ProfiPassung';
+mk('span', 'licenseLine', 'license-line');
+mk('button', 'infoBtn', 'icon-btn');
+var actOv = mk('div', 'activation', 'modal-overlay');
+mk('input', 'licName'); mk('input', 'licKey');
+mk('button', 'licActivate'); mk('button', 'licLater');
 var langDe = mk('button', null, 'lang-btn'); langDe.setAttribute('data-lang', 'de');
 var langEn = mk('button', null, 'lang-btn'); langEn.setAttribute('data-lang', 'en');
 var langPt = mk('button', null, 'lang-btn'); langPt.setAttribute('data-lang', 'pt');
@@ -111,8 +118,10 @@ var documentShim = {
   body: body,
   createElement: function (t) { return new Elem(t); },
   createElementNS: function (_ns, t) { return new Elem(t); },
+  createTextNode: function (txt) { var e = new Elem('#text'); e.textContent = txt; return e; },
   getElementById: function (id) { return byId[id] || null; },
   querySelectorAll: function (sel) { return docRoot.findAll(function (n) { return matchSel(n, sel); }); },
+  querySelector: function (sel) { var r = docRoot.findAll(function (n) { return matchSel(n, sel); }); return r.length ? r[0] : null; },
   addEventListener: function () {}
 };
 var lsMap = {};
@@ -394,6 +403,53 @@ presetSel.value = '';
   ok(RPmod.dtpFilename('Test', '2026-07-18T09:00:00Z') === 'Test_2026-07-18.dtp', 'Dateiname trägt Bezeichnung + Datum');
 
   global.setTimeout = _realST2;
+})();
+
+/* B15: Registrierung + Editionszeile + Info (Vollversion). */
+(function () {
+  // Erststart ohne hinterlegten Namen → Aktivierungsdialog ist offen.
+  ok(byId.activation.classList.contains('open'), 'Erststart (Voll, ohne Name): Aktivierungsdialog offen');
+
+  // Aktivieren erst möglich, wenn BEIDE Felder gefüllt sind.
+  byId.licName.value = 'Dieter'; byId.licName.fire('input');
+  ok(byId.licActivate.disabled === true, 'nur Name → Aktivieren noch gesperrt');
+  byId.licKey.value = 'DS24-XYZ'; byId.licKey.fire('input');
+  ok(byId.licActivate.disabled === false, 'Name + Schlüssel → Aktivieren frei (kein Formatcheck)');
+  byId.licActivate.fire('click');
+  ok(!byId.activation.classList.contains('open'), 'Aktivieren schließt den Dialog');
+  ok(global.localStorage.getItem('dtp-licensee') === 'Dieter', 'Name in localStorage gespeichert');
+  ok(global.localStorage.getItem('dtp-license-key') === 'DS24-XYZ', 'Schlüssel unverändert gespeichert');
+  var line = byId.licenseLine;
+  ok(line.hidden === false && line.textContent.indexOf('Dieter') > 0, 'Kopfzeile: „Vollversion · lizenziert für Dieter"');
+
+  // Lizenznehmer fließt in den Berichtskopf (RTF) ein.
+  var RPx = global.DTPReport;
+  var mdl = RPx.buildModel({ lang: 'de', licensee: global.localStorage.getItem('dtp-licensee') });
+  ok(mdl.licensee && mdl.licensee.value === 'Dieter', 'Lizenznehmer erscheint im Berichtskopf');
+
+  // 10-s-Long-Press auf der Marke löscht Name + Schlüssel (setTimeout sync).
+  var _st3 = global.setTimeout;
+  global.setTimeout = function (fn) { if (typeof fn === 'function') fn(); return 0; };
+  var markEl = docRoot.findAll(function (n) { return n.classList.contains('mark'); })[0];
+  ok(!!markEl && (markEl._events.mousedown || []).length > 0, 'Long-Press auf der Marke ist verdrahtet');
+  markEl.fire('mousedown');
+  ok(global.localStorage.getItem('dtp-licensee') === null, 'Long-Press löscht den Namen');
+  ok(global.localStorage.getItem('dtp-license-key') === null, 'Long-Press löscht den Schlüssel');
+  ok(byId.licenseLine.textContent.indexOf('Dieter') < 0, 'Kopfzeile fällt auf „Vollversion" zurück');
+  global.setTimeout = _st3;
+
+  // Info-Overlay (ⓘ): Beschreibung Passung + Impressum + Link.
+  byId.infoBtn.fire('click');
+  var infoOv = body.findAll(function (n) { return n.classList.contains('locked-overlay'); }).pop();
+  ok(!!infoOv, 'Info-Overlay öffnet');
+  var infoTxt = infoOv ? infoOv.textContent : '';
+  ok(infoTxt.indexOf('ISO 286') >= 0 && infoTxt.indexOf('Schraube') < 0, 'Info beschreibt die PASSUNG (nicht Schraube)');
+  ok(infoTxt.indexOf('Dieter Tepe') >= 0 && infoTxt.indexOf('Dreierwalde') >= 0, 'Info nennt Entwickler + Anschrift');
+  ok(infoTxt.indexOf('Dieter.Tepe@live.de') >= 0, 'Info nennt E-Mail');
+  var link = infoOv.findAll(function (n) { return n.tagName === 'A' && String(n.href || '').indexOf('dt-profidreieck') >= 0; })[0];
+  ok(!!link, 'Info verlinkt www.dt-profidreieck.de');
+  // schließen
+  infoOv.findAll(function (n) { return n.classList.contains('close'); })[0].fire('click');
 })();
 
 /* Freiform-Modus: dort 2 ⓘ (Nennmaß + Klasse). */
