@@ -69,12 +69,13 @@
     pt: 'DT-ProfiPassung \u2013 Vers\u00e3o de teste \u2013 n\u00e3o usar em produ\u00e7\u00e3o'
   };
   function watermarkText(lang) { return pick(WATERMARK, lang); }
-  function shouldWatermark(edition) { return edition === 'test'; }
+  function shouldWatermark(edition) { return edition !== 'full'; }
 
   var GATED_FEATURES = ['save', 'load', 'print', 'copy', 'cad', 'rtf', 'csv'];
   function isFeatureAllowed(feature, edition) {
-    if (edition === 'test') return false;
-    return true;
+    // Sichere Voreinstellung: NUR die echte Vollversion ('full') darf ausgeben.
+    // Jede andere Kennung (leer, 'test', Tippfehler) sperrt alle Ausgaben.
+    return edition === 'full';
   }
 
   function num(x, lang, dec) {

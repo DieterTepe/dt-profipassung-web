@@ -132,6 +132,9 @@ var localStorageShim = {
 };
 
 global.window = global;
+// Dieser Smoke prüft die VOLLVERSION (Aktivierung, freie Ausgaben, RTF/Print).
+// Seit dem Sicherheitsfix gilt: nur exakt 'full' = Vollversion, alles andere Test.
+global.DT_EDITION = 'full';
 global.document = documentShim;
 global.localStorage = localStorageShim;
 

@@ -18,6 +18,8 @@ komplette Wahrheit steht in diesem Plan und in den Projektdateien. So steigst du
    `rm -rf /home/claude/dtp && mkdir -p /home/claude/dtp && cp /mnt/project/* /home/claude/dtp/`
    Dann Basislinie prüfen: `cd /home/claude/dtp && node test_passung.js`
    → muss **exakt die Basislinie unten** zeigen, 0 Fehler. Wenn ja: Stand ist intakt.
+   Zusätzlich DOM-Smokes: `node dom_smoke_b10a.js` (= **118 OK**) und `node dom_smoke_b14_test.js`
+   (= **17 OK**) → bestätigt, dass die Fehler-Fixes F1–F7 im Stand sind.
    (Dieter hält /mnt/project + GitHub nach jedem Schritt aktuell = Source of Truth.)
 
 3) TOKEN-PAUSEN: Ein großer Umbau kann die 4-h-Tokens sprengen. Dieter stoppt bei ~90 %
@@ -57,12 +59,15 @@ komplette Wahrheit steht in diesem Plan und in den Projektdateien. So steigst du
 ═══════════════════════════════════════════════════════════════════════════
 
 ═══════════════════════════════════════════════════════════════════════════
-Plan-Version : 3.7 · Stand 2026-07-19 · Status: **B1–B11, B14 und B15 komplett & am Handy
+Plan-Version : 3.8 · Stand 2026-07-20 · Status: **B1–B11, B14 und B15 komplett & am Handy
                bestätigt.** [DECISION] B13 ANSI B4.1 aus V1 GESTRICHEN (→ optionales späteres
                Update; Mehrwert in Europa gering, reine Tabellennorm = hoher Belegaufwand).
+               **Zwischenphase Fehlerbeseitigung F1–F7 abgeschlossen & am Handy bestätigt**
+               (nur UI-/Ausgabe-Schicht; Zahlenkern unberührt — Basislinie identisch).
                Nächster & letzter V1-Baustein: **B16 Feinschliff.**
-Basislinie   : **154.765 Assertions, 0 Fehler** — prüfbar per `node test_passung.js`,
+Basislinie   : **154.780 Assertions, 0 Fehler** — prüfbar per `node test_passung.js`,
                am Handy über **DT-ProfiPassung_Pruefstand.html** (grünes Banner = weiterbauen).
+               DOM-Smokes: **dom_smoke_b10a.js = 118 OK**, **dom_smoke_b14_test.js = 17 OK** (0 Fehler).
 Produktname  : **DT-ProfiPassung** (Arbeitstitel — vor Markteintritt Marke/Domain prüfen).
                Produktversion startet bei v0.1.0.
 Modell       : Einmalkauf (Vollversion) + kostenlose Testversion — **Testversion hat vollen
@@ -494,6 +499,48 @@ gemeinsamer Priorisierung mit Dieter. Kickoff-Block, Reihenfolge (Abschnitt 1) u
 entsprechend umgestellt; B11/B14/B15 als BESTÄTIGT markiert. Keine Codeänderung — Basislinie
 unverändert **154.765 / 0**, Smokes 79 + 17 OK. **Wiedereinstieg (auch für frischen Chat):
 Kickoff-Block lesen → „weiter mit B16" → Teilpunkte a–e mit Dieter priorisieren → Etappe 1.**
+
+**v3.8 (2026-07-20) · Zwischenphase FEHLERBESEITIGUNG F1–F7 abgeschlossen & am Handy
+bestätigt** (vor B16 eingeschoben; auf Dieters Wunsch das Programm erst gründlich auf Bugs
+geprüft — Befunde in Fehler.md, dann Fließband-Fixes). **Alles nur UI-/Ausgabe-Schicht; der
+ISO-286-Zahlenkern und die Basislinie blieben identisch (154.765 / 0).** Behoben:
+• **F3** onFitInput: Kurzeingabe mit falscher Schreibweise/Grad rechnete still einen ANDEREN
+  als den getippten Wert → jetzt klare Meldung (via computeFit) statt stiller Fehlrechnung.
+• **F2** Freiform-Export: RTF war inhaltsleer → renderFreiform setzt lastResult; currentReportBase/
+  collectReportCtx haben Freiform-Zweig (Nennmaß/Klasse/Grenzmaße + buildFreiform-Rechenweg);
+  Fehler-/Leer-Pfade setzen lastResult=null (kein Stale-Export).
+• **F7** (unterwegs gefunden) flashToast war nie definiert → in Vollversion ReferenceError bei
+  jeder Ausgabe; Status-Zeile (#dtMsg) ergänzt. War zwingend, da F2 den outNoCalc-Pfad erreichbar macht.
+• **F1** Rechenweg-Wörter (Gegenprobe/Vollschmierung/duktil/Fügespiel/Nabe auf … + Faktoren 0,4/0,8)
+  waren in EN/PT hart deutsch → über fmt.w übersetzbar mit DE-Fallback (Node-Tests unverändert).
+  Dabei Namenskollision entdeckt: 'W' (Nachgiebigkeit) in buildPressverband → Wörter-Var in WORDS
+  umbenannt.
+• **F4** Sprachwechsel überschrieb fehlerhafte Kurzeingabe → refreshFitField nur noch ohne aktiven Fehler.
+• **F5** JS/js-Grenzmaße auf 3 Stellen gerundet (50 JS7 → 50,013 statt 50,0125) → solver round4 +
+  fmtMm zeigt bis 4 Nachkommastellen (Normalfall bleibt 3-stellig).
+• **F6a** RTF-Unicode > U+FFFF (Emoji) als signed-16-bit · **F6b** Datenstand je Modus (ISO 2768/
+  DIN 7190) · **F6c** totes #dtFile aus beiden HTMLs · **F6d** Assistent-Nennmaß 1–500 · **F6e**
+  Info-/Sperr-Overlay per Escape schließbar + Fokusfalle.
+Jeder Fix per Gegenprobe (alt rot → neu grün) belegt; **DOM-Smoke b10a von 79 → 118 OK** gewachsen
+(+39 Regressionsprüfungen, dauerhaft eingehängt), b14 unverändert 17 OK, i18n-Parität 389×3.
+Geänderte Dateien gesamt: ui.js, solver.js, rechenweg.js, report.js, beide Produktiv-HTMLs,
+dom_smoke_b10a.js, plan3.md. **KEIN offener Punkt aus Fehler.md mehr.**
+**Wiedereinstieg (frischer Chat): Kickoff-Block lesen → Arbeitsordner herstellen → Basislinie
+prüfen (154.765/0, Smokes 118+17) → „weiter mit B16" → B16-Teilpunkte a–e mit Dieter
+priorisieren → Etappe 1 im Fließband.**
+
+**v3.8 (2026-07-23) · SICHERHEITSFIX Editionsweiche (Dieter gemeldet):** Bisher galt „nur exakt
+'test' → Testversion, sonst Vollversion" — d. h. ein Tippfehler oder beliebiger Wert schaltete
+fälschlich die VOLLVERSION frei. **Umgekehrt auf sichere Voreinstellung:** in ui.js
+`edition = (window.DT_EDITION === 'full') ? 'full' : 'test'` — **nur exakt 'full' ergibt die
+Vollversion, alles andere (leer, 'test', Tippfehler, Groß/Klein wie 'FULL') ist Testversion.**
+report.js analog gehärtet: isFeatureAllowed → `edition === 'full'`; shouldWatermark →
+`edition !== 'full'`. Harness-Erwartungen umgekehrt + Fälle ergänzt (undefined/''/fremd/'FULL'
+sperren) → **154.765 → 154.780 (+15)**. dom_smoke_b10a.js setzt jetzt explizit DT_EDITION='full'
+(prüft die Vollversion) → 118 OK; neuer **dom_smoke_edition_test.js** lädt einen UNBEKANNTEN Wert
+('vollzugang') und weist nach, dass trotzdem die Testversion mit allen Sperren aktiv ist → 17 OK;
+dom_smoke_b14_test.js 17 OK. Geändert: ui.js, report.js, test_passung.js, dom_smoke_b10a.js;
+NEU: dom_smoke_edition_test.js.
 
 ═══════════════════════════════════════════════════════════════════════════
 Ende plan3.md · DT-ProfiPassung

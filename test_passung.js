@@ -1589,10 +1589,13 @@ section('22) Ausgaben (report.js)');
     ok(RP.GATED_FEATURES.indexOf(f) >= 0, 'GATED enthält ' + f);
     ok(RP.isFeatureAllowed(f, 'test') === false, 'Testversion sperrt ' + f);
     ok(RP.isFeatureAllowed(f, 'full') === true, 'Vollversion erlaubt ' + f);
-    ok(RP.isFeatureAllowed(f, undefined) === true, 'unbekannte Edition erlaubt ' + f + ' (sichere Voreinstellung)');
-    ok(RP.isFeatureAllowed(f, 'irgendwas') === true, 'fremde Kennung erlaubt ' + f);
+    ok(RP.isFeatureAllowed(f, undefined) === false, 'unbekannte Edition SPERRT ' + f + ' (sichere Voreinstellung)');
+    ok(RP.isFeatureAllowed(f, 'irgendwas') === false, 'fremde Kennung SPERRT ' + f);
+    ok(RP.isFeatureAllowed(f, 'FULL') === false, 'nur exakt „full" erlaubt ' + f + ' (kein Groß/Klein)');
+    ok(RP.isFeatureAllowed(f, '') === false, 'leere Kennung SPERRT ' + f);
   });
-  ok(RP.shouldWatermark('test') === true && RP.shouldWatermark('full') === false, 'Wasserzeichen nur in Testversion');
+  ok(RP.shouldWatermark('test') === true && RP.shouldWatermark('full') === false, 'Wasserzeichen nur in Vollversion nicht');
+  ok(RP.shouldWatermark(undefined) === true && RP.shouldWatermark('xyz') === true, 'Wasserzeichen bei jeder Nicht-Vollversion (sichere Voreinstellung)');
   ['de', 'en', 'pt'].forEach(function (l) { ok(RP.watermarkText(l).length > 10, 'Wasserzeichentext ' + l); });
 
   // 22.2 .dtp Round-Trip: state bleibt bit-identisch (Eingaben, keine Ergebnisse).

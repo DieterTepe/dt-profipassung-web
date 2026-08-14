@@ -982,7 +982,10 @@
   var pvFax = parseFloat(localStorage.getItem('dtp-pv-fax')); if (isNaN(pvFax) || pvFax < 0) pvFax = 0;
   var pvSideA = { key: localStorage.getItem('dtp-pv-mata') || 'steel', own: localStorage.getItem('dtp-pv-owna') === '1', cust: pvReadCust('dtp-pv-ca') };
   var pvSideI = { key: localStorage.getItem('dtp-pv-mati') || 'steel', own: localStorage.getItem('dtp-pv-owni') === '1', cust: pvReadCust('dtp-pv-ci') };
-  var edition = (window.DT_EDITION === 'test') ? 'test' : 'full';
+  // Sichere Voreinstellung: NUR exakt 'full' aktiviert die Vollversion. Alles
+  // andere (leer, Tippfehler, 'test', beliebiger Text) ist Testversion — damit
+  // niemand durch irgendeinen Eintrag die Vollversion freischalten kann.
+  var edition = (window.DT_EDITION === 'full') ? 'full' : 'test';
 
   // Auffindbarkeit der ⓘ-Sprechblasen: einmaliger, begrenzter Puls; endet dauerhaft,
   // sobald der Nutzer erstmals eine Sprechblase antippt (in localStorage gemerkt).
