@@ -19,6 +19,9 @@
 <meta property="og:image:width" content="1344">
 <meta property="og:image:height" content="842">
 <meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="https://dt-profidreieck.de/Landigpage_Daten/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="https://dt-profidreieck.de/Landigpage_Daten/favicon.png" type="image/png" sizes="48x48">
+<link rel="apple-touch-icon" href="https://dt-profidreieck.de/Landigpage_Daten/apple-touch-icon.png">
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -71,7 +74,7 @@
   --line-soft: #2a333c;
   --fg:        #e7eef4;
   --muted:     #94a4b2;
-  --faint:     #6c7b88;
+  --faint:     #8a99a6;
 
   /* interaktiv / CAD */
   --accent:        #34c3d4;
@@ -107,7 +110,7 @@
   --line-soft: #e2e8ee;
   --fg:        #182530;
   --muted:     #566673;
-  --faint:     #8494a1;
+  --faint:     #66727d;
   --accent-soft: rgba(31, 151, 168, .12);
   --brass-soft:  rgba(160, 120, 30, .14);
   --shadow: 0 12px 30px -20px rgba(20, 40, 60, .45);
@@ -122,7 +125,7 @@ body {
   color: var(--fg);
   background:
     radial-gradient(1200px 600px at 80% -10%, rgba(52, 195, 212, .06), transparent 60%),
-    linear-gradient(180deg, var(--bg2), var(--bg));
+    linear-gradient(180deg, var(--bg2), var(--bg)) var(--bg);
   background-attachment: fixed;
   min-height: 100vh;
   font-size: 15px;
@@ -908,10 +911,12 @@ input.locked { background: var(--line-soft); color: var(--muted); cursor: defaul
 
 </style>
 
+<style id="dt-ready-css">html:not(.dt-ready) .app-main,html:not(.dt-ready) .app-footer{visibility:hidden}</style>
+<noscript><style>.app-main,.app-footer{visibility:visible!important}</style></noscript>
 </head>
 <body>
 
-<div id="editionBar" class="edition-bar" hidden></div>
+<div id="editionBar" class="edition-bar test">Testversion</div>
 
 <header class="app-header">
   <div class="brand">
@@ -1026,5 +1031,7 @@ let vmH=typeof globalThis!=='undefined'?globalThis:typeof self!=='undefined'?sel
 
 </script>
 
+<script>/* Inhalt erst zeigen, wenn das Programm ihn aufgebaut hat – verhindert Springen beim Laden */
+(function(){var d=document.documentElement,f=function(){setTimeout(function(){d.classList.add("dt-ready")},0)};if(document.readyState==="loading"){document.addEventListener("DOMContentLoaded",f)}else{f()}setTimeout(function(){d.classList.add("dt-ready")},4000)})();</script>
 </body>
 </html>
