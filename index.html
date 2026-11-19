@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
+  <meta name="theme-color" content="#101923">
+
+  <title>Passung berechnen nach ISO 286 – DT-ProfiPassung | Passungsrechner</title>
+  <meta name="description" content="Passung nach ISO 286 online berechnen: Grenzmaße, Spiel, Übermaß, Toleranzfeld, Pressverband nach DIN 7190. Mit Rechenweg – gratis im Browser testen.">
+  <meta name="author" content="Dieter Tepe">
+
+  <link rel="canonical" href="https://dietertepe.github.io/dt-profipassung-web/">
+  <link rel="icon" href="https://dt-profidreieck.de/Landigpage_Daten/favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="https://dt-profidreieck.de/Landigpage_Daten/favicon.png" type="image/png" sizes="48x48">
+  <link rel="apple-touch-icon" href="https://dt-profidreieck.de/Landigpage_Daten/apple-touch-icon.png">
+
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="de_DE">
+  <meta property="og:site_name" content="DT-ProfiTools">
+  <meta property="og:title" content="Passung berechnen nach ISO 286 – DT-ProfiPassung | Passungsrechner">
+  <meta property="og:description" content="Passung nach ISO 286 online berechnen: Grenzmaße, Spiel, Übermaß, Toleranzfeld, Pressverband nach DIN 7190. Mit Rechenweg – gratis im Browser testen.">
+  <meta property="og:url" content="https://dietertepe.github.io/dt-profipassung-web/">
+  <meta property="og:image" content="https://dt-profidreieck.de/Passung_Daten/bilder/passung-start.jpg">
+  <meta name="twitter:card" content="summary_large_image">
+
+  <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebPage",
+      "@id": "https://dietertepe.github.io/dt-profipassung-web/#webpage",
+      "url": "https://dietertepe.github.io/dt-profipassung-web/",
+      "name": "Passung berechnen nach ISO 286 – DT-ProfiPassung | Passungsrechner",
+      "description": "Passung nach ISO 286 online berechnen: Grenzmaße, Spiel, Übermaß, Toleranzfeld, Pressverband nach DIN 7190. Mit Rechenweg – gratis im Browser testen.",
+      "inLanguage": "de",
+      "primaryImageOfPage": "https://dt-profidreieck.de/Passung_Daten/bilder/passung-start.jpg",
+      "isPartOf": {
+        "@type": "WebSite",
+        "name": "DT-ProfiTools",
+        "url": "https://dt-profidreieck.de/"
+      },
+      "mainEntity": {
+        "@id": "https://dietertepe.github.io/dt-profipassung-web/#software"
+      }
+    },
+    {
+      "@type": "SoftwareApplication",
+      "@id": "https://dietertepe.github.io/dt-profipassung-web/#software",
+      "name": "DT-ProfiPassung",
+      "url": "https://dietertepe.github.io/dt-profipassung-web/DT-ProfiPassung_Testversion.html",
+      "applicationCategory": "BusinessApplication",
+      "applicationSubCategory": "Passungsrechner nach ISO 286",
+      "operatingSystem": "Webbrowser (Windows, macOS, Linux, Android, iOS)",
+      "browserRequirements": "JavaScript erforderlich",
+      "inLanguage": [
+        "de",
+        "en",
+        "pt"
+      ],
+      "image": "https://dt-profidreieck.de/Passung_Daten/bilder/passung-start.jpg",
+      "description": "Mit DT-ProfiPassung ermitteln Sie Grenzmaße, Abmaße, Spiel und Übermaß für Passungen nach ISO 286. Zusätzlich rechnet das Programm Pressverbände nach DIN 7190 und Allgemeintoleranzen nach ISO 2768 – jeder Schritt mit Formel, Werten und Quelle.",
+      "author": {
+        "@type": "Person",
+        "name": "Dieter Tepe",
+        "url": "https://dt-profidreieck.de/"
+      },
+      "offers": [
+        {
+          "@type": "Offer",
+          "name": "Gratis-Testversion",
+          "price": "0.00",
+          "priceCurrency": "EUR",
+          "availability": "https://schema.org/InStock",
+          "url": "https://dietertepe.github.io/dt-profipassung-web/DT-ProfiPassung_Testversion.html"
+        },
+        {
+          "@type": "Offer",
+          "name": "Vollversion",
+          "price": "139.00",
+          "priceCurrency": "EUR",
+          "availability": "https://schema.org/InStock",
+          "url": "https://www.checkout-ds24.com/product/722972"
+        }
+      ]
+    }
+  ]
+}
+  </script>
+
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #101923;
+      --panel: #172431;
+      --panel2: #1c2c3a;
+      --text: #f2f7fb;
+      --muted: #b4c4d1;
+      --cyan: #42d2df;
+      --cyan-dark: #087d8b;
+      --gold: #f0c36a;
+      --line: rgba(202, 222, 237, .16);
+      --max: 1120px;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(ellipse at 85% 0%, rgba(66,210,223,.13), transparent 35rem),
+        linear-gradient(180deg, #14212e 0%, var(--bg) 55%);
+      line-height: 1.65;
+    }
+    a { color: inherit; }
+    .wrap { width: min(calc(100% - 36px), var(--max)); margin-inline: auto; }
+    .topline { border-bottom: 1px solid var(--line); }
+    .nav {
+      min-height: 70px; display: flex; align-items: center; justify-content: space-between;
+      gap: 20px; padding-block: 12px;
+    }
+    .brand { font-weight: 850; letter-spacing: -.04em; font-size: 1.22rem; }
+    .brand span { color: var(--cyan); }
+    .nav-note { color: var(--muted); font-size: .9rem; }
+    .hero { padding: clamp(48px, 8vw, 94px) 0 60px; }
+    .hero-grid { display: grid; grid-template-columns: minmax(0, 1.08fr) minmax(280px, .92fr); gap: clamp(28px, 6vw, 70px); align-items: center; }
+    .eyebrow {
+      display: inline-flex; align-items: center; gap: 9px; color: var(--gold);
+      font-size: .82rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase;
+    }
+    h1 { margin: 14px 0 18px; max-width: 760px; font-size: clamp(2.35rem, 5.2vw, 4.6rem); line-height: 1.04; letter-spacing: -.055em; }
+    h1 em { color: var(--cyan); font-style: normal; }
+    .lead { max-width: 680px; color: #d0dce5; font-size: clamp(1.08rem, 1.8vw, 1.25rem); }
+    .actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 28px; }
+    .button {
+      display: inline-flex; justify-content: center; align-items: center; gap: 10px;
+      min-height: 50px; padding: 13px 20px; border-radius: 12px; text-decoration: none;
+      font-weight: 800; border: 1px solid transparent; transition: transform .15s, background .15s;
+    }
+    .button:hover { transform: translateY(-2px); }
+    .primary { color: #062128; background: linear-gradient(135deg, #61e3e9, #31bdce); box-shadow: 0 12px 32px rgba(29, 186, 203, .18); }
+    .secondary { background: rgba(255,255,255,.04); border-color: var(--line); }
+    .micro { margin-top: 14px; color: var(--muted); font-size: .88rem; }
+    .diagram {
+      position: relative; padding: 18px; border: 1px solid rgba(117, 210, 223, .25);
+      border-radius: 24px; background: linear-gradient(145deg, rgba(31,51,66,.94), rgba(16,25,35,.92));
+      box-shadow: 0 30px 80px rgba(0,0,0,.2);
+    }
+    .diagram img { display: block; width: 100%; height: auto; border-radius: 14px; }
+    .diagram-caption { padding: 10px 8px 2px; color: var(--muted); font-size: .88rem; text-align: center; }
+    .trust-row { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; margin-top: 42px; }
+    .trust { border: 1px solid var(--line); border-radius: 14px; background: rgba(255,255,255,.035); padding: 15px 17px; }
+    .trust strong { display: block; color: var(--cyan); font-size: 1rem; }
+    .trust span { color: var(--muted); font-size: .86rem; }
+    section.content { padding: 62px 0; border-top: 1px solid var(--line); }
+    .section-head { max-width: 760px; margin-bottom: 28px; }
+    h2 { margin: 0 0 12px; font-size: clamp(1.8rem, 3.5vw, 2.65rem); line-height: 1.15; letter-spacing: -.035em; }
+    h3 { margin: 0 0 8px; font-size: 1.12rem; }
+    p { margin: 0 0 14px; }
+    .muted { color: var(--muted); }
+    .feature-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; }
+    .feature { padding: 22px; border: 1px solid var(--line); border-radius: 17px; background: linear-gradient(160deg, rgba(28,44,58,.85), rgba(20,31,43,.78)); }
+    .feature-icon { width: 42px; height: 42px; display: grid; place-items: center; border-radius: 12px; background: rgba(66,210,223,.12); color: var(--cyan); font-size: 1.35rem; margin-bottom: 16px; }
+    .feature p { color: var(--muted); font-size: .96rem; margin: 0; }
+    .split { display: grid; grid-template-columns: 1fr 1fr; gap: 38px; align-items: start; }
+    .checklist { list-style: none; padding: 0; margin: 18px 0 0; }
+    .checklist li { padding: 9px 0 9px 30px; position: relative; border-bottom: 1px solid rgba(202,222,237,.09); }
+    .checklist li::before { content: "✓"; position: absolute; left: 0; color: var(--cyan); font-weight: 900; }
+    .formula-box { border: 1px solid var(--line); background: rgba(255,255,255,.035); padding: 24px; border-radius: 18px; }
+    .formula { font-family: "Cambria Math", "Times New Roman", serif; font-size: clamp(1.3rem, 3vw, 2rem); color: var(--gold); margin: 10px 0; }
+    .faq { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    details { border: 1px solid var(--line); border-radius: 14px; padding: 17px 19px; background: rgba(255,255,255,.025); }
+    summary { cursor: pointer; font-weight: 800; }
+    details p { margin: 12px 0 0; color: var(--muted); }
+    .closing { padding: 34px; border-radius: 22px; border: 1px solid rgba(66,210,223,.28); background: linear-gradient(120deg, rgba(66,210,223,.11), rgba(240,195,106,.06)); text-align: center; }
+    .closing p { color: var(--muted); max-width: 700px; margin: 0 auto 20px; }
+    footer { border-top: 1px solid var(--line); padding: 24px 0 38px; color: var(--muted); font-size: .88rem; }
+    footer .footrow { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; }
+    footer a { color: var(--cyan); }
+    @media (max-width: 780px) {
+      .hero-grid, .split { grid-template-columns: 1fr; }
+      .diagram { max-width: 560px; margin-inline: auto; }
+      .feature-grid { grid-template-columns: 1fr 1fr; }
+      .faq { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 520px) {
+      .wrap { width: min(calc(100% - 28px), var(--max)); }
+      .nav { align-items: flex-start; flex-direction: column; gap: 2px; }
+      .hero { padding-top: 42px; }
+      .trust-row, .feature-grid { grid-template-columns: 1fr; }
+      .button { width: 100%; }
+      .closing { padding: 25px 18px; }
+    }
+    @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } .button { transition: none; } }
+  
+    .media-link { display:grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 28px; align-items:center; }
+    .media-link a.thumb { position:relative; display:block; border-radius:16px; overflow:hidden; border:1px solid var(--line); }
+    .media-link a.thumb img { display:block; width:100%; height:auto; }
+    .media-link a.thumb span { position:absolute; inset:auto 12px 12px auto; background:rgba(16,25,35,.85); color:var(--text);
+      padding:6px 12px; border-radius:999px; font-weight:800; font-size:.9rem; }
+    .price { font-size: 2.2rem; font-weight: 850; color: var(--gold); letter-spacing:-.03em; }
+    .price small { font-size: .95rem; color: var(--muted); font-weight: 600; }
+    .tools { display:flex; flex-wrap:wrap; gap:8px 18px; margin-top:10px; }
+    @media (max-width: 780px) { .media-link { grid-template-columns: 1fr; } }
+
+    :root { --cyan: #2fc48f; --cyan-dark: #0b7a56; }
+    .primary { background: linear-gradient(135deg, #2fc48f, #0b7a56); color:#fff; box-shadow:none; }
+  </style>
+</head>
+<body>
+  <header class="topline">
+    <div class="wrap nav">
+      <div class="brand">DT-<span>Profi</span>Passung</div>
+      <div class="nav-note"><a href="https://dt-profidreieck.de/">Alle DT-ProfiTools auf dt-profidreieck.de</a></div>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="wrap">
+        <div class="hero-grid">
+          <div>
+            <div class="eyebrow">Passungsrechner nach ISO 286</div>
+            <h1>Passung <em>berechnen</em> nach ISO 286 – mit Selbstprüfung.</h1>
+            <p class="lead">Mit <strong>DT-ProfiPassung</strong> ermitteln Sie Grenzmaße, Abmaße, Spiel und Übermaß für Passungen nach ISO 286. Zusätzlich rechnet das Programm Pressverbände nach DIN 7190 und Allgemeintoleranzen nach ISO 2768 – jeder Schritt mit Formel, Werten und Quelle.</p>
+            <div class="actions">
+              <a class="button primary" href="https://dietertepe.github.io/dt-profipassung-web/DT-ProfiPassung_Testversion.html">Testversion jetzt starten <span aria-hidden="true">→</span></a>
+              <a class="button secondary" href="#funktionen">Funktionen entdecken</a>
+            </div>
+            <p class="micro">Direkt im Browser · Keine Anmeldung · Keine Installation</p>
+          </div>
+          <div class="diagram">
+            <img src="https://dt-profidreieck.de/Passung_Daten/bilder/passung-start.jpg" width="1344" height="842" fetchpriority="high" decoding="async" alt="Startansicht von DT-ProfiPassung mit Eingabe einer Passung und Ergebnis nach ISO 286">
+            <div class="diagram-caption">Grenzmaße · Spiel/Übermaß · Toleranzfeld</div>
+          </div>
+        </div>
+        <div class="trust-row" aria-label="Wichtige Eigenschaften">
+          <div class="trust"><strong>ISO 286 · DIN 7190</strong><span>Passungen, Pressverband, ISO 2768</span></div>
+          <div class="trust"><strong>Selbstprüfung</strong><span>Ergebnis auf zweitem Weg gegengerechnet</span></div>
+          <div class="trust"><strong>Direkt im Browser</strong><span>ohne Installation und Benutzerkonto</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="content" id="funktionen">
+      <div class="wrap">
+        <div class="section-head">
+          <div class="eyebrow">Funktionen</div>
+          <h2>Was DT-ProfiPassung rechnet</h2>
+          <p class="muted">Für Konstruktion, Werkstatt, technische Büros, Ausbildung und Lehre – eine einzelne HTML-Datei, die auf dem eigenen Gerät rechnet.</p>
+        </div>
+        <div class="feature-grid">
+          <article class="feature">
+            <div class="feature-icon" aria-hidden="true">⌀</div>
+            <h3>Schnelleingabe wie gewohnt</h3>
+            <p>Passung in der üblichen Schreibweise eingeben, etwa Ø50 H7/g6 – oder Nennmaß und Toleranzklassen einzeln wählen.</p>
+          </article>
+          <article class="feature">
+            <div class="feature-icon" aria-hidden="true">±</div>
+            <h3>Abmaße und Grenzmaße</h3>
+            <p>Oberes und unteres Abmaß, Höchst- und Mindestmaß für Bohrung und Welle, Grundabmaße A bis ZC und a bis zc, IT1 bis IT18.</p>
+          </article>
+          <article class="feature">
+            <div class="feature-icon" aria-hidden="true">⇔</div>
+            <h3>Spiel, Übermaß, Passungsart</h3>
+            <p>Höchst- und Mindestspiel bzw. -übermaß und die Einordnung als Spiel-, Übergangs- oder Übermaßpassung.</p>
+          </article>
+          <article class="feature">
+            <div class="feature-icon" aria-hidden="true">⌁</div>
+            <h3>Toleranzfeld als Grafik</h3>
+            <p>Lage von Bohrung und Welle bezogen auf die Nulllinie – sofort erkennbar, wo Spiel oder Übermaß entsteht.</p>
+          </article>
+          <article class="feature">
+            <div class="feature-icon" aria-hidden="true">✓</div>
+            <h3>Selbstprüfender Rechenweg</h3>
+            <p>Formel, eingesetzte Werte und Quelle je Schritt. Das Programm rechnet auf einem zweiten Weg gegen und meldet Abweichungen.</p>
+          </article>
+          <article class="feature">
+            <div class="feature-icon" aria-hidden="true">◉</div>
+            <h3>Pressverband und Praxis</h3>
+            <p>Fugendruck, übertragbares Moment und Fügetemperatur nach DIN 7190, Allgemeintoleranzen nach ISO 2768 und Praxishinweise zur Passungswahl.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="content">
+      <div class="wrap split">
+        <div>
+          <div class="eyebrow">So funktioniert es</div>
+          <h2>In wenigen Schritten zum Ergebnis</h2>
+          <ul class="checklist">
+            <li>Passung eingeben, zum Beispiel Ø50 H7/g6.</li>
+            <li>Bei Bedarf Pressverband oder Allgemeintoleranz wählen.</li>
+            <li>Ergebnis und Toleranzfeld ansehen.</li>
+            <li>Rechenweg mit Selbstprüfung kontrollieren.</li>
+          </ul>
+        </div>
+        <aside class="formula-box">
+          <h3>Beispiel: Höchstspiel</h3>
+          <p class="muted">Das Höchstspiel ergibt sich aus dem Höchstmaß der Bohrung und dem Mindestmaß der Welle:</p>
+          <div class="formula">P<sub>SH</sub> = G<sub>oB</sub> − G<sub>uW</sub></div>
+          <p class="muted">Der Rechenweg zeigt, welche Werte eingesetzt werden und wie das Ergebnis entsteht.</p>
+          <a href="https://dietertepe.github.io/dt-profipassung-web/DT-ProfiPassung_Testversion.html" class="button secondary">In der Testversion ausprobieren →</a>
+        </aside>
+      </div>
+    </section>
+
+    <section class="content" id="video">
+      <div class="wrap media-link">
+        <a class="thumb" href="https://dt-profidreieck.de/videos/passung-iso-286.html">
+          <img src="https://dt-profidreieck.de/Passung_Daten/bilder/passung-start.jpg" width="1280" height="720" loading="lazy" alt="Vorschaubild zum Video: DT-ProfiPassung im Überblick – 40 Sekunden">
+          <span>▶ Video ansehen</span>
+        </a>
+        <div>
+          <div class="eyebrow">Vollversion</div>
+          <h2>DT-ProfiPassung kaufen</h2>
+          <div class="price">139 € <small>einmalig · kein Abo</small></div>
+          <p class="muted">Die Vollversion ist eine einzelne HTML-Datei, die offline läuft – auf PC, Tablet und Handy. Zusätzlich freigeschaltet: Speichern, Laden, Drucken/PDF und Berichte.</p>
+          <div class="actions">
+            <a class="button primary" rel="nofollow" href="https://www.checkout-ds24.com/product/722972">Vollversion · 139 €</a>
+            <a class="button secondary" href="https://dt-profidreieck.de/#passung">Zur Produktseite</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="content">
+      <div class="wrap">
+        <div class="section-head">
+          <div class="eyebrow">Häufige Fragen</div>
+          <h2>Fragen zu DT-ProfiPassung</h2>
+        </div>
+        <div class="faq">
+          <details>
+            <summary>Nach welchen Normen rechnet DT-ProfiPassung?</summary>
+            <p>Passungen nach ISO 286, Pressverbände nach DIN 7190 und Allgemeintoleranzen nach ISO 2768.</p>
+          </details>
+          <details>
+            <summary>Welche Werte liefert der Passungsrechner?</summary>
+            <p>Abmaße, Höchst- und Mindestmaße, Spiel bzw. Übermaß, Passungsart und das Toleranzfeld als Grafik.</p>
+          </details>
+          <details>
+            <summary>Wie zuverlässig sind die Ergebnisse?</summary>
+            <p>Das Programm rechnet jedes Ergebnis auf einem zweiten Weg gegen und meldet Abweichungen. Vor verbindlicher Verwendung bitte gegen die Originalnorm prüfen.</p>
+          </details>
+          <details>
+            <summary>Was kann die Testversion?</summary>
+            <p>Sie rechnet in vollem Umfang. Gesperrt sind nur die Ausgaben: Speichern, Öffnen, Drucken und der Word-Bericht.</p>
+          </details>
+          <details>
+            <summary>Muss ich etwas installieren?</summary>
+            <p>Nein. Die Testversion läuft direkt im Browser, ohne Anmeldung und ohne Installation.</p>
+          </details>
+          <details>
+            <summary>Funktioniert das Programm offline?</summary>
+            <p>Ja. Alle Berechnungen laufen auf dem eigenen Gerät; es werden keine Daten an Server übertragen.</p>
+          </details>
+        </div>
+      </div>
+    </section>
+
+    <section class="content">
+      <div class="wrap">
+        <div class="closing">
+          <div class="eyebrow">Jetzt selbst rechnen</div>
+          <h2>Testen Sie DT-ProfiPassung direkt im Browser</h2>
+          <p>Eingaben machen, Ergebnis und Rechenweg prüfen – ohne Anmeldung und ohne Installation.</p>
+          <a class="button primary" href="https://dietertepe.github.io/dt-profipassung-web/DT-ProfiPassung_Testversion.html">DT-ProfiPassung Testversion starten →</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="wrap">
+      <div class="footrow">
+        <span>© <span id="year">2026</span> Dieter Tepe · DT-ProfiPassung</span>
+        <span>Hinweis: Ergebnisse vor einer sicherheitskritischen oder verbindlichen Verwendung fachlich prüfen.</span>
+        <a href="https://dt-profidreieck.de/impressum.html">Impressum</a>
+        <a href="https://dt-profidreieck.de/datenschutz.html">Datenschutz</a>
+      </div>
+      <nav class="tools" aria-label="Weitere Testversionen">Weitere Werkzeuge: <a href="https://dietertepe.github.io/test-dreieck/">Dreieck berechnen</a> · <a href="https://dietertepe.github.io/dt-profischraube-web/">Schraube nach VDI 2230</a> · <span>Passung nach ISO 286</span> · <a href="https://dietertepe.github.io/dt-profischweissnaht-web/">Schweißnaht nach EN 1993-1-8</a></nav>
+    </div>
+  </footer>
+  <script>
+    document.getElementById("year").textContent = new Date().getFullYear();
+  </script>
+</body>
+</html>
