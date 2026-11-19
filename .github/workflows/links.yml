@@ -1,0 +1,34 @@
+# Prueft alle Links, Bilder und Videos der Seite auf Erreichbarkeit.
+# Laeuft bei jeder Aenderung und zusaetzlich jeden Montag (falls extern etwas wegfaellt).
+name: Links pruefen
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    - cron: "17 6 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  links:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Links, Bilder und Videos pruefen
+        uses: lycheeverse/lychee-action@v2
+        with:
+          fail: true
+          args: >-
+            --no-progress
+            --root-dir ${{ github.workspace }}
+            --max-retries 3
+            --accept 200,206,429
+            --exclude "checkout-ds24\.com"
+            --exclude "localhost"
+            --exclude-path "google[0-9a-f]+\.html"
+            './**/*.html'

@@ -1,0 +1,50 @@
+# Meldet nach jeder Aenderung alle Seiten aus der Sitemap per IndexNow
+# an Bing, Yandex, Seznam, Naver und Yep. (Google nutzt IndexNow nicht.)
+# Kostenlos, kein Konto noetig. Manuell starten: Actions -> IndexNow -> Run workflow.
+name: IndexNow
+
+on:
+  push:
+    branches: [main]
+    paths: ["**.html", "sitemap*.xml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  melden:
+    runs-on: ubuntu-latest
+    env:
+      INDEXNOW_KEY: "ae75103e91164e89baa52e9f013df398"
+      KEY_LOCATION: "https://dietertepe.github.io/dt-profipassung-web/ae75103e91164e89baa52e9f013df398.txt"
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Warten, bis GitHub Pages die neue Version ausliefert
+        run: sleep 120
+
+      - name: Seiten an IndexNow melden
+        run: |
+          python3 - <<'PY'
+          import glob, json, os, re, urllib.parse, urllib.request
+          urls = []
+          for f in sorted(glob.glob("sitemap*.xml")):
+              urls += re.findall(r"<loc>\s*([^<\s]+)\s*</loc>", open(f, encoding="utf-8").read())
+          urls = list(dict.fromkeys(urls))
+          if not urls:
+              raise SystemExit("Keine URLs in der Sitemap gefunden")
+          host = urllib.parse.urlparse(urls[0]).netloc
+          body = json.dumps({"host": host, "key": os.environ["INDEXNOW_KEY"],
+                             "keyLocation": os.environ["KEY_LOCATION"], "urlList": urls}).encode()
+          req = urllib.request.Request("https://api.indexnow.org/indexnow", data=body,
+                                       headers={"Content-Type": "application/json; charset=utf-8"})
+          try:
+              with urllib.request.urlopen(req, timeout=30) as r:
+                  print("IndexNow-Antwort:", r.status, "fuer", len(urls), "URLs")
+          except urllib.error.HTTPError as e:
+              print("IndexNow-Fehler:", e.code, e.read().decode(errors="replace"))
+              raise SystemExit(1)
+          for u in urls:
+              print(" -", u)
+          PY
