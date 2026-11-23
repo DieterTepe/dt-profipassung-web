@@ -19,7 +19,7 @@ jobs:
       INDEXNOW_KEY: "ae75103e91164e89baa52e9f013df398"
       KEY_LOCATION: "https://dietertepe.github.io/dt-profipassung-web/ae75103e91164e89baa52e9f013df398.txt"
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Warten, bis GitHub Pages die neue Version ausliefert
         run: sleep 120
