@@ -19,6 +19,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Warten, bis GitHub Pages neue Seiten ausliefert (sonst falsche 404)
+        if: github.event_name == 'push'
+        run: sleep 150
+
       - name: Links, Bilder und Videos pruefen
         uses: lycheeverse/lychee-action@v2
         with:
