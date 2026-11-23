@@ -1,11 +1,32 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
     <loc>https://dietertepe.github.io/dt-profipassung-web/</loc>
-    <lastmod>2026-11-19</lastmod>
+    <lastmod>2026-11-23</lastmod>
+    <xhtml:link rel="alternate" hreflang="de" href="https://dietertepe.github.io/dt-profipassung-web/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://dietertepe.github.io/dt-profipassung-web/en/"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://dietertepe.github.io/dt-profipassung-web/pt/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://dietertepe.github.io/dt-profipassung-web/"/>
+  </url>
+  <url>
+    <loc>https://dietertepe.github.io/dt-profipassung-web/en/</loc>
+    <lastmod>2026-11-23</lastmod>
+    <xhtml:link rel="alternate" hreflang="de" href="https://dietertepe.github.io/dt-profipassung-web/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://dietertepe.github.io/dt-profipassung-web/en/"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://dietertepe.github.io/dt-profipassung-web/pt/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://dietertepe.github.io/dt-profipassung-web/"/>
+  </url>
+  <url>
+    <loc>https://dietertepe.github.io/dt-profipassung-web/pt/</loc>
+    <lastmod>2026-11-23</lastmod>
+    <xhtml:link rel="alternate" hreflang="de" href="https://dietertepe.github.io/dt-profipassung-web/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://dietertepe.github.io/dt-profipassung-web/en/"/>
+    <xhtml:link rel="alternate" hreflang="pt" href="https://dietertepe.github.io/dt-profipassung-web/pt/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://dietertepe.github.io/dt-profipassung-web/"/>
   </url>
   <url>
     <loc>https://dietertepe.github.io/dt-profipassung-web/DT-ProfiPassung_Testversion.html</loc>
-    <lastmod>2026-11-19</lastmod>
+    <lastmod>2026-11-23</lastmod>
   </url>
 </urlset>
