@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
+  <meta name="theme-color" content="#101923">
+
+  <title>ISO 286 Fit &amp; Tolerance Calculator | DT-ProfiPassung</title>
+  <meta name="description" content="Calculate ISO 286 fits such as H7/g6: limit deviations, clearance, interference, tolerance zones and DIN 7190 press fits. Try it free online.">
+  <meta name="author" content="Dieter Tepe">
+
+  <link rel="canonical" href="https://dietertepe.github.io/dt-profipassung-web/en/">
+  <link rel="alternate" hreflang="de" href="https://dietertepe.github.io/dt-profipassung-web/">
+  <link rel="alternate" hreflang="en" href="https://dietertepe.github.io/dt-profipassung-web/en/">
+  <link rel="alternate" hreflang="pt" href="https://dietertepe.github.io/dt-profipassung-web/pt/">
+  <link rel="alternate" hreflang="x-default" href="https://dietertepe.github.io/dt-profipassung-web/">
+  <link rel="icon" href="https://dt-profidreieck.de/Landigpage_Daten/favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="https://dt-profidreieck.de/Landigpage_Daten/favicon.png" type="image/png" sizes="48x48">
+  <link rel="apple-touch-icon" href="https://dt-profidreieck.de/Landigpage_Daten/apple-touch-icon.png">
+
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="en_US">
+  <meta property="og:locale:alternate" content="de_DE">
+  <meta property="og:locale:alternate" content="pt_BR">
+  <meta property="og:site_name" content="DT-ProfiTools">
+  <meta property="og:title" content="ISO 286 Fit &amp; Tolerance Calculator | DT-ProfiPassung">
+  <meta property="og:description" content="Calculate ISO 286 fits such as H7/g6: limit deviations, clearance, interference, tolerance zones and DIN 7190 press fits. Try it free online.">
+  <meta property="og:url" content="https://dietertepe.github.io/dt-profipassung-web/en/">
+  <meta property="og:image" content="https://dt-profidreieck.de/Passung_Daten/bilder/passung-start.jpg">
+  <meta name="twitter:card" content="summary_large_image">
+
+  <!-- AUTOMATISCH ERZEUGT mit _sprachen/startseiten.py (Repo dt-profidreieck-web) – nicht von Hand bearbeiten -->
+  <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebPage",
+      "@id": "https://dietertepe.github.io/dt-profipassung-web/en/#webpage",
+      "url": "https://dietertepe.github.io/dt-profipassung-web/en/",
+      "name": "ISO 286 Fit & Tolerance Calculator | DT-ProfiPassung",
+      "description": "Calculate ISO 286 fits such as H7/g6: limit deviations, clearance, interference, tolerance zones and DIN 7190 press fits. Try it free online.",
+      "inLanguage": "en",
+      "primaryImageOfPage": "https://dt-profidreieck.de/Passung_Daten/bilder/passung-start.jpg",
+      "isPartOf": {
+        "@type": "WebSite",
+        "name": "DT-ProfiTools",
+        "url": "https://dt-profidreieck.de/"
+      },
+      "mainEntity": {
+        "@id": "https://dietertepe.github.io/dt-profipassung-web/en/#software"
+      }
+    },
+    {
+      "@type": "SoftwareApplication",
+      "@id": "https://dietertepe.github.io/dt-profipassung-web/en/#software",
+      "name": "DT-ProfiPassung",
+      "url": "https://dietertepe.github.io/dt-profipassung-web/DT-ProfiPassung_Testversion.html?lang=en",
+      "applicationCategory": "BusinessApplication",
+      "applicationSubCategory": "ISO 286 fit calculator",
+      "operatingSystem": "Webbrowser (Windows, macOS, Linux, Android, iOS)",
+      "browserRequirements": "JavaScript",
+      "inLanguage": [
+        "de",
+        "en",
+        "pt-BR"
+      ],
+      "image": "https://dt-profidreieck.de/Passung_Daten/bilder/passung-start.jpg",
+      "description": "With DT-ProfiPassung you get limit deviations, limits of size, clearance and interference for fits to ISO 286. The program also calculates press fits to DIN 7190 and general tolerances to ISO 2768 – every step with formula, values and source.",
+      "author": {
+        "@type": "Person",
+        "name": "Dieter Tepe",
+        "url": "https://dt-profidreieck.de/"
+      },
+      "offers": [
+        {
+          "@type": "Offer",
+          "name": "Start the free trial",
+          "price": "0.00",
+          "priceCurrency": "EUR",
+          "availability": "https://schema.org/InStock",
+          "url": "https://dietertepe.github.io/dt-profipassung-web/DT-ProfiPassung_Testversion.html?lang=en"
+        },
+        {
+          "@type": "Offer",
+          "name": "Full version",
+          "price": "139.00",
+          "priceCurrency": "EUR",
+          "availability": "https://schema.org/InStock",
+          "url": "https://www.checkout-ds24.com/product/722972"
+        }
+      ]
+    }
+  ]
+}
+  </script>
+
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #101923;
+      --panel: #172431;
+      --panel2: #1c2c3a;
+      --text: #f2f7fb;
+      --muted: #b4c4d1;
+      --cyan: #42d2df;
+      --cyan-dark: #087d8b;
+      --gold: #f0c36a;
+      --line: rgba(202, 222, 237, .16);
+      --max: 1120px;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(ellipse at 85% 0%, rgba(66,210,223,.13), transparent 35rem),
+        linear-gradient(180deg, #14212e 0%, var(--bg) 55%);
+      line-height: 1.65;
+    }
+    a { color: inherit; }
+    .wrap { width: min(calc(100% - 36px), var(--max)); margin-inline: auto; }
+    .topline { border-bottom: 1px solid var(--line); }
+    .nav {
+      min-height: 70px; display: flex; align-items: center; justify-content: space-between;
+      gap: 20px; padding-block: 12px;
+    }
+    .brand { font-weight: 850; letter-spacing: -.04em; font-size: 1.22rem; }
+    .brand span { color: var(--cyan); }
+    .nav-note { color: var(--muted); font-size: .9rem; }
+    .hero { padding: clamp(48px, 8vw, 94px) 0 60px; }
+    .hero-grid { display: grid; grid-template-columns: minmax(0, 1.08fr) minmax(280px, .92fr); gap: clamp(28px, 6vw, 70px); align-items: center; }
+    .eyebrow {
+      display: inline-flex; align-items: center; gap: 9px; color: var(--gold);
+      font-size: .82rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase;
+    }
+    h1 { margin: 14px 0 18px; max-width: 760px; font-size: clamp(2.35rem, 5.2vw, 4.6rem); line-height: 1.04; letter-spacing: -.055em; }
+    h1 em { color: var(--cyan); font-style: normal; }
+    .lead { max-width: 680px; color: #d0dce5; font-size: clamp(1.08rem, 1.8vw, 1.25rem); }
+    .actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 28px; }
+    .button {
+      display: inline-flex; justify-content: center; align-items: center; gap: 10px;
+      min-height: 50px; padding: 13px 20px; border-radius: 12px; text-decoration: none;
+      font-weight: 800; border: 1px solid transparent; transition: transform .15s, background .15s;
+    }
+    .button:hover { transform: translateY(-2px); }
+    .primary { color: #062128; background: linear-gradient(135deg, #61e3e9, #31bdce); box-shadow: 0 12px 32px rgba(29, 186, 203, .18); }
+    .secondary { background: rgba(255,255,255,.04); border-color: var(--line); }
+    .micro { margin-top: 14px; color: var(--muted); font-size: .88rem; }
+    .diagram {
+      position: relative; padding: 18px; border: 1px solid rgba(117, 210, 223, .25);
+      border-radius: 24px; background: linear-gradient(145deg, rgba(31,51,66,.94), rgba(16,25,35,.92));
+      box-shadow: 0 30px 80px rgba(0,0,0,.2);
+    }
+    .diagram img { display: block; width: 100%; height: auto; border-radius: 14px; }
+    .diagram-caption { padding: 10px 8px 2px; color: var(--muted); font-size: .88rem; text-align: center; }
+    .trust-row { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; margin-top: 42px; }
+    .trust { border: 1px solid var(--line); border-radius: 14px; background: rgba(255,255,255,.035); padding: 15px 17px; }
+    .trust strong { display: block; color: var(--cyan); font-size: 1rem; }
+    .trust span { color: var(--muted); font-size: .86rem; }
+    section.content { padding: 62px 0; border-top: 1px solid var(--line); }
+    .section-head { max-width: 760px; margin-bottom: 28px; }
+    h2 { margin: 0 0 12px; font-size: clamp(1.8rem, 3.5vw, 2.65rem); line-height: 1.15; letter-spacing: -.035em; }
+    h3 { margin: 0 0 8px; font-size: 1.12rem; }
+    p { margin: 0 0 14px; }
+    .muted { color: var(--muted); }
+    .feature-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; }
+    .feature { padding: 22px; border: 1px solid var(--line); border-radius: 17px; background: linear-gradient(160deg, rgba(28,44,58,.85), rgba(20,31,43,.78)); }
+    .feature-icon { width: 42px; height: 42px; display: grid; place-items: center; border-radius: 12px; background: rgba(66,210,223,.12); color: var(--cyan); font-size: 1.35rem; margin-bottom: 16px; }
+    .feature p { color: var(--muted); font-size: .96rem; margin: 0; }
+    .split { display: grid; grid-template-columns: 1fr 1fr; gap: 38px; align-items: start; }
+    .checklist { list-style: none; padding: 0; margin: 18px 0 0; }
+    .checklist li { padding: 9px 0 9px 30px; position: relative; border-bottom: 1px solid rgba(202,222,237,.09); }
+    .checklist li::before { content: "✓"; position: absolute; left: 0; color: var(--cyan); font-weight: 900; }
+    .formula-box { border: 1px solid var(--line); background: rgba(255,255,255,.035); padding: 24px; border-radius: 18px; }
+    .formula { font-family: "Cambria Math", "Times New Roman", serif; font-size: clamp(1.3rem, 3vw, 2rem); color: var(--gold); margin: 10px 0; }
+    .faq { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    details { border: 1px solid var(--line); border-radius: 14px; padding: 17px 19px; background: rgba(255,255,255,.025); }
+    summary { cursor: pointer; font-weight: 800; }
+    details p { margin: 12px 0 0; color: var(--muted); }
+    .closing { padding: 34px; border-radius: 22px; border: 1px solid rgba(66,210,223,.28); background: linear-gradient(120deg, rgba(66,210,223,.11), rgba(240,195,106,.06)); text-align: center; }
+    .closing p { color: var(--muted); max-width: 700px; margin: 0 auto 20px; }
+    footer { border-top: 1px solid var(--line); padding: 24px 0 38px; color: var(--muted); font-size: .88rem; }
+    footer .footrow { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; }
+    footer a { color: var(--cyan); }
+    @media (max-width: 780px) {
+      .hero-grid, .split { grid-template-columns: 1fr; }
+      .diagram { max-width: 560px; margin-inline: auto; }
+      .feature-grid { grid-template-columns: 1fr 1fr; }
+      .faq { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 520px) {
+      .wrap { width: min(calc(100% - 28px), var(--max)); }
+      .nav { align-items: flex-start; flex-direction: column; gap: 2px; }
+      .hero { padding-top: 42px; }
+      .trust-row, .feature-grid { grid-template-columns: 1fr; }
+      .button { width: 100%; }
+      .closing { padding: 25px 18px; }
+    }
+    @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } .button { transition: none; } }
+  
+    .media-link { display:grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 28px; align-items:center; }
+    .media-link a.thumb { position:relative; display:block; border-radius:16px; overflow:hidden; border:1px solid var(--line); }
+    .media-link a.thumb img { display:block; width:100%; height:auto; }
+    .media-link a.thumb span { position:absolute; inset:auto 12px 12px auto; background:rgba(16,25,35,.85); color:var(--text);
+      padding:6px 12px; border-radius:999px; font-weight:800; font-size:.9rem; }
+    .price { font-size: 2.2rem; font-weight: 850; color: var(--gold); letter-spacing:-.03em; }
+    .price small { font-size: .95rem; color: var(--muted); font-weight: 600; }
+    .tools { display:flex; flex-wrap:wrap; gap:8px 18px; margin-top:10px; }
+    @media (max-width: 780px) { .media-link { grid-template-columns: 1fr; } }
+
+  
+    .langs { display:inline-flex; gap:4px; margin-left:14px; }
+    .langs a { text-decoration:none; font-size:.8rem; font-weight:800; padding:3px 8px; border-radius:999px; border:1px solid var(--line); color:var(--muted); }
+    .langs a[aria-current="page"] { background:var(--cyan); border-color:var(--cyan); color:#062128; }
+
+    :root { --cyan: #2fc48f; --cyan-dark: #0b7a56; }
+    .primary { background: linear-gradient(135deg, #2fc48f, #0b7a56); color:#fff; box-shadow:none; }
+  </style>
+</head>
+<body>
+  <header class="topline">
+    <div class="wrap nav">
+      <div class="brand">DT-<span>Profi</span>Passung</div>
+      <div class="nav-note"><a href="https://dt-profidreieck.de/en/">All DT-ProfiTools at dt-profidreieck.de</a><nav class="langs" aria-label="Language"><a href="https://dietertepe.github.io/dt-profipassung-web/" hreflang="de" lang="de">DE</a><a href="https://dietertepe.github.io/dt-profipassung-web/en/" hreflang="en" lang="en" aria-current="page">EN</a><a href="https://dietertepe.github.io/dt-profipassung-web/pt/" hreflang="pt" lang="pt">PT</a></nav></div>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="wrap">
+        <div class="hero-grid">
+          <div>
+            <div class="eyebrow">ISO 286 fit calculator</div>
+            <h1><em>Calculate</em> fits to ISO 286 – with a self-check.</h1>
+            <p class="lead">With <strong>DT-ProfiPassung</strong> you get limit deviations, limits of size, clearance and interference for fits to ISO 286. The program also calculates press fits to DIN 7190 and general tolerances to ISO 2768 – every step with formula, values and source.</p>
+            <div class="actions">
+              <a class="button primary" href="https://dietertepe.github.io/dt-profipassung-web/DT-ProfiPassung_Testversion.html?lang=en">Start the free trial <span aria-hidden="true">→</span></a>
+              <a class="button secondary" href="#funktionen">Explore the features</a>
+            </div>
+            <p class="micro">Runs in your browser · No sign-up · No installation</p>
+          </div>
+          <div class="diagram">
+            <img src="https://dt-profidreieck.de/Passung_Daten/bilder/passung-start.jpg" width="1344" height="842" fetchpriority="high" decoding="async" alt="Start view of DT-ProfiPassung with a fit entered and the ISO 286 result">
+            <div class="diagram-caption">Limits of size · clearance/interference · tolerance zones</div>
+          </div>
+        </div>
+        <div class="trust-row" aria-label="Features">
+          <div class="trust"><strong>ISO 286 · DIN 7190</strong><span>fits, press fits, ISO 2768</span></div>
+          <div class="trust"><strong>Self-check</strong><span>result recalculated a second way</span></div>
+          <div class="trust"><strong>Runs in your browser</strong><span>no installation, no user account</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="content" id="funktionen">
+      <div class="wrap">
+        <div class="section-head">
+          <div class="eyebrow">Features</div>
+          <h2>What DT-ProfiPassung calculates</h2>
+          <p class="muted">For design, workshop, engineering offices, training and teaching – a single HTML file that calculates on your own device.</p>
+        </div>
+        <div class="feature-grid">
+          <article class="feature">
+            <div class="feature-icon" aria-hidden="true">⌀</div>
+            <h3>Quick entry as usual</h3>
+            <p>Type the fit the way you write it, e.g. Ø50 H7/g6 – or pick nominal size and tolerance classes individually.</p>
+          </article>
+          <article class="feature">
+            <div class="feature-icon" aria-hidden="true">±</div>
+            <h3>Deviations and limits of size</h3>
+            <p>Upper and lower deviation, maximum and minimum size for hole and shaft, fundamental deviations A–ZC and a–zc, grades IT1–IT18.</p>
+          </article>
+          <article class="feature">
+            <div class="feature-icon" aria-hidden="true">⇔</div>
+            <h3>Clearance, interference, fit type</h3>
+            <p>Maximum and minimum clearance or interference and the classification as clearance, transition or interference fit.</p>
+          </article>
+          <article class="feature">
+            <div class="feature-icon" aria-hidden="true">⌁</div>
+            <h3>Tolerance zones as a chart</h3>
+            <p>Position of hole and shaft relative to the zero line – instantly visible where clearance or interference occurs.</p>
+          </article>
+          <article class="feature">
+            <div class="feature-icon" aria-hidden="true">✓</div>
+            <h3>Self-checking calculation path</h3>
+            <p>Formula, inserted values and source for each step. The program recalculates a second way and reports deviations.</p>
+          </article>
+          <article class="feature">
+            <div class="feature-icon" aria-hidden="true">◉</div>
+            <h3>Press fits and practice</h3>
+            <p>Interface pressure, transmissible torque and assembly temperature to DIN 7190, general tolerances to ISO 2768 and practical advice.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="content">
+      <div class="wrap split">
+        <div>
+          <div class="eyebrow">How it works</div>
+          <h2>From input to result in a few steps</h2>
+          <ul class="checklist">
+            <li>Enter the fit, for example Ø50 H7/g6.</li>
+            <li>If needed, choose press fit or general tolerance.</li>
+            <li>View the result and the tolerance zones.</li>
+            <li>Check the calculation path with its self-check.</li>
+          </ul>
+        </div>
+        <aside class="formula-box">
+          <h3>Example: maximum clearance</h3>
+          <p class="muted">The maximum clearance follows from the largest hole size and the smallest shaft size:</p>
+          <div class="formula">P<sub>SH</sub> = G<sub>oB</sub> − G<sub>uW</sub></div>
+          <p class="muted">The calculation path shows which values are used and how the result is obtained.</p>
+          <a href="https://dietertepe.github.io/dt-profipassung-web/DT-ProfiPassung_Testversion.html?lang=en" class="button secondary">Try it in the free version →</a>
+        </aside>
+      </div>
+    </section>
+
+    <section class="content" id="video">
+      <div class="wrap media-link">
+        <a class="thumb" href="https://dt-profidreieck.de/videos/passung-iso-286.html">
+          <img src="https://dt-profidreieck.de/Passung_Daten/bilder/passung-start.jpg" width="1280" height="720" loading="lazy" alt="Video thumbnail: DT-ProfiPassung">
+          <span>▶ Watch the video</span>
+        </a>
+        <div>
+          <div class="eyebrow">Full version</div>
+          <h2>Buy DT-ProfiPassung</h2>
+          <div class="price">139 € <small>one-time · no subscription</small></div>
+          <p class="muted">The full version is a single HTML file that runs offline – on PC, tablet and phone. Also unlocked: save, load, print/PDF and reports.</p>
+          <div class="actions">
+            <a class="button primary" rel="nofollow" href="https://www.checkout-ds24.com/product/722972">Full version · €139</a>
+            <a class="button secondary" href="https://dt-profidreieck.de/en/#passung">Product page</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="content">
+      <div class="wrap">
+        <div class="section-head">
+          <div class="eyebrow">FAQ</div>
+          <h2>Questions about DT-ProfiPassung</h2>
+        </div>
+        <div class="faq">
+          <details>
+            <summary>Which standards does DT-ProfiPassung use?</summary>
+            <p>Fits to ISO 286, press fits to DIN 7190 and general tolerances to ISO 2768.</p>
+          </details>
+          <details>
+            <summary>What does the fit calculator provide?</summary>
+            <p>Deviations, maximum and minimum sizes, clearance or interference, fit type and the tolerance zones as a chart.</p>
+          </details>
+          <details>
+            <summary>How reliable are the results?</summary>
+            <p>Each result is recalculated a second way and deviations are reported. Before binding use, please check against the original standard.</p>
+          </details>
+          <details>
+            <summary>What does the free version do?</summary>
+            <p>It calculates in full. Only outputs are locked: save, open, print and the Word report.</p>
+          </details>
+          <details>
+            <summary>Do I need to install anything?</summary>
+            <p>No. The free version runs directly in the browser, without sign-up or installation.</p>
+          </details>
+          <details>
+            <summary>Does the program work offline?</summary>
+            <p>Yes. All calculations run on your own device; no data is sent to any server.</p>
+          </details>
+        </div>
+      </div>
+    </section>
+
+    <section class="content">
+      <div class="wrap">
+        <div class="closing">
+          <div class="eyebrow">Calculate it yourself</div>
+          <h2>Try DT-ProfiPassung right in your browser</h2>
+          <p>Enter your values, check the result and the calculation path – no sign-up, no installation.</p>
+          <a class="button primary" href="https://dietertepe.github.io/dt-profipassung-web/DT-ProfiPassung_Testversion.html?lang=en">Start the DT-ProfiPassung free trial →</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="wrap">
+      <div class="footrow">
+        <span>© <span id="year">2026</span> Dieter Tepe · DT-ProfiPassung</span>
+        <span>Note: have results checked by a qualified person before any safety-critical or binding use.</span>
+        <a href="https://dt-profidreieck.de/impressum.html">Legal notice (German)</a>
+        <a href="https://dt-profidreieck.de/datenschutz.html">Privacy (German)</a>
+      </div>
+      <nav class="tools" aria-label="More tools:">More tools: <a href="https://dietertepe.github.io/test-dreieck/en/">Triangle calculator</a> · <a href="https://dietertepe.github.io/dt-profischraube-web/en/">Bolted joints to VDI 2230</a> · <span>Fits to ISO 286</span> · <a href="https://dietertepe.github.io/dt-profischweissnaht-web/en/">Welds to EN 1993-1-8</a></nav>
+    </div>
+  </footer>
+  <script>
+    document.getElementById("year").textContent = new Date().getFullYear();
+  </script>
+</body>
+</html>
