@@ -1,11 +1,11 @@
 # Prueft alle Links, Bilder und Videos der Seite auf Erreichbarkeit.
-# Laeuft bei jeder Aenderung und zusaetzlich jeden Montag (falls extern etwas wegfaellt).
+# Laeuft nach jeder Veroeffentlichung und zusaetzlich jeden Montag (falls extern etwas wegfaellt).
+# Kurze Server-Aussetzer (z. B. 503 waehrend GitHub Pages neu veroeffentlicht) werden wiederholt geprueft.
 name: Links pruefen
 
 on:
   push:
     branches: [main]
-  pull_request:
   schedule:
     - cron: "17 6 * * 1"
   workflow_dispatch:
@@ -30,7 +30,8 @@ jobs:
           args: >-
             --no-progress
             --root-dir ${{ github.workspace }}
-            --max-retries 3
+            --max-retries 5
+            --retry-wait-time 20
             --accept 200,206,429
             --exclude "checkout-ds24\.com"
             --exclude "localhost"
