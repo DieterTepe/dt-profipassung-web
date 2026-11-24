@@ -6,7 +6,7 @@
   <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
   <meta name="theme-color" content="#101923">
 
-  <title>Calculadora de Ajustes e Tolerâncias ISO 286</title>
+  <title>Calculadora de ajustes ISO 286 – H7/g6 e interferência</title>
   <meta name="description" content="Calcule ajustes ISO 286 como H7/g6: desvios, folga, interferência, zonas de tolerância e ajuste prensado DIN 7190. Teste grátis no navegador.">
   <meta name="author" content="Dieter Tepe">
 
@@ -24,7 +24,7 @@
   <meta property="og:locale:alternate" content="de_DE">
   <meta property="og:locale:alternate" content="en_US">
   <meta property="og:site_name" content="DT-ProfiTools">
-  <meta property="og:title" content="Calculadora de Ajustes e Tolerâncias ISO 286">
+  <meta property="og:title" content="Calculadora de ajustes ISO 286 – H7/g6 e interferência">
   <meta property="og:description" content="Calcule ajustes ISO 286 como H7/g6: desvios, folga, interferência, zonas de tolerância e ajuste prensado DIN 7190. Teste grátis no navegador.">
   <meta property="og:url" content="https://dietertepe.github.io/dt-profipassung-web/pt/">
   <meta property="og:image" content="https://dt-profidreieck.de/Passung_Daten/bilder/passung-start.jpg">
@@ -39,7 +39,7 @@
       "@type": "WebPage",
       "@id": "https://dietertepe.github.io/dt-profipassung-web/pt/#webpage",
       "url": "https://dietertepe.github.io/dt-profipassung-web/pt/",
-      "name": "Calculadora de Ajustes e Tolerâncias ISO 286",
+      "name": "Calculadora de ajustes ISO 286 – H7/g6 e interferência",
       "description": "Calcule ajustes ISO 286 como H7/g6: desvios, folga, interferência, zonas de tolerância e ajuste prensado DIN 7190. Teste grátis no navegador.",
       "inLanguage": "pt-BR",
       "primaryImageOfPage": "https://dt-profidreieck.de/Passung_Daten/bilder/passung-start.jpg",
@@ -90,6 +90,11 @@
           "availability": "https://schema.org/InStock",
           "url": "https://www.checkout-ds24.com/product/722972"
         }
+      ],
+      "featureList": [
+        "Ajuste com folga H7/g6 – Ø 25 mm",
+        "Interferência e ajuste prensado – contração 60 H7/s6",
+        "Refaça os exemplos você mesmo"
       ]
     }
   ]
@@ -216,6 +221,12 @@
     .langs { display:inline-flex; gap:4px; margin-left:14px; }
     .langs a { text-decoration:none; font-size:.8rem; font-weight:800; padding:3px 8px; border-radius:999px; border:1px solid var(--line); color:var(--muted); }
     .langs a[aria-current="page"] { background:var(--cyan); border-color:var(--cyan); color:#062128; }
+    .task-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
+    .task { padding: 22px; border: 1px solid var(--line); border-radius: 17px; background: rgba(255,255,255,.035); }
+    .task p { color: var(--muted); font-size: .96rem; }
+    .task-f { font-size: 1.05rem; margin: 8px 0 0; overflow-wrap: anywhere; }
+    .task-cta { margin-top: 22px; }
+    @media (max-width: 780px) { .task-grid { grid-template-columns: 1fr; } }
 
     :root { --cyan: #2fc48f; --cyan-dark: #0b7a56; }
     .primary { background: linear-gradient(135deg, #2fc48f, #0b7a56); color:#fff; box-shadow:none; }
@@ -298,6 +309,41 @@
       </div>
     </section>
 
+    <section class="content" id="aufgaben">
+      <div class="wrap">
+        <div class="section-head">
+          <div class="eyebrow">Exemplos de cálculo</div>
+          <h2>Calcular ajustes: H7/g6 e ajuste prensado H7/s6</h2>
+          <p class="muted">Dois casos típicos da oficina – um ajuste deslizante e um ajuste por contração. Os dois exemplos estão incluídos no programa; todos os valores vêm da memória de cálculo conforme ISO 286 e DIN 7190.</p>
+        </div>
+        <div class="task-grid">
+          <article class="task" id="h7-g6">
+            <h3>Ajuste com folga H7/g6 – Ø 25 mm</h3>
+            <p>O clássico ajuste deslizante justo: o eixo é sempre menor que o furo, por isso sempre há uma folga. Os afastamentos da ISO 286 dão as dimensões-limite e a folga.</p>
+            <div class="formula task-f">Furo 25 H7: ES = +21 µm, EI = 0 → 25,000 … 25,021 mm</div>
+            <div class="formula task-f">Eixo 25 g6: es = −7 µm, ei = −20 µm → 24,980 … 24,993 mm</div>
+            <div class="formula task-f">Folga mínima = EI − es = 0 − (−7) = 7 µm</div>
+            <div class="formula task-f">Folga máxima = ES − ei = 21 − (−20) = 41 µm</div>
+          </article>
+          <article class="task" id="pressverband">
+            <h3>Interferência e ajuste prensado – contração 60 H7/s6</h3>
+            <p>Engrenagem de aço sobre eixo de aço Ø 60 mm, diâmetro externo do cubo 120 mm, comprimento de ajuste 50 mm, a seco (µ ≈ 0,14), torque exigido 250 N·m. Conforme DIN 7190, o programa calcula pressão de contato, torque transmissível, força de prensagem e temperatura de montagem.</p>
+            <div class="formula task-f">Interferência 23 … 72 µm</div>
+            <div class="formula task-f">Pressão de contato p = 24,3 … 88,6 N/mm² ≤ p<sub>zul</sub> = 153,7 N/mm²</div>
+            <div class="formula task-f">M<sub>t,max</sub> = 962,2 N·m → segurança ao deslizamento S<sub>H</sub> = 3,85</div>
+            <div class="formula task-f">Força de prensagem F<sub>e</sub> = 116,9 kN · aquecer o cubo a 211,3 °C</div>
+          </article>
+          <article class="task" id="selbst-rechnen">
+            <h3>Refaça os exemplos você mesmo</h3>
+            <p>Na versão de teste, escolha “25 H7/g6” ou “Zahnrad-Schrumpfsitz · 60 H7/s6 · Stahl/Stahl” em “Carregar exemplo” e clique em “Calcular”. Qualquer outro ajuste pode ser digitado diretamente, por exemplo “50 H7/k6”.</p>
+            <div class="formula task-f">Folga ou interferência = medida do furo − medida do eixo</div>
+            <div class="formula task-f">Tolerância do ajuste = IT<sub>furo</sub> + IT<sub>eixo</sub> = 21 + 13 = 34 µm</div>
+          </article>
+        </div>
+        <div class="actions task-cta"><a class="button primary" href="https://dietertepe.github.io/dt-profipassung-web/DT-ProfiPassung_Testversion.html?lang=pt">Calcular um ajuste na versão de teste →</a></div>
+      </div>
+    </section>
+
     <section class="content">
       <div class="wrap split">
         <div>
@@ -346,6 +392,10 @@
           <h2>Dúvidas sobre o DT-ProfiPassung</h2>
         </div>
         <div class="faq">
+          <details>
+            <summary>O que significa H7/g6?</summary>
+            <p>H7 é a zona de tolerância do furo (afastamento fundamental H, afastamento inferior 0, grau de tolerância IT7), g6 a do eixo. Juntos formam um ajuste com folga: em Ø 25 mm a folga fica entre 7 e 41 µm.</p>
+          </details>
           <details>
             <summary>Quais normas o DT-ProfiPassung usa?</summary>
             <p>Ajustes conforme ISO 286, ajustes prensados conforme DIN 7190 e tolerâncias gerais conforme ISO 2768.</p>

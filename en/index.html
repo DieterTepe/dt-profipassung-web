@@ -6,7 +6,7 @@
   <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
   <meta name="theme-color" content="#101923">
 
-  <title>ISO 286 Fit &amp; Tolerance Calculator | DT-ProfiPassung</title>
+  <title>ISO 286 Fit &amp; Tolerance Calculator – H7/g6, Press Fit</title>
   <meta name="description" content="Calculate ISO 286 fits such as H7/g6: limit deviations, clearance, interference, tolerance zones and DIN 7190 press fits. Try it free online.">
   <meta name="author" content="Dieter Tepe">
 
@@ -24,7 +24,7 @@
   <meta property="og:locale:alternate" content="de_DE">
   <meta property="og:locale:alternate" content="pt_BR">
   <meta property="og:site_name" content="DT-ProfiTools">
-  <meta property="og:title" content="ISO 286 Fit &amp; Tolerance Calculator | DT-ProfiPassung">
+  <meta property="og:title" content="ISO 286 Fit &amp; Tolerance Calculator – H7/g6, Press Fit">
   <meta property="og:description" content="Calculate ISO 286 fits such as H7/g6: limit deviations, clearance, interference, tolerance zones and DIN 7190 press fits. Try it free online.">
   <meta property="og:url" content="https://dietertepe.github.io/dt-profipassung-web/en/">
   <meta property="og:image" content="https://dt-profidreieck.de/Passung_Daten/bilder/passung-start.jpg">
@@ -39,7 +39,7 @@
       "@type": "WebPage",
       "@id": "https://dietertepe.github.io/dt-profipassung-web/en/#webpage",
       "url": "https://dietertepe.github.io/dt-profipassung-web/en/",
-      "name": "ISO 286 Fit & Tolerance Calculator | DT-ProfiPassung",
+      "name": "ISO 286 Fit & Tolerance Calculator – H7/g6, Press Fit",
       "description": "Calculate ISO 286 fits such as H7/g6: limit deviations, clearance, interference, tolerance zones and DIN 7190 press fits. Try it free online.",
       "inLanguage": "en",
       "primaryImageOfPage": "https://dt-profidreieck.de/Passung_Daten/bilder/passung-start.jpg",
@@ -90,6 +90,11 @@
           "availability": "https://schema.org/InStock",
           "url": "https://www.checkout-ds24.com/product/722972"
         }
+      ],
+      "featureList": [
+        "Clearance fit H7/g6 – Ø 25 mm",
+        "Interference and press fit – shrink fit 60 H7/s6",
+        "Recalculate the examples yourself"
       ]
     }
   ]
@@ -216,6 +221,12 @@
     .langs { display:inline-flex; gap:4px; margin-left:14px; }
     .langs a { text-decoration:none; font-size:.8rem; font-weight:800; padding:3px 8px; border-radius:999px; border:1px solid var(--line); color:var(--muted); }
     .langs a[aria-current="page"] { background:var(--cyan); border-color:var(--cyan); color:#062128; }
+    .task-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
+    .task { padding: 22px; border: 1px solid var(--line); border-radius: 17px; background: rgba(255,255,255,.035); }
+    .task p { color: var(--muted); font-size: .96rem; }
+    .task-f { font-size: 1.05rem; margin: 8px 0 0; overflow-wrap: anywhere; }
+    .task-cta { margin-top: 22px; }
+    @media (max-width: 780px) { .task-grid { grid-template-columns: 1fr; } }
 
     :root { --cyan: #2fc48f; --cyan-dark: #0b7a56; }
     .primary { background: linear-gradient(135deg, #2fc48f, #0b7a56); color:#fff; box-shadow:none; }
@@ -298,6 +309,41 @@
       </div>
     </section>
 
+    <section class="content" id="aufgaben">
+      <div class="wrap">
+        <div class="section-head">
+          <div class="eyebrow">Worked examples</div>
+          <h2>Calculate fits: H7/g6 and press fit H7/s6</h2>
+          <p class="muted">Two typical workshop cases – a sliding fit and a shrink fit. Both examples are built into the program; all figures come from its calculation path to ISO 286 and DIN 7190.</p>
+        </div>
+        <div class="task-grid">
+          <article class="task" id="h7-g6">
+            <h3>Clearance fit H7/g6 – Ø 25 mm</h3>
+            <p>The classic close sliding fit: the shaft is always smaller than the hole, so there is always a gap. The ISO 286 deviations give the limits of size and the clearance.</p>
+            <div class="formula task-f">Hole 25 H7: ES = +21 µm, EI = 0 → 25.000 … 25.021 mm</div>
+            <div class="formula task-f">Shaft 25 g6: es = −7 µm, ei = −20 µm → 24.980 … 24.993 mm</div>
+            <div class="formula task-f">Minimum clearance = EI − es = 0 − (−7) = 7 µm</div>
+            <div class="formula task-f">Maximum clearance = ES − ei = 21 − (−20) = 41 µm</div>
+          </article>
+          <article class="task" id="pressverband">
+            <h3>Interference and press fit – shrink fit 60 H7/s6</h3>
+            <p>Steel gear on a steel shaft Ø 60 mm, hub outside diameter 120 mm, joint length 50 mm, dry (µ ≈ 0.14), required torque 250 N·m. Following DIN 7190 the program calculates joint pressure, transmittable torque, press-in force and joining temperature.</p>
+            <div class="formula task-f">Interference 23 … 72 µm</div>
+            <div class="formula task-f">Joint pressure p = 24.3 … 88.6 N/mm² ≤ p<sub>zul</sub> = 153.7 N/mm²</div>
+            <div class="formula task-f">M<sub>t,max</sub> = 962.2 N·m → slip safety S<sub>H</sub> = 3.85</div>
+            <div class="formula task-f">Press-in force F<sub>e</sub> = 116.9 kN · heat hub to 211.3 °C</div>
+          </article>
+          <article class="task" id="selbst-rechnen">
+            <h3>Recalculate the examples yourself</h3>
+            <p>In the free version choose “25 H7/g6” or “Zahnrad-Schrumpfsitz · 60 H7/s6 · Stahl/Stahl” under “Load example” and press “Calculate”. Any other fit can be typed in directly, for example “50 H7/k6”.</p>
+            <div class="formula task-f">Clearance or interference = hole size − shaft size</div>
+            <div class="formula task-f">Fit tolerance = IT<sub>hole</sub> + IT<sub>shaft</sub> = 21 + 13 = 34 µm</div>
+          </article>
+        </div>
+        <div class="actions task-cta"><a class="button primary" href="https://dietertepe.github.io/dt-profipassung-web/DT-ProfiPassung_Testversion.html?lang=en">Calculate a fit in the free version →</a></div>
+      </div>
+    </section>
+
     <section class="content">
       <div class="wrap split">
         <div>
@@ -346,6 +392,10 @@
           <h2>Questions about DT-ProfiPassung</h2>
         </div>
         <div class="faq">
+          <details>
+            <summary>What does H7/g6 mean?</summary>
+            <p>H7 is the tolerance zone of the hole (fundamental deviation H, lower deviation 0, tolerance grade IT7), g6 that of the shaft. Together they form a clearance fit: at Ø 25 mm the clearance is between 7 and 41 µm.</p>
+          </details>
           <details>
             <summary>Which standards does DT-ProfiPassung use?</summary>
             <p>Fits to ISO 286, press fits to DIN 7190 and general tolerances to ISO 2768.</p>

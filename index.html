@@ -6,8 +6,8 @@
   <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
   <meta name="theme-color" content="#101923">
 
-  <title>Passung berechnen nach ISO 286 | DT-ProfiPassung</title>
-  <meta name="description" content="Passung nach ISO 286 online berechnen: Grenzmaße, Spiel, Übermaß, Toleranzfeld, Pressverband nach DIN 7190. Mit Rechenweg – gratis im Browser testen.">
+  <title>Passungsrechner ISO 286 online – Passung berechnen</title>
+  <meta name="description" content="Passung online berechnen: Grenzmaße, Spiel und Übermaß nach ISO 286, z. B. H7/g6, dazu Pressverband nach DIN 7190 mit Einpresskraft. Kostenlos testen.">
   <meta name="author" content="Dieter Tepe">
 
   <link rel="canonical" href="https://dietertepe.github.io/dt-profipassung-web/">
@@ -24,8 +24,8 @@
   <meta property="og:locale:alternate" content="en_US">
   <meta property="og:locale:alternate" content="pt_BR">
   <meta property="og:site_name" content="DT-ProfiTools">
-  <meta property="og:title" content="Passung berechnen nach ISO 286 | DT-ProfiPassung">
-  <meta property="og:description" content="Passung nach ISO 286 online berechnen: Grenzmaße, Spiel, Übermaß, Toleranzfeld, Pressverband nach DIN 7190. Mit Rechenweg – gratis im Browser testen.">
+  <meta property="og:title" content="Passungsrechner ISO 286 online – Passung berechnen">
+  <meta property="og:description" content="Passung online berechnen: Grenzmaße, Spiel und Übermaß nach ISO 286, z. B. H7/g6, dazu Pressverband nach DIN 7190 mit Einpresskraft. Kostenlos testen.">
   <meta property="og:url" content="https://dietertepe.github.io/dt-profipassung-web/">
   <meta property="og:image" content="https://dt-profidreieck.de/Passung_Daten/bilder/passung-start.jpg">
   <meta name="twitter:card" content="summary_large_image">
@@ -39,8 +39,8 @@
       "@type": "WebPage",
       "@id": "https://dietertepe.github.io/dt-profipassung-web/#webpage",
       "url": "https://dietertepe.github.io/dt-profipassung-web/",
-      "name": "Passung berechnen nach ISO 286 | DT-ProfiPassung",
-      "description": "Passung nach ISO 286 online berechnen: Grenzmaße, Spiel, Übermaß, Toleranzfeld, Pressverband nach DIN 7190. Mit Rechenweg – gratis im Browser testen.",
+      "name": "Passungsrechner ISO 286 online – Passung berechnen",
+      "description": "Passung online berechnen: Grenzmaße, Spiel und Übermaß nach ISO 286, z. B. H7/g6, dazu Pressverband nach DIN 7190 mit Einpresskraft. Kostenlos testen.",
       "inLanguage": "de",
       "primaryImageOfPage": "https://dt-profidreieck.de/Passung_Daten/bilder/passung-start.jpg",
       "isPartOf": {
@@ -90,6 +90,11 @@
           "availability": "https://schema.org/InStock",
           "url": "https://www.checkout-ds24.com/product/722972"
         }
+      ],
+      "featureList": [
+        "Spielpassung H7/g6 berechnen – Ø 25 mm",
+        "Übermaß und Pressverband – Schrumpfsitz 60 H7/s6",
+        "So rechnen Sie die Beispiele selbst nach"
       ]
     }
   ]
@@ -216,6 +221,12 @@
     .langs { display:inline-flex; gap:4px; margin-left:14px; }
     .langs a { text-decoration:none; font-size:.8rem; font-weight:800; padding:3px 8px; border-radius:999px; border:1px solid var(--line); color:var(--muted); }
     .langs a[aria-current="page"] { background:var(--cyan); border-color:var(--cyan); color:#062128; }
+    .task-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
+    .task { padding: 22px; border: 1px solid var(--line); border-radius: 17px; background: rgba(255,255,255,.035); }
+    .task p { color: var(--muted); font-size: .96rem; }
+    .task-f { font-size: 1.05rem; margin: 8px 0 0; overflow-wrap: anywhere; }
+    .task-cta { margin-top: 22px; }
+    @media (max-width: 780px) { .task-grid { grid-template-columns: 1fr; } }
 
     :root { --cyan: #2fc48f; --cyan-dark: #0b7a56; }
     .primary { background: linear-gradient(135deg, #2fc48f, #0b7a56); color:#fff; box-shadow:none; }
@@ -298,6 +309,41 @@
       </div>
     </section>
 
+    <section class="content" id="aufgaben">
+      <div class="wrap">
+        <div class="section-head">
+          <div class="eyebrow">Rechenbeispiele</div>
+          <h2>Passung berechnen: H7/g6 und Pressverband H7/s6</h2>
+          <p class="muted">Zwei typische Fälle aus der Werkstatt – eine Gleitpassung und ein Schrumpfsitz. Beide Beispiele sind im Programm hinterlegt; alle Zahlen stammen aus seinem Rechenweg nach ISO 286 und DIN 7190.</p>
+        </div>
+        <div class="task-grid">
+          <article class="task" id="h7-g6">
+            <h3>Spielpassung H7/g6 berechnen – Ø 25 mm</h3>
+            <p>Der klassische enge Gleitsitz: Die Welle ist immer kleiner als die Bohrung, es bleibt stets ein Spalt. Aus den Abmaßen nach ISO 286 folgen Grenzmaße und Spiel.</p>
+            <div class="formula task-f">Bohrung 25 H7: ES = +21 µm, EI = 0 → 25,000 … 25,021 mm</div>
+            <div class="formula task-f">Welle 25 g6: es = −7 µm, ei = −20 µm → 24,980 … 24,993 mm</div>
+            <div class="formula task-f">Mindestspiel = EI − es = 0 − (−7) = 7 µm</div>
+            <div class="formula task-f">Höchstspiel = ES − ei = 21 − (−20) = 41 µm</div>
+          </article>
+          <article class="task" id="pressverband">
+            <h3>Übermaß und Pressverband – Schrumpfsitz 60 H7/s6</h3>
+            <p>Zahnrad aus Stahl auf Stahlwelle Ø 60 mm, Nabenaußen-Ø 120 mm, Fugenlänge 50 mm, trocken (µ ≈ 0,14), gefordert 250 N·m. Nach DIN 7190 berechnet das Programm Fugendruck, übertragbares Moment, Einpresskraft und Fügetemperatur.</p>
+            <div class="formula task-f">Übermaß 23 … 72 µm</div>
+            <div class="formula task-f">Fugendruck p = 24,3 … 88,6 N/mm² ≤ p<sub>zul</sub> = 153,7 N/mm²</div>
+            <div class="formula task-f">M<sub>t,max</sub> = 962,2 N·m → Rutschsicherheit S<sub>H</sub> = 3,85</div>
+            <div class="formula task-f">Einpresskraft F<sub>e</sub> = 116,9 kN · Nabe erwärmen auf 211,3 °C</div>
+          </article>
+          <article class="task" id="selbst-rechnen">
+            <h3>So rechnen Sie die Beispiele selbst nach</h3>
+            <p>In der Testversion unter „Beispiel laden“ den Eintrag „25 H7/g6“ oder „Zahnrad-Schrumpfsitz · 60 H7/s6 · Stahl/Stahl“ wählen und „Berechnen“ drücken. Jede andere Passung lässt sich direkt eintippen, zum Beispiel „50 H7/k6“.</p>
+            <div class="formula task-f">Spiel bzw. Übermaß = Bohrungsmaß − Wellenmaß</div>
+            <div class="formula task-f">Passtoleranz = IT<sub>Bohrung</sub> + IT<sub>Welle</sub> = 21 + 13 = 34 µm</div>
+          </article>
+        </div>
+        <div class="actions task-cta"><a class="button primary" href="https://dietertepe.github.io/dt-profipassung-web/DT-ProfiPassung_Testversion.html">Passung in der Testversion berechnen →</a></div>
+      </div>
+    </section>
+
     <section class="content">
       <div class="wrap split">
         <div>
@@ -346,6 +392,10 @@
           <h2>Fragen zu DT-ProfiPassung</h2>
         </div>
         <div class="faq">
+          <details>
+            <summary>Was bedeutet H7/g6?</summary>
+            <p>H7 ist das Toleranzfeld der Bohrung (Grundabmaß H, untere Abweichung 0, Toleranzgrad IT7), g6 das der Welle. Zusammen ergibt das eine Spielpassung: Bei Ø 25 mm liegt das Spiel zwischen 7 und 41 µm.</p>
+          </details>
           <details>
             <summary>Nach welchen Normen rechnet DT-ProfiPassung?</summary>
             <p>Passungen nach ISO 286, Pressverbände nach DIN 7190 und Allgemeintoleranzen nach ISO 2768.</p>
